@@ -25,25 +25,27 @@ function create ()
 {
     this.add.image(400, 300, 'background');
 
-    //Create the path that enemy units will travel on
     var graphics = this.add.graphics();
-    var path = this.add.path(100,0);
-    path.lineTo(100,100);
-    path.lineTo(700,100);
-    path.lineTo(700,300);
-    path.lineTo(100,300);
-    path.lineTo(100,500);
-    path.lineTo(700,500);
-    path.lineTo(700,600);
+    var path = this.add.path(0,50);
+    path = createPath(graphics, path);
 
-    graphics.lineStyle(3,0xffffff,1);
-    path.draw(graphics);  
 }
 
 function update ()
 {
 }
 
-function createPath(){
- 
+function createPath(graphics,path){
+    //Create the path that enemy units will travel on
+    path.lineTo(150,50);
+    path.lineTo(150,150);
+    path.lineTo(650,150);
+    path.lineTo(650,350);
+    path.lineTo(50,350);
+    path.lineTo(50,550);
+    path.lineTo(800,550);
+
+    //change alpha value (third param) to 0 in order to hide path.
+    graphics.lineStyle(3,0xffffff,0.5);
+    path.draw(graphics);
 }

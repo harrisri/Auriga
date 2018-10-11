@@ -23,9 +23,27 @@ function preload ()
 
 function create ()
 {
-	this.add.image(400, 300, 'background');
+    this.add.image(400, 300, 'background');
+
+    //Create the path that enemy units will travel on
+    var graphics = this.add.graphics();
+    var path = this.add.path(100,0);
+    path.lineTo(100,100);
+    path.lineTo(700,100);
+    path.lineTo(700,300);
+    path.lineTo(100,300);
+    path.lineTo(100,500);
+    path.lineTo(700,500);
+    path.lineTo(700,600);
+
+    graphics.lineStyle(3,0xffffff,1);
+    path.draw(graphics);  
 }
 
 function update ()
 {
+}
+
+function createPath(){
+ 
 }

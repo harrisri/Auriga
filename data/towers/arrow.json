@@ -1,0 +1,22 @@
+{
+	"name": "arrow",
+	"costs":{
+		"level_1": 80,
+		"level_2": 120,
+		"level_3": 120,
+		"level_4": 200
+	},
+	"damage":{
+		"level_1": 8,
+		"level_2": 10,
+		"level_3": 13,
+		"level_4": 18
+	},
+	"range":{
+		"level_1": 30,
+		"level_2": 30,
+		"level_3": 40,
+		"level_4": 100
+	},
+	"final-ability": "anti-air"
+}

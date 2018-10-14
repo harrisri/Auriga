@@ -17,13 +17,23 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-	this.load.image('background', '/assets/background.png');
+    // Load background images and UI elements
+    this.load.image('background', '/assets/background.png');
+
+    // Load unit and tower sprites
+
+    // Load unit and tower files
+    this.load.json('infantry', '/data/units/infantry.json')
+    this.load.json('heavy', '/data/units/heavy.json')
+    this.load.json('flying', '/data/units/flying.json')
+    this.load.json('speedy', '/data/units/speedy.json')
+    this.load.json('arrow', '/data/tower/arrow.json')
 }
 
 
 function create ()
 {
-	this.add.image(400, 300, 'background');
+    this.add.image(400, 300, 'background');
 }
 
 function update ()

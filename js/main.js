@@ -28,6 +28,9 @@ function preload ()
     this.load.json('flying', '/data/units/flying.json')
     this.load.json('speedy', '/data/units/speedy.json')
     this.load.json('arrow', '/data/tower/arrow.json')
+    this.load.json('fire', '/data/tower/fire.json')
+    this.load.json('ice', '/data/tower/ice.json')
+    this.load.json('bomb', '/data/tower/bomb.json')
 }
 
 

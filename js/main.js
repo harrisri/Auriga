@@ -18,7 +18,6 @@ var config = {
 // The code from this website and the assets used were modified to fit our purposes
 
 var game = new Phaser.Game(config);
-
 var path;
 var ENEMY_SPEED = 1/25000;
 
@@ -35,7 +34,8 @@ var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0],
                 [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
-function preload() {    
+function preload() {  
+  	this.load.image('background', '/assets/grassBackground.jpg');
     this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
     this.load.image('bullet', 'assets/bullet.png');
     this.load.image('goblin', 'assets/goblin.png');
@@ -145,6 +145,7 @@ function canPlaceTurret(i, j) {
 }
 
 function create() {
+    this.add.image(400, 300, 'background');
     // this graphics element is only for visualization, 
     // its not related to our path
     var graphics = this.add.graphics();   
@@ -193,3 +194,4 @@ function update(time, delta) {
         }       
     }
 }
+

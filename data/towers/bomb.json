@@ -1,7 +1,7 @@
 {
     "name": "bomb",
     "target": "ground",
-    "costs":{
+    "cost":{
         "level_1": 125,
         "level_2": 140,
         "level_3": 185,
@@ -31,5 +31,5 @@
         "level_3": 55,
         "level_4": 55
     },
-    "final-ability": "missile"
+    "final_ability": "missile"
 }

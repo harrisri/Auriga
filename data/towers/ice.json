@@ -1,7 +1,7 @@
 {
     "name": "ice",
     "target": "ground",
-    "costs":{
+    "cost":{
         "level_1": 110,
         "level_2": 125,
         "level_3": 140,
@@ -31,5 +31,5 @@
         "level_3": 2.25,
         "level_4": 2.25
     },
-    "final-ability": "freeze"
+    "final_ability": "freeze"
 }

@@ -1,7 +1,7 @@
 {
     "name": "fire",
     "target": "ground",
-    "costs":{
+    "cost":{
         "level_1": 110,
         "level_2": 125,
         "level_3": 140,
@@ -19,5 +19,5 @@
         "level_3": 40,
         "level_4": 55
     },
-    "final-ability": "incinerate"
+    "final_ability": "incinerate"
 }

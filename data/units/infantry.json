@@ -3,6 +3,6 @@
 	"move_type": "ground",
 	"base_hp": 20,
 	"base_armor": 0,
-	"base_speed": 1.00,
+	"base_speed": 1,
 	"gold_drop": 10
 }

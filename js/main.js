@@ -1,3 +1,7 @@
+// import Phaser from '../node_modules/phaser/src/phaser.js';
+// import Turret from './sprites/Turret.js';
+// import Enemy from './sprites/Enemy.js';
+
 var config = {
     type: Phaser.AUTO,
     parent: 'content',
@@ -20,7 +24,7 @@ var config = {
 var game = new Phaser.Game(config);
 
 var path;
-var ENEMY_SPEED = 1/25000;
+var ENEMY_SPEED = 1/50000;
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -37,19 +41,19 @@ var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 
 function preload() {    
     this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
-    this.load.image('bullet', 'assets/bullet.png');
-    this.load.image('goblin', 'assets/goblin.png');
+    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
+    this.load.image('normalEnemy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
 }
 
 var Enemy = new Phaser.Class({
  
-    Extends: Phaser.GameObjects.Image,
+    Extends: Phaser.GameObjects.Sprite,
 
     initialize:
 
     function Enemy (scene)
     {
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
+        Phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'normalEnemy', 'enemy');
         this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
     },
 
@@ -88,13 +92,13 @@ var Enemy = new Phaser.Class({
 
 var Turret = new Phaser.Class({
  
-    Extends: Phaser.GameObjects.Image,
+    Extends: Phaser.GameObjects.Sprite,
 
     initialize:
 
     function Turret (scene)
     {
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
+        Phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'tower', 'turret');
         this.nextTic = 0;
     },
     // we will place the turret according to the grid
@@ -110,6 +114,56 @@ var Turret = new Phaser.Class({
             this.nextTic = time + 1000;
         }
     }
+});
+
+var Bullet = new Phaser.Class({
+ 
+    Extends: Phaser.GameObjects.Image,
+ 
+    initialize:
+ 
+    function Bullet (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bullet');
+ 
+        this.dx = 0;
+        this.dy = 0;
+        this.lifespan = 0;
+ 
+        this.speed = Phaser.Math.GetSpeed(600, 1);
+    },
+ 
+    fire: function (x, y, angle)
+    {
+        this.setActive(true);
+        this.setVisible(true);
+ 
+        //  Bullets fire from the middle of the screen to the given x/y
+        this.setPosition(x, y);
+ 
+    //  we don't need to rotate the bullets as they are round
+    //  this.setRotation(angle);
+ 
+        this.dx = Math.cos(angle);
+        this.dy = Math.sin(angle);
+ 
+        this.lifespan = 300;
+    },
+ 
+    update: function (time, delta)
+    {
+        this.lifespan -= delta;
+ 
+        this.x += this.dx * (this.speed * delta);
+        this.y += this.dy * (this.speed * delta);
+ 
+        if (this.lifespan <= 0)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+ 
 });
 
 function drawGrid(graphics) {
@@ -144,10 +198,18 @@ function canPlaceTurret(i, j) {
     return map[i][j] === 0;
 }
 
+// function addBullet(x, y, angle) {
+//     var bullet = bullets.get();
+//     if (bullet)
+//     {
+//         bullet.fire(x, y, angle);
+//     }
+// }
+
 function create() {
     // this graphics element is only for visualization, 
     // its not related to our path
-    var graphics = this.add.graphics();   
+    var graphics = this.add.graphics();
     drawGrid(graphics);
     
     // the path for our enemies
@@ -172,8 +234,12 @@ function create() {
 
     enemies = this.add.group({ classType: Enemy, runChildUpdate: true });
     this.nextEnemy = 0;
+
     turrets = this.add.group({ classType: Turret, runChildUpdate: true });
     this.input.on('pointerdown', placeTurret);
+
+    // bullets = this.add.group({ classType: Bullet, runChildUpdate: true });
+
 }
 
 function update(time, delta) {  

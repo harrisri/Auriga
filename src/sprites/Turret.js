@@ -1,5 +1,9 @@
 export default class Turret extends Phaser.GameObjects.Sprite {
     constructor(config) {
+        super({
+            key: 'SimpleScene'
+        });
+        
         Phaser.GameObjects.Sprite.call(SimpleScene, 0, 0, 'tower', 'turret');
         this.nextTic = 0;
     }

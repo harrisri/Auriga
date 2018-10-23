@@ -1,4 +1,4 @@
-export default class Turret extends Phaser.GameObjects.Sprite {
+export default class Enemy extends Phaser.GameObjects.Sprite {
     constructor(config) {
         super({
             key: 'SimpleScene'

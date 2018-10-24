@@ -45,6 +45,9 @@ function preload() {
     this.load.json('ice', 'data/towers/ice.json')
     this.load.json('bomb', 'data/towers/bomb.json')
 
+    // Load map files
+    this.load.text('level1', 'data/maps/level1');
+
     // Load background images and UI elements
     this.load.image('background', '/assets/grassBackground.jpg');
 
@@ -54,216 +57,65 @@ function preload() {
     this.load.image('goblin', 'assets/goblin.png');
 }
 
-var Infantry = new Phaser.Class({
 
-    Extends: Phaser.GameObjects.Image,
+function generateEnemyClass(data){
 
-    initialize:
-    function Infantry (scene)
-    {
-        let data = game.cache.json.get('infantry')
-        // Replace with infantry image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.name = data['name']
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
+    var Enemy = new Phaser.Class({
 
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
+        Extends: Phaser.GameObjects.Image,
 
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        initialize:
+        function Enemy (scene)
         {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-    }
-});
+            // Replace with infantry image when complete
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
+            this.name = data['name']
+            this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
+            this.speed = data['base_speed'] / SPEED_SCALE;
+            this.hp = data['base_hp'];
+            this.armor = data['base_armor'];
+            this.gold = data['gold_drop'];
+            this.moveType = data['move_type'];
+        },
 
-var Heavy = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Heavy (scene)
-    {
-        let data = game.cache.json.get('heavy')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.name = data['name']
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
-
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        startOnPath: function ()
         {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-    }
-});
+            // set the t parameter at the start of the path
+            this.follower.t = 0;
 
+            // get x and y of the given t point
+            path.getPoint(this.follower.t, this.follower.vec);
 
-var Flying = new Phaser.Class({
+            // set the x and y of our enemy to the received from the previous step
+            this.setPosition(this.follower.vec.x, this.follower.vec.y);
 
-    Extends: Phaser.GameObjects.Image,
+        },
 
-    initialize:
-    function Flying (scene)
-    {
-        let data = game.cache.json.get('flying')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.name = data['name']
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
-
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        update: function (time, delta)
         {
-            this.setActive(false);
-            this.setVisible(false);
+            // move the t point along the path, 0 is the start and 0 is the end
+            this.follower.t += this.speed * delta;
+
+            // get the new x and y coordinates in vec
+            path.getPoint(this.follower.t, this.follower.vec);
+
+            // update enemy x and y to the newly obtained x and y
+            this.setPosition(this.follower.vec.x, this.follower.vec.y);
+
+            // if we have reached the end of the path, remove the enemy
+            if (this.follower.t >= 1)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+            }
         }
-    }
-});
+    });
 
-var Speedy = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Speedy (scene)
-    {
-        let data = game.cache.json.get('speedy')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.name = data['name']
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
-
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
-        {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-    }
-});
+    return Enemy;
+}
 
 
+// TODO: Create Tower Class factory in the style of the above function
 var Arrow = new Phaser.Class({
 
     Extends: Phaser.GameObjects.Image,
@@ -490,12 +342,55 @@ function canPlaceTurret(i, j) {
     return map[i][j] === 0;
 }
 
+function parseMap(maptext){
+    // Expects a string read in from a map text file.
+    // Returns an array of tiles needed to build the map
+
+    // Map syntax:
+    //   # :  Blocking (Buildable)
+    //   - :  Open (Path)
+    //   0, 1, 2 : Start points. Add more below if needed
+    //   9, 8, 7 : End points. Add more below if needed
+    var blocking = '#';
+    var open = '-';
+    var start = ['0', '1', '2']
+    var end = ['9', '8', '7']
+
+    var map = []
+
+    for (var i = 0; i < maptext.length; i++) {
+        var char = maptext[i];
+        if (char === blocking){
+
+        }
+        else if (char === open){
+
+        }
+        else if (start.includes(char)){
+
+        }
+        else if (end.includes(char)){
+
+        }
+        else if (char === '\n'){
+
+        }
+
+    }
+
+    return map;
+}
+
 function create() {
     this.add.image(400, 300, 'background');
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
     drawGrid(graphics);
+
+    level1 = this.cache.text.get('level1');
+    console.log(typeof level1);
+
 
     // the path for our enemies
     // parameters are the start x and y of our path
@@ -517,7 +412,23 @@ function create() {
     // visualize the path
     path.draw(graphics);
 
-    enemies = this.add.group({ classType: Infantry, runChildUpdate: true });
+    let infantryData = game.cache.json.get('infantry');
+    let heavyData = game.cache.json.get('heavy');
+    let flyingData = game.cache.json.get('flying');
+    let speedyData = game.cache.json.get('speedy');
+
+    const Infantry = generateEnemyClass(infantryData);
+    const Heavy = generateEnemyClass(heavyData);
+    const Flying = generateEnemyClass(flyingData);
+    const Speedy = generateEnemyClass(speedyData);
+
+    enemies = this.add.group({ classType: Heavy, runChildUpdate: true });
+
+    infantryGroup = this.add.group({ classType: Infantry, runChildUpdate: true });
+    heavyGroup = this.add.group({ classType: Heavy, runChildUpdate: true });
+    flyingGroup = this.add.group({ classType: Flying, runChildUpdate: true });
+    speedyGroup = this.add.group({ classType: Speedy, runChildUpdate: true });
+
     this.nextEnemy = 0;
     turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
     this.input.on('pointerdown', placeTurret);

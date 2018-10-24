@@ -115,6 +115,64 @@ function generateEnemyClass(data){
 }
 
 
+
+generateTowerClass(data){
+
+    var Tower = new Phaser.Class({
+
+        Extends: Phaser.GameObjects.Image,
+
+        initialize:
+        function Arrow (scene)
+        {
+            let data = game.cache.json.get('arrow');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
+            this.nextTic = 0;
+
+            this.name = data['name'];
+            this.target = data['target'];
+            this.level = 1;
+            levelKey = 'level_' + this.level;
+            this.cost = data['cost'][levelKey];
+            this.damage = data['damage'][levelKey];
+            this.range = data['range'][levelKey];
+            this.rate = data['rate'][levelKey];
+            this.radius = data['radius'][levelKey];
+            this.slow = data['slow'][levelKey];
+            this.duration = data['duration'][levelKey];
+            this.ability = data['final_ability'];
+        },
+
+        // Update tower values when upgraded
+        upgrade: function() {
+            if (this.level <= 3) {
+                this.level += 1;
+            }
+            levelKey = 'level_' + this.level;
+            this.cost = data['cost'][levelKey];
+            this.damage = data['damage'][levelKey];
+            this.range = data['range'][levelKey];
+            this.rate = data['rate'][levelKey];
+        },
+
+        // we will place the turret according to the grid
+        place: function(i, j) {
+            this.y = i * 50 + 50/2;
+            this.x = j * 50 + 50/2;
+            map[i][j] = 1;
+        },
+        update: function (time, delta)
+        {
+            // time to shoot
+            if(time > this.nextTic) {
+                this.nextTic = time + 1000;
+            }
+        }
+    });
+
+
+}
+
 // TODO: Create Tower Class factory in the style of the above function
 var Arrow = new Phaser.Class({
 
@@ -356,28 +414,33 @@ function parseMap(maptext){
     var start = ['0', '1', '2']
     var end = ['9', '8', '7']
 
-    var map = []
+    var map = [[]]
 
+    var row = 0;
     for (var i = 0; i < maptext.length; i++) {
         var char = maptext[i];
-        if (char === blocking){
+        // if (char === blocking){
+        //     map.push(char);
+        // }
+        // else if (char === open){
 
-        }
-        else if (char === open){
+        // }
+        // else if (start.includes(char)){
 
-        }
-        else if (start.includes(char)){
+        // }
+        // else if (end.includes(char)){
 
-        }
-        else if (end.includes(char)){
-
+        // }
+        if (char !== '\n'){
+            map[row].push(char);
         }
         else if (char === '\n'){
-
+            map.push([]);
+            row++
         }
-
     }
 
+    console.log(map);
     return map;
 }
 
@@ -391,6 +454,7 @@ function create() {
     level1 = this.cache.text.get('level1');
     console.log(typeof level1);
 
+    parseMap(level1);
 
     // the path for our enemies
     // parameters are the start x and y of our path

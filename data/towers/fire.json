@@ -19,5 +19,17 @@
         "level_3": 40,
         "level_4": 55
     },
+    "rate":{
+        "level_1": 0.00
+    },
+    "radius":{
+        "level_1": 0.00
+    },
+    "slow":{
+        "level_1": 0.00
+    },
+    "duration":{
+        "level_1": 0.00
+    },
     "final_ability": "incinerate"
 }

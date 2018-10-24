@@ -47,6 +47,8 @@ function preload() {
 
     // Load map files
     this.load.text('level1', 'data/maps/level1');
+    this.load.text('level2', 'data/maps/level1');
+    this.load.text('level3', 'data/maps/level1');
 
     // Load background images and UI elements
     this.load.image('background', '/assets/grassBackground.jpg');
@@ -115,15 +117,14 @@ function generateEnemyClass(data){
 }
 
 
-
-generateTowerClass(data){
+function generateTowerClass(data){
 
     var Tower = new Phaser.Class({
 
         Extends: Phaser.GameObjects.Image,
 
         initialize:
-        function Arrow (scene)
+        function Tower (scene)
         {
             let data = game.cache.json.get('arrow');
             Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
@@ -141,6 +142,7 @@ generateTowerClass(data){
             this.slow = data['slow'][levelKey];
             this.duration = data['duration'][levelKey];
             this.ability = data['final_ability'];
+            this.abilityActive = false;
         },
 
         // Update tower values when upgraded
@@ -153,6 +155,12 @@ generateTowerClass(data){
             this.damage = data['damage'][levelKey];
             this.range = data['range'][levelKey];
             this.rate = data['rate'][levelKey];
+            this.radius = data['radius'][levelKey];
+            this.slow = data['slow'][levelKey];
+            this.duration = data['duration'][levelKey];
+            if (levelKey === 4){
+                this.abilityActive = true;
+            }
         },
 
         // we will place the turret according to the grid
@@ -170,203 +178,9 @@ generateTowerClass(data){
         }
     });
 
-
+    return Tower;
 }
 
-// TODO: Create Tower Class factory in the style of the above function
-var Arrow = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Arrow (scene)
-    {
-        let data = game.cache.json.get('arrow');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Bomb = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Bomb (scene)
-    {
-        let data = game.cache.json.get('bomb');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-        this.radius = data['radius'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Fire = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Fire (scene)
-    {
-        let data = game.cache.json.get('fire');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Ice = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Ice (scene)
-    {
-        let data = game.cache.json.get('ice');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.slow = data['slow'][levelKey];
-        this.duration = data['duration'][levelKey];
-        this.ability = data['final_ability'];
-
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.slow = data['slow'][levelKey];
-        this.duration = data['duration'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
 
 function drawGrid(graphics) {
     graphics.lineStyle(1, 0x006400, 0.5);
@@ -402,7 +216,7 @@ function canPlaceTurret(i, j) {
 
 function parseMap(maptext){
     // Expects a string read in from a map text file.
-    // Returns an array of tiles needed to build the map
+    // Returns an array of char 'tiles' needed to build the map
 
     // Map syntax:
     //   # :  Blocking (Buildable)
@@ -419,18 +233,6 @@ function parseMap(maptext){
     var row = 0;
     for (var i = 0; i < maptext.length; i++) {
         var char = maptext[i];
-        // if (char === blocking){
-        //     map.push(char);
-        // }
-        // else if (char === open){
-
-        // }
-        // else if (start.includes(char)){
-
-        // }
-        // else if (end.includes(char)){
-
-        // }
         if (char !== '\n'){
             map[row].push(char);
         }
@@ -440,7 +242,6 @@ function parseMap(maptext){
         }
     }
 
-    console.log(map);
     return map;
 }
 
@@ -451,10 +252,14 @@ function create() {
     var graphics = this.add.graphics();
     drawGrid(graphics);
 
+    // Parse a map file and produce a 2d array of chars
+    // that can be used to generate the level.
     level1 = this.cache.text.get('level1');
-    console.log(typeof level1);
-
-    parseMap(level1);
+    level2 = this.cache.text.get('level2');
+    level3 = this.cache.text.get('level3');
+    levelMap1 = parseMap(level1);       // Currently unused.
+    levelMap2 = parseMap(level2);
+    levelMap3 = parseMap(level3);
 
     // the path for our enemies
     // parameters are the start x and y of our path
@@ -476,6 +281,7 @@ function create() {
     // visualize the path
     path.draw(graphics);
 
+    // Get enemy data and generate classes to instantiate enemies
     let infantryData = game.cache.json.get('infantry');
     let heavyData = game.cache.json.get('heavy');
     let flyingData = game.cache.json.get('flying');
@@ -486,14 +292,26 @@ function create() {
     const Flying = generateEnemyClass(flyingData);
     const Speedy = generateEnemyClass(speedyData);
 
-    enemies = this.add.group({ classType: Heavy, runChildUpdate: true });
+    enemies = this.add.group({ classType: Infantry, runChildUpdate: true });
+    this.nextEnemy = 0;
 
+    // Individual groups for each enemy type ?
     infantryGroup = this.add.group({ classType: Infantry, runChildUpdate: true });
     heavyGroup = this.add.group({ classType: Heavy, runChildUpdate: true });
     flyingGroup = this.add.group({ classType: Flying, runChildUpdate: true });
     speedyGroup = this.add.group({ classType: Speedy, runChildUpdate: true });
 
-    this.nextEnemy = 0;
+    // Do the same thing with towers
+    let arrowData = game.cache.json.get('arrow');
+    let bombData = game.cache.json.get('bomb');
+    let fireData = game.cache.json.get('fire');
+    let iceData = game.cache.json.get('ice');
+
+    const Arrow = generateTowerClass(arrowData);
+    const Bomb = generateTowerClass(bombData);
+    const Fire = generateTowerClass(fireData);
+    const Ice = generateTowerClass(iceData);
+
     turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
     this.input.on('pointerdown', placeTurret);
 }
@@ -514,10 +332,4 @@ function update(time, delta) {
             this.nextEnemy = time + 1000;
         }
     }
-}
-
-function render() {
-
-    this.debug.text(`Debugging Phaser ${Phaser.VERSION}`, 20, 20, 'black', 'Segoe UI');
-
 }

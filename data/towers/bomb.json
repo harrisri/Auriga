@@ -32,10 +32,16 @@
         "level_4": 55
     },
     "slow":{
-        "level_1": -1
+        "level_1": -1,
+        "level_2": -1,
+        "level_3": -1,
+        "level_4": -1
     },
     "duration":{
-        "level_1": -1
+        "level_1": -1,
+        "level_2": -1,
+        "level_3": -1,
+        "level_4": -1
     },
     "final_ability": "missile"
 }

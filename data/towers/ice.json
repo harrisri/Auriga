@@ -20,10 +20,16 @@
         "level_4": 55
     },
     "rate":{
-        "level_1": -1
+        "level_1": -1,
+        "level_2": -1,
+        "level_3": -1,
+        "level_4": -1
     },
     "radius":{
-        "level_1": -1
+        "level_1": -1,
+        "level_2": -1,
+        "level_3": -1,
+        "level_4": -1
     },
     "slow":{
         "level_1": 0.25,

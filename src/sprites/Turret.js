@@ -1,18 +1,15 @@
 export default class Turret extends Phaser.GameObjects.Sprite {
     constructor(config) {
-        super({
-            key: 'SimpleScene'
-        });
+        super(config.scene, config.x, config.y, config.key);
+
+        config.scene.physics.world.enable(this);
+        config.scene.add.existing(this);
         
-        Phaser.GameObjects.Sprite.call(SimpleScene, 0, 0, 'tower', 'turret');
         this.nextTic = 0;
     }
 
-    // we will place the turret according to the grid
-    place(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
+    create() {
+        Phaser.GameObjects.Sprite.call(config.scene, 0, 0, 'tower', 'turret');
     }
 
     update(time, delta){

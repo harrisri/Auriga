@@ -1,12 +1,11 @@
-export default class Enemy extends Phaser.GameObjects.Sprite {
+export default class Turret extends Phaser.GameObjects.Sprite {
     constructor(config) {
         super(config.scene, config.x, config.y, config.key);
-        //Phaser.GameObjects.Sprite.call(SimpleScene, 0, 0, 'normalEnemy', 'enemy');
 
         //no idea why these two lines are needed, but the game breaks without them.
         config.scene.physics.world.enable(this);
         config.scene.add.existing(this);
-        
+
         //path the enemies follow.
         this.path = config.path;
 
@@ -15,6 +14,10 @@ export default class Enemy extends Phaser.GameObjects.Sprite {
 
         //for moving down the path
         this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
+    }
+
+    create() {
+        Phaser.GameObjects.Sprite.call(config.scene, 0, 0, 'normalEnemy', 'enemy');
     }
 
     startOnPath() {

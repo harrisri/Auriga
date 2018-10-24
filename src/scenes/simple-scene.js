@@ -5,12 +5,8 @@ import Enemy from '../sprites/Enemy';
 export class SimpleScene extends Phaser.Scene {
   preload() {
     // ********* "this" is the current scene, or "SimpleScene" *********
-    this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
     this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
-    this.load.image('normalEnemy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
-    
-    // ********* test code to load images *********
-    this.load.image('cokecan', 'assets/cokecan.png');
+    this.load.image('normalEnemy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');  
   }
 
   create() {
@@ -46,17 +42,6 @@ export class SimpleScene extends Phaser.Scene {
       return map[i][j] === 0;
     }
 
-    // ********* test code to render images *********
-    this.add.text(100, 100, 'Hello Phaser!', { fill: '#0f0' });
-    this.add.image(100, 200, 'cokecan');
-
-    this.add.image (400, 300, 'tower');
-    this.add.image(500, 400, 'normalEnemy');
-
-    // ********* For some reason our path, and grid are not getting drawn on the current scene. I will work on that a bit more tonight. *********
-    let path;
-    const ENEMY_SPEED = 1/50000;
-
     const map =    [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
@@ -77,6 +62,7 @@ export class SimpleScene extends Phaser.Scene {
     
     // the path for our enemies
     // parameters are the start x and y of our path
+    let path;
     path = this.add.path(0, 75);
     path.lineTo(75,75);
     path.lineTo(75,125);
@@ -95,11 +81,30 @@ export class SimpleScene extends Phaser.Scene {
     // visualize the path
     path.draw(graphics);
 
+    //Create global array of enemies
+    this.enemies = [];
+    this.enemies_running = [];
+    this.nextEnemy = 0;
+
+    //create 10 new enemies and put them in enemies array.
+    for (var i = 0; i < 10; i++) {
+        let enemy = new Enemy({
+          scene: this,
+          x: 0,
+          y: 0,
+          key: 'normalEnemy',
+          path: path
+        })
+        enemy.setVisible(false);
+        enemy.setActive(false);
+        this.enemies.push(enemy);
+    }
+    //Below is not functioning.
     // let enemies = this.add.group({ classType: Enemy, runChildUpdate: true });
     // this.nextEnemy = 0;
 
-    let turrets = this.add.group({ classType: Turret, runChildUpdate: true });
-    this.input.on('pointerdown', placeTurret);
+    //let turrets = this.add.group({ classType: Turret, runChildUpdate: true });
+    //this.input.on('pointerdown', placeTurret);
 
     // bullets = this.add.group({ classType: Bullet, runChildUpdate: true });
 
@@ -109,17 +114,20 @@ export class SimpleScene extends Phaser.Scene {
     // if its time for the next enemy
     if (time > this.nextEnemy)
     {        
-        let enemy = enemies.get();
-        if (enemy)
-        {
-            enemy.setActive(true);
-            enemy.setVisible(true);
-            
-            // place the enemy at the start of the path
-            enemy.startOnPath();
-            
-            this.nextEnemy = time + 1000;
-        }       
-    }
+        if(this.enemies[0]){ //if there are enemies left in the enemies array.
+            this.enemies[0].setActive(true);
+            this.enemies[0].setVisible(true);
+            this.enemies[0].startOnPath();
+            let enemy = this.enemies.shift(); //removes 0 position enemy from array and moves it into enemy variable
+            this.enemies_running.push(enemy); //enemies currently running.
+        }
+        
+        this.nextEnemy = time + 2000;
+    }       
+    
+    //manually update all of the enemies 
+    for (var i = 0; i < this.enemies_running.length; i++) {
+        this.enemies_running[i].update(time, delta);
+    }  
   }
 }

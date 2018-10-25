@@ -59,7 +59,6 @@ function preload() {
     this.load.image('goblin', 'assets/goblin.png');
 }
 
-
 function generateEnemyClass(data){
 
     var Enemy = new Phaser.Class({
@@ -260,7 +259,7 @@ function create() {
     levelMap1 = parseMap(level1);       // Currently unused.
     levelMap2 = parseMap(level2);
     levelMap3 = parseMap(level3);
-
+  
     // the path for our enemies
     // parameters are the start x and y of our path
     path = this.add.path(0, 75);

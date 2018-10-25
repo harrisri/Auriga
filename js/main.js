@@ -45,6 +45,11 @@ function preload() {
     this.load.json('ice', 'data/towers/ice.json')
     this.load.json('bomb', 'data/towers/bomb.json')
 
+    // Load map files
+    this.load.text('level1', 'data/maps/level1');
+    this.load.text('level2', 'data/maps/level1');
+    this.load.text('level3', 'data/maps/level1');
+
     // Load background images and UI elements
     this.load.image('background', '/assets/grassBackground.jpg');
 
@@ -54,409 +59,127 @@ function preload() {
     this.load.image('goblin', 'assets/goblin.png');
 }
 
-var Infantry = new Phaser.Class({
+function generateEnemyClass(data){
 
-    Extends: Phaser.GameObjects.Image,
+    var Enemy = new Phaser.Class({
 
-    initialize:
-    function Infantry (scene)
-    {
-        let data = game.cache.json.get('infantry')
-        // Replace with infantry image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.name = data['name']
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
+        Extends: Phaser.GameObjects.Image,
 
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        initialize:
+        function Enemy (scene)
         {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-    }
-});
+            // Replace with infantry image when complete
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
+            this.name = data['name']
+            this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
+            this.speed = data['base_speed'] / SPEED_SCALE;
+            this.hp = data['base_hp'];
+            this.armor = data['base_armor'];
+            this.gold = data['gold_drop'];
+            this.moveType = data['move_type'];
+        },
 
-var Heavy = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Heavy (scene)
-    {
-        let data = game.cache.json.get('heavy')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.name = data['name']
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
-
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        startOnPath: function ()
         {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-    }
-});
+            // set the t parameter at the start of the path
+            this.follower.t = 0;
 
+            // get x and y of the given t point
+            path.getPoint(this.follower.t, this.follower.vec);
 
-var Flying = new Phaser.Class({
+            // set the x and y of our enemy to the received from the previous step
+            this.setPosition(this.follower.vec.x, this.follower.vec.y);
 
-    Extends: Phaser.GameObjects.Image,
+        },
 
-    initialize:
-    function Flying (scene)
-    {
-        let data = game.cache.json.get('flying')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.name = data['name']
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
-
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
-
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        update: function (time, delta)
         {
-            this.setActive(false);
-            this.setVisible(false);
+            // move the t point along the path, 0 is the start and 0 is the end
+            this.follower.t += this.speed * delta;
+
+            // get the new x and y coordinates in vec
+            path.getPoint(this.follower.t, this.follower.vec);
+
+            // update enemy x and y to the newly obtained x and y
+            this.setPosition(this.follower.vec.x, this.follower.vec.y);
+
+            // if we have reached the end of the path, remove the enemy
+            if (this.follower.t >= 1)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+            }
         }
-    }
-});
+    });
 
-var Speedy = new Phaser.Class({
+    return Enemy;
+}
 
-    Extends: Phaser.GameObjects.Image,
 
-    initialize:
-    function Speedy (scene)
-    {
-        let data = game.cache.json.get('speedy')
-        // Replace with heavy image when complete
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
-        this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.name = data['name']
-        this.speed = data['base_speed'] / SPEED_SCALE;
-        this.hp = data['base_hp'];
-        this.armor = data['base_armor'];
-        this.gold = data['gold_drop'];
-        this.moveType = data['move_type'];
-    },
+function generateTowerClass(data){
 
-    startOnPath: function ()
-    {
-        // set the t parameter at the start of the path
-        this.follower.t = 0;
+    var Tower = new Phaser.Class({
 
-        // get x and y of the given t point
-        path.getPoint(this.follower.t, this.follower.vec);
+        Extends: Phaser.GameObjects.Image,
 
-        // set the x and y of our enemy to the received from the previous step
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-    },
-
-    update: function (time, delta)
-    {
-        // move the t point along the path, 0 is the start and 0 is the end
-        this.follower.t += this.speed * delta;
-
-        // get the new x and y coordinates in vec
-        path.getPoint(this.follower.t, this.follower.vec);
-
-        // update enemy x and y to the newly obtained x and y
-        this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
-        // if we have reached the end of the path, remove the enemy
-        if (this.follower.t >= 1)
+        initialize:
+        function Tower (scene)
         {
-            this.setActive(false);
-            this.setVisible(false);
+            let data = game.cache.json.get('arrow');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
+            this.nextTic = 0;
+
+            this.name = data['name'];
+            this.target = data['target'];
+            this.level = 1;
+            levelKey = 'level_' + this.level;
+            this.cost = data['cost'][levelKey];
+            this.damage = data['damage'][levelKey];
+            this.range = data['range'][levelKey];
+            this.rate = data['rate'][levelKey];
+            this.radius = data['radius'][levelKey];
+            this.slow = data['slow'][levelKey];
+            this.duration = data['duration'][levelKey];
+            this.ability = data['final_ability'];
+            this.abilityActive = false;
+        },
+
+        // Update tower values when upgraded
+        upgrade: function() {
+            if (this.level <= 3) {
+                this.level += 1;
+            }
+            levelKey = 'level_' + this.level;
+            this.cost = data['cost'][levelKey];
+            this.damage = data['damage'][levelKey];
+            this.range = data['range'][levelKey];
+            this.rate = data['rate'][levelKey];
+            this.radius = data['radius'][levelKey];
+            this.slow = data['slow'][levelKey];
+            this.duration = data['duration'][levelKey];
+            if (levelKey === 4){
+                this.abilityActive = true;
+            }
+        },
+
+        // we will place the turret according to the grid
+        place: function(i, j) {
+            this.y = i * 50 + 50/2;
+            this.x = j * 50 + 50/2;
+            map[i][j] = 1;
+        },
+        update: function (time, delta)
+        {
+            // time to shoot
+            if(time > this.nextTic) {
+                this.nextTic = time + 1000;
+            }
         }
-    }
-});
+    });
 
+    return Tower;
+}
 
-var Arrow = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Arrow (scene)
-    {
-        let data = game.cache.json.get('arrow');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Bomb = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Bomb (scene)
-    {
-        let data = game.cache.json.get('bomb');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-        this.radius = data['radius'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.rate = data['rate'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Fire = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Fire (scene)
-    {
-        let data = game.cache.json.get('fire');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.ability = data['final_ability'];
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
-
-var Ice = new Phaser.Class({
-
-    Extends: Phaser.GameObjects.Image,
-
-    initialize:
-    function Ice (scene)
-    {
-        let data = game.cache.json.get('ice');
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
-        this.nextTic = 0;
-
-        this.name = data['name'];
-        this.level = 1;
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.slow = data['slow'][levelKey];
-        this.duration = data['duration'][levelKey];
-        this.ability = data['final_ability'];
-
-    },
-
-    // Update tower values when upgraded
-    upgrade: function() {
-        if (this.level <= 3) {
-            this.level += 1;
-        }
-        levelKey = 'level_' + this.level;
-        this.cost = data['cost'][levelKey];
-        this.damage = data['damage'][levelKey];
-        this.range = data['range'][levelKey];
-        this.slow = data['slow'][levelKey];
-        this.duration = data['duration'][levelKey];
-    },
-
-    // we will place the turret according to the grid
-    place: function(i, j) {
-        this.y = i * 50 + 50/2;
-        this.x = j * 50 + 50/2;
-        map[i][j] = 1;
-    },
-    update: function (time, delta)
-    {
-        // time to shoot
-        if(time > this.nextTic) {
-            this.nextTic = time + 1000;
-        }
-    }
-});
 
 function drawGrid(graphics) {
     graphics.lineStyle(1, 0x006400, 0.5);
@@ -490,6 +213,37 @@ function canPlaceTurret(i, j) {
     return map[i][j] === 0;
 }
 
+function parseMap(maptext){
+    // Expects a string read in from a map text file.
+    // Returns an array of char 'tiles' needed to build the map
+
+    // Map syntax:
+    //   # :  Blocking (Buildable)
+    //   - :  Open (Path)
+    //   0, 1, 2 : Start points. Add more below if needed
+    //   9, 8, 7 : End points. Add more below if needed
+    var blocking = '#';
+    var open = '-';
+    var start = ['0', '1', '2']
+    var end = ['9', '8', '7']
+
+    var map = [[]]
+
+    var row = 0;
+    for (var i = 0; i < maptext.length; i++) {
+        var char = maptext[i];
+        if (char !== '\n'){
+            map[row].push(char);
+        }
+        else if (char === '\n'){
+            map.push([]);
+            row++
+        }
+    }
+
+    return map;
+}
+
 function create() {
     this.add.image(400, 300, 'background');
     // this graphics element is only for visualization,
@@ -497,6 +251,15 @@ function create() {
     var graphics = this.add.graphics();
     drawGrid(graphics);
 
+    // Parse a map file and produce a 2d array of chars
+    // that can be used to generate the level.
+    level1 = this.cache.text.get('level1');
+    level2 = this.cache.text.get('level2');
+    level3 = this.cache.text.get('level3');
+    levelMap1 = parseMap(level1);       // Currently unused.
+    levelMap2 = parseMap(level2);
+    levelMap3 = parseMap(level3);
+  
     // the path for our enemies
     // parameters are the start x and y of our path
     path = this.add.path(0, 75);
@@ -517,8 +280,37 @@ function create() {
     // visualize the path
     path.draw(graphics);
 
+    // Get enemy data and generate classes to instantiate enemies
+    let infantryData = game.cache.json.get('infantry');
+    let heavyData = game.cache.json.get('heavy');
+    let flyingData = game.cache.json.get('flying');
+    let speedyData = game.cache.json.get('speedy');
+
+    const Infantry = generateEnemyClass(infantryData);
+    const Heavy = generateEnemyClass(heavyData);
+    const Flying = generateEnemyClass(flyingData);
+    const Speedy = generateEnemyClass(speedyData);
+
     enemies = this.add.group({ classType: Infantry, runChildUpdate: true });
     this.nextEnemy = 0;
+
+    // Individual groups for each enemy type ?
+    infantryGroup = this.add.group({ classType: Infantry, runChildUpdate: true });
+    heavyGroup = this.add.group({ classType: Heavy, runChildUpdate: true });
+    flyingGroup = this.add.group({ classType: Flying, runChildUpdate: true });
+    speedyGroup = this.add.group({ classType: Speedy, runChildUpdate: true });
+
+    // Do the same thing with towers
+    let arrowData = game.cache.json.get('arrow');
+    let bombData = game.cache.json.get('bomb');
+    let fireData = game.cache.json.get('fire');
+    let iceData = game.cache.json.get('ice');
+
+    const Arrow = generateTowerClass(arrowData);
+    const Bomb = generateTowerClass(bombData);
+    const Fire = generateTowerClass(fireData);
+    const Ice = generateTowerClass(iceData);
+
     turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
     this.input.on('pointerdown', placeTurret);
 }
@@ -539,10 +331,4 @@ function update(time, delta) {
             this.nextEnemy = time + 1000;
         }
     }
-}
-
-function render() {
-
-    this.debug.text(`Debugging Phaser ${Phaser.VERSION}`, 20, 20, 'black', 'Segoe UI');
-
 }

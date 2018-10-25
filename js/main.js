@@ -162,6 +162,14 @@ function generateTowerClass(data){
             }
         },
 
+        fire: function() {
+            var enemy = getEnemy(this.x, this.y, 100);
+            if(enemy) {
+                var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
+                addProjectile(this.x, this.y, angle);
+                this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            }
+        },
         // we will place the turret according to the grid
         place: function(i, j) {
             this.y = i * 50 + 50/2;
@@ -172,12 +180,83 @@ function generateTowerClass(data){
         {
             // time to shoot
             if(time > this.nextTic) {
+                this.fire()
                 this.nextTic = time + 1000;
             }
         }
     });
 
     return Tower;
+}
+
+function generateProjectileClass(data){
+    var Projectile = new Phaser.Class({
+ 
+    Extends: Phaser.GameObjects.Image,
+ 
+    initialize:
+ 
+    function Projectile (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, data.image);
+ 
+        this.dx = 0;
+        this.dy = 0;
+        this.lifespan = 0;
+ 
+        this.speed = Phaser.Math.GetSpeed(600, 1);
+    },
+ 
+    fire: function (x, y, angle)
+    {
+        this.setActive(true);
+        this.setVisible(true);
+ 
+        //  Bullets fire from the middle of the screen to the given x/y
+        this.setPosition(x, y);
+ 
+        this.setRotation(angle);
+ 
+        this.dx = Math.cos(angle);
+        this.dy = Math.sin(angle);
+ 
+        this.lifespan = 300;
+    },
+ 
+    update: function (time, delta)
+    {
+        this.lifespan -= delta;
+ 
+        this.x += this.dx * (this.speed * delta);
+        this.y += this.dy * (this.speed * delta);
+ 
+        if (this.lifespan <= 0)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+ 
+    });
+
+    return Projectile;
+}
+
+function addProjectile(x, y, angle) {
+    var projectile = Projectiles.get();
+    if (projectile)
+    {
+        projectile.fire(x, y, angle);
+    }
+}
+
+function getEnemy(x, y, distance) {
+    var enemyUnits = enemies.getChildren();
+    for(var i = 0; i < enemyUnits.length; i++) {       
+        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)
+            return enemyUnits[i];
+    }
+    return false;
 }
 
 
@@ -312,6 +391,11 @@ function create() {
     const Ice = generateTowerClass(iceData);
 
     turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+
+    //as with projectiles
+    const Projectile = generateProjectileClass({"image":"bullet"});
+    Projectiles = this.add.group({ classType: Projectile, runChildUpdate: true });
+
     this.input.on('pointerdown', placeTurret);
 }
 

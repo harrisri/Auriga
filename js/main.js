@@ -266,7 +266,14 @@ function addProjectile(x, y, angle, damage) {
 }
 
 function getEnemy(x, y, distance) {
-    var enemyUnits = enemies.getChildren();
+    //get ALL enemies on screen
+    var enemyUnits = infantryGroup.getChildren();
+    enemyUnits.concat(heavyGroup.getChildren());
+    enemyUnits.concat(flyingGroup.getChildren()); 
+    enemyUnits.concat(speedyGroup.getChildren());
+
+    console.log(infantryGroup.getChildren());
+    console.log(enemyUnits);
     for(var i = 0; i < enemyUnits.length; i++) {       
         if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)
             return enemyUnits[i];
@@ -396,7 +403,7 @@ function create() {
     const Flying = generateEnemyClass(flyingData);
     const Speedy = generateEnemyClass(speedyData);
 
-    enemies = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
+
     this.nextEnemy = 0;
 
     // Individual groups for each enemy type ?
@@ -422,8 +429,13 @@ function create() {
     const Projectile = generateProjectileClass({"image":"bullet"});
     Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
 
-    this.physics.add.overlap(enemies, Projectiles, damageEnemy);
+    //add collisions between enemies and projectiles.
+    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
 
+    //clicks place turrets
     this.input.on('pointerdown', placeTurret);
 }
 
@@ -431,7 +443,7 @@ function update(time, delta) {
     // if its time for the next enemy
     if (time > this.nextEnemy)
     {
-        var enemy = enemies.get();
+        var enemy = infantryGroup.get();
         if (enemy)
         {
             enemy.setActive(true);

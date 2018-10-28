@@ -47,8 +47,8 @@ function preload() {
 
     // Load map files
     this.load.text('level1', 'data/maps/level1');
-    this.load.text('level2', 'data/maps/level1');
-    this.load.text('level3', 'data/maps/level1');
+    this.load.text('level2', 'data/maps/level2');
+    this.load.text('level3', 'data/maps/level3');
 
     // Load background images and UI elements
     this.load.image('background', '/assets/grassBackground.jpg');
@@ -57,6 +57,9 @@ function preload() {
     this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
     this.load.image('bullet', 'assets/bullet.png');
     this.load.image('goblin', 'assets/goblin.png');
+
+    //load wave data
+    this.load.text('waveText', 'data/waves/windingPath')
 }
 
 function generateEnemyClass(data){
@@ -266,14 +269,11 @@ function addProjectile(x, y, angle, damage) {
 }
 
 function getEnemy(x, y, distance) {
-    //get ALL enemies on screen
-    var enemyUnits = infantryGroup.getChildren();
-    enemyUnits.concat(heavyGroup.getChildren());
-    enemyUnits.concat(flyingGroup.getChildren()); 
-    enemyUnits.concat(speedyGroup.getChildren());
-
-    console.log(infantryGroup.getChildren());
+    //get ALL enemies
+    var speedy = speedyGroup.getChildren();
+    var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
     console.log(enemyUnits);
+
     for(var i = 0; i < enemyUnits.length; i++) {       
         if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)
             return enemyUnits[i];
@@ -356,6 +356,40 @@ function parseMap(maptext){
     return map;
 }
 
+function parseWaveText(waveText){
+    var waves = [[]]
+
+    //split up each wave's data
+    var textIntoWaves = waveText.split('\n');
+    for (var i = 0; i < textIntoWaves.length; i++) {
+        //split each individual wave 
+        var wave = textIntoWaves[i].split(' ')
+        for (var j = 0; j < wave.length; j++) {
+            //convert strings to ints
+            var converted = parseInt(wave[j],10);
+            //if parseInt fails (if parameter isn't numeric), NaN is returned.  Don't replace if converted is NaN
+            if (!isNaN(converted)) { 
+                wave[j] = converted;
+            }
+        }
+        waves.push(wave);
+    }
+    waves.shift()//first row is empty, remove empty row
+    return waves; 
+}
+
+function allEnemiesDead(){
+    var speedy = speedyGroup.getChildren();
+    var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+    for (var i = 0; i < enemyUnits.length; i++) {
+        if (enemyUnits[i].active) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function create() {
     this.add.image(400, 300, 'background');
     // this graphics element is only for visualization,
@@ -371,7 +405,10 @@ function create() {
     levelMap1 = parseMap(level1);       // Currently unused.
     levelMap2 = parseMap(level2);
     levelMap3 = parseMap(level3);
-  
+
+    let waveText = this.cache.text.get('waveText');
+    this.waveData = parseWaveText(waveText); 
+    
     // the path for our enemies
     // parameters are the start x and y of our path
     path = this.add.path(0, 75);
@@ -403,10 +440,7 @@ function create() {
     const Flying = generateEnemyClass(flyingData);
     const Speedy = generateEnemyClass(speedyData);
 
-
-    this.nextEnemy = 0;
-
-    // Individual groups for each enemy type ?
+    // Individual groups for each enemy type
     infantryGroup = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
     heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
     flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
@@ -437,22 +471,62 @@ function create() {
 
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);
+    
+    //variables to assist in spawning enemies in waves
+    this.nextEnemy = 0;
+    this.nextEnemyIndex = 0;
+    this.timeToNextEnemyIndex = 1;
+    this.waveIndex = 0;
 }
 
 function update(time, delta) {
-    // if its time for the next enemy
+
     if (time > this.nextEnemy)
     {
-        var enemy = infantryGroup.get();
+        var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
+
+        var enemy;
+        switch(enemyType){
+            case 'i':
+                enemy = infantryGroup.get()
+                break;
+            case 'h':
+                enemy = heavyGroup.get()
+                break;
+            case 'f':
+                enemy = flyingGroup.get()
+                break;
+            case 's':
+                enemy = speedyGroup.get()
+                break;
+        }
+
         if (enemy)
-        {
+        {   
             enemy.setActive(true);
             enemy.setVisible(true);
-
-            // place the enemy at the start of the path
             enemy.startOnPath();
 
-            this.nextEnemy = time + 10000;
+            this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
+            this.nextEnemyIndex = this.nextEnemyIndex + 2;
+            this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
         }
     }
+
+    if (this.waveIndex < 10) {
+        //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
+        if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
+            allEnemiesDead()) {
+            //time for a new wave!
+            this.nextEnemyIndex = 0;
+            this.timeToNextEnemyIndex = 1;
+            this.waveIndex++;
+            this.nextEnemy = time + 10000; //10 sec until next wave
+        }
+    }
+
+    else if (allEnemiesDead()){
+        console.log("game over!")
+    }
+
 }

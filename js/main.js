@@ -96,7 +96,7 @@ function generateEnemyClass(data){
         },
 
         receiveDamage: function(damage) {
-            this.hp -= damage;           
+            this.hp =  this.hp - (damage - this.armor);           
             
             // if hp drops below 0 we deactivate this enemy
             if(this.hp <= 0) {
@@ -176,7 +176,7 @@ function generateTowerClass(data){
         },
 
         fire: function() {
-            var enemy = getEnemy(this.x, this.y, 100);
+            var enemy = getEnemy(this.x, this.y, this.range);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 addProjectile(this.x, this.y, angle, this.damage);
@@ -194,7 +194,7 @@ function generateTowerClass(data){
             // time to shoot
             if(time > this.nextTic) {
                 this.fire()
-                this.nextTic = time + 1000;
+                this.nextTic = time + this.rate;
             }
         }
     });

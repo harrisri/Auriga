@@ -272,7 +272,6 @@ function getEnemy(x, y, distance) {
     //get ALL enemies
     var speedy = speedyGroup.getChildren();
     var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
-    console.log(enemyUnits);
 
     for(var i = 0; i < enemyUnits.length; i++) {       
         if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)

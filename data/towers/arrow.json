@@ -14,16 +14,16 @@
         "level_4": 18
     },
     "range":{
-        "level_1": 30,
-        "level_2": 30,
-        "level_3": 40,
-        "level_4": 100
+        "level_1": 150,
+        "level_2": 200,
+        "level_3": 300,
+        "level_4": 800
     },
     "rate":{
-        "level_1": 1,
-        "level_2": 1,
-        "level_3": 1.5,
-        "level_4": 1.5  },
+        "level_1": 1000,
+        "level_2": 900,
+        "level_3": 800,
+        "level_4": 800  },
     "radius":{
         "level_1": -1,
         "level_2": -1,

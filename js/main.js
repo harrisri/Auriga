@@ -69,7 +69,8 @@ function generateEnemyClass(data){
         function Enemy (scene)
         {
             // Replace with infantry image when complete
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin');
+            //Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
             this.name = data['name']
             this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
             this.speed = data['base_speed'] / SPEED_SCALE;
@@ -90,6 +91,18 @@ function generateEnemyClass(data){
             // set the x and y of our enemy to the received from the previous step
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
 
+            this.hp = data['base_hp'];
+
+        },
+
+        receiveDamage: function(damage) {
+            this.hp -= damage;           
+            
+            // if hp drops below 0 we deactivate this enemy
+            if(this.hp <= 0) {
+                this.setActive(false);
+                this.setVisible(false);      
+            }
         },
 
         update: function (time, delta)
@@ -166,7 +179,7 @@ function generateTowerClass(data){
             var enemy = getEnemy(this.x, this.y, 100);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
-                addProjectile(this.x, this.y, angle);
+                addProjectile(this.x, this.y, angle, this.damage);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             }
         },
@@ -203,11 +216,12 @@ function generateProjectileClass(data){
         this.dx = 0;
         this.dy = 0;
         this.lifespan = 0;
+        this.damage = 0;
  
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
  
-    fire: function (x, y, angle)
+    fire: function (x, y, angle, damage)
     {
         this.setActive(true);
         this.setVisible(true);
@@ -221,6 +235,7 @@ function generateProjectileClass(data){
         this.dy = Math.sin(angle);
  
         this.lifespan = 300;
+        this.damage = damage;
     },
  
     update: function (time, delta)
@@ -242,11 +257,11 @@ function generateProjectileClass(data){
     return Projectile;
 }
 
-function addProjectile(x, y, angle) {
+function addProjectile(x, y, angle, damage) {
     var projectile = Projectiles.get();
     if (projectile)
     {
-        projectile.fire(x, y, angle);
+        projectile.fire(x, y, angle, damage);
     }
 }
 
@@ -259,6 +274,17 @@ function getEnemy(x, y, distance) {
     return false;
 }
 
+function damageEnemy(enemy, bullet) {  
+    // only if both enemy and bullet are alive
+    if (enemy.active === true && bullet.active === true) {
+        // we remove the bullet right away
+        bullet.setActive(false);
+        bullet.setVisible(false);    
+        
+        // decrease the enemy hp with BULLET_DAMAGE
+        enemy.receiveDamage(bullet.damage);
+    }
+}
 
 function drawGrid(graphics) {
     graphics.lineStyle(1, 0x006400, 0.5);
@@ -370,14 +396,14 @@ function create() {
     const Flying = generateEnemyClass(flyingData);
     const Speedy = generateEnemyClass(speedyData);
 
-    enemies = this.add.group({ classType: Infantry, runChildUpdate: true });
+    enemies = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
     this.nextEnemy = 0;
 
     // Individual groups for each enemy type ?
-    infantryGroup = this.add.group({ classType: Infantry, runChildUpdate: true });
-    heavyGroup = this.add.group({ classType: Heavy, runChildUpdate: true });
-    flyingGroup = this.add.group({ classType: Flying, runChildUpdate: true });
-    speedyGroup = this.add.group({ classType: Speedy, runChildUpdate: true });
+    infantryGroup = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
+    heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
+    flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
+    speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
 
     // Do the same thing with towers
     let arrowData = game.cache.json.get('arrow');
@@ -394,7 +420,9 @@ function create() {
 
     //as with projectiles
     const Projectile = generateProjectileClass({"image":"bullet"});
-    Projectiles = this.add.group({ classType: Projectile, runChildUpdate: true });
+    Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
+
+    this.physics.add.overlap(enemies, Projectiles, damageEnemy);
 
     this.input.on('pointerdown', placeTurret);
 }
@@ -412,7 +440,7 @@ function update(time, delta) {
             // place the enemy at the start of the path
             enemy.startOnPath();
 
-            this.nextEnemy = time + 1000;
+            this.nextEnemy = time + 10000;
         }
     }
 }

@@ -512,7 +512,7 @@ function update(time, delta) {
         }
     }
 
-    if (this.waveIndex < 10) {
+    if (this.waveIndex < this.waveData.length - 1) {
         //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
         if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
             allEnemiesDead()) {

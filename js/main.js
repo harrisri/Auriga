@@ -20,6 +20,10 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 var SPEED_SCALE = 50000;
+var gold = 0;
+var goldText;
+var life = 20;
+var lifeText;
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -51,15 +55,23 @@ function preload() {
     this.load.text('level3', 'data/maps/level3');
 
     // Load background images and UI elements
-    this.load.image('background', '/assets/grassBackground.jpg');
+    // this.load.image('background', '/assets/grassBackground.jpg');
+    this.load.image('level1', '/assets/tilemaps/level1.png');
+    this.load.image('level2', '/assets/tilemaps/level2.png');
+    // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load unit and tower sprites
-    this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
+    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
     this.load.image('bullet', 'assets/bullet.png');
-    this.load.image('goblin', 'assets/goblin.png');
+    this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
+    this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
+    this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
+    this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
+    this.load.image('goldCoin', 'assets/goldCoin.png');
+    this.load.image('heart', 'assets/heart.png');
 
     //load wave data
-    this.load.text('waveText', 'data/waves/windingPath')
+    this.load.text('waveText', 'data/waves/windingPath');
 }
 
 function generateEnemyClass(data){
@@ -72,7 +84,7 @@ function generateEnemyClass(data){
         function Enemy (scene)
         {
             // Replace with infantry image when complete
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'infantry');
             //Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
             this.name = data['name']
             this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
@@ -81,6 +93,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
+            this.angle = 90;
         },
 
         startOnPath: function ()
@@ -104,7 +117,9 @@ function generateEnemyClass(data){
             // if hp drops below 0 we deactivate this enemy
             if(this.hp <= 0) {
                 this.setActive(false);
-                this.setVisible(false);      
+                this.setVisible(false);
+                gold += this.gold;
+                goldText.setText(gold);
             }
         },
 
@@ -124,6 +139,8 @@ function generateEnemyClass(data){
             {
                 this.setActive(false);
                 this.setVisible(false);
+                life -= 1;
+                lifeText.setText(life);
             }
         }
     });
@@ -142,7 +159,7 @@ function generateTowerClass(data){
         function Tower (scene)
         {
             let data = game.cache.json.get('arrow');
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'tower');
             this.nextTic = 0;
 
             this.name = data['name'];
@@ -292,19 +309,19 @@ function damageEnemy(enemy, bullet) {
     }
 }
 
-function drawGrid(graphics) {
-    graphics.lineStyle(1, 0x006400, 0.5);
-    for (var i = 0; i < 16; i++) {
-        graphics.moveTo((i*100)/2, 0);
-        graphics.lineTo((i*100)/2, 600);
-    }
+// function drawGrid(graphics) {
+//     graphics.lineStyle(1, 0x006400, 0.5);
+//     for (var i = 0; i < 16; i++) {
+//         graphics.moveTo((i*100)/2, 0);
+//         graphics.lineTo((i*100)/2, 600);
+//     }
 
-    for (var i = 0; i < 12;  i++) {
-        graphics.moveTo(0, (i*100)/2);
-        graphics.lineTo(800, (i*100)/2);
-    }
-    graphics.strokePath();
-}
+//     for (var i = 0; i < 12;  i++) {
+//         graphics.moveTo(0, (i*100)/2);
+//         graphics.lineTo(800, (i*100)/2);
+//     }
+//     graphics.strokePath();
+// }
 
 function placeTurret(pointer) {
     var i = Math.floor(pointer.y/50);
@@ -390,11 +407,15 @@ function allEnemiesDead(){
 }
 
 function create() {
-    this.add.image(400, 300, 'background');
+    this.add.image(400, 300, 'level1');
+    this.add.image(20, 21, 'goldCoin');
+    this.add.image(758, 20, 'heart');
+    goldText = this.add.text(38, 12, '0', {fontSize: '20px'});
+    lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
-    drawGrid(graphics);
+    // drawGrid(graphics);
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -424,7 +445,8 @@ function create() {
     path.lineTo(175,425);
     path.lineTo(175,600);
 
-    graphics.lineStyle(3, 0xffffff, 1);
+    // Change alpha to 1 to see the path
+    graphics.lineStyle(3, 0xffffff, 0);
     // visualize the path
     path.draw(graphics);
 

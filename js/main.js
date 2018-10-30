@@ -56,8 +56,8 @@ function preload() {
 
     // Load background images and UI elements
     // this.load.image('background', '/assets/grassBackground.jpg');
-    this.load.image('level1', '/assets/tilemaps/level1.png');
-    this.load.image('level2', '/assets/tilemaps/level2.png');
+    this.load.image('level1', 'assets/tilemaps/level1.png');
+    this.load.image('level2', 'assets/tilemaps/level2.png');
     // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load unit and tower sprites

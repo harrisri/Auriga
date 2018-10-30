@@ -84,7 +84,7 @@ function generateEnemyClass(data){
         function Enemy (scene)
         {
             // Replace with infantry image when complete
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'infantry');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
             //Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
             this.name = data['name']
             this.follower = { t: 0, vec: new Phaser.Math.Vector2() };

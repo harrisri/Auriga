@@ -20,7 +20,7 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 var SPEED_SCALE = 50000;
-var gold = 0;
+var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
@@ -208,6 +208,9 @@ function generateTowerClass(data){
             this.y = i * 50 + 50/2;
             this.x = j * 50 + 50/2;
             map[i][j] = 1;
+
+            gold -= this.cost;
+            goldText.setText(gold);
         },
         update: function (time, delta)
         {
@@ -330,9 +333,17 @@ function placeTurret(pointer) {
         var turret = turrets.get();
         if (turret)
         {
-            turret.setActive(true);
-            turret.setVisible(true);
-            turret.place(i, j);
+            if (gold - turret.cost >= 0)
+            {
+                turret.setActive(true);
+                turret.setVisible(true);
+                turret.place(i, j);
+            }
+            else
+            {
+                turret.setActive(false);
+                turret.setVisible(false);
+            }
         }
     }
 }
@@ -410,7 +421,7 @@ function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
     this.add.image(758, 20, 'heart');
-    goldText = this.add.text(38, 12, '0', {fontSize: '20px'});
+    goldText = this.add.text(38, 12, '200', {fontSize: '20px'});
     lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
     // this graphics element is only for visualization,
     // its not related to our path

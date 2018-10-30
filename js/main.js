@@ -20,6 +20,10 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 var SPEED_SCALE = 50000;
+var gold = 0;
+var goldText;
+var life = 20;
+var lifeText;
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -47,16 +51,27 @@ function preload() {
 
     // Load map files
     this.load.text('level1', 'data/maps/level1');
-    this.load.text('level2', 'data/maps/level1');
-    this.load.text('level3', 'data/maps/level1');
+    this.load.text('level2', 'data/maps/level2');
+    this.load.text('level3', 'data/maps/level3');
 
     // Load background images and UI elements
-    this.load.image('background', '/assets/grassBackground.jpg');
+    // this.load.image('background', '/assets/grassBackground.jpg');
+    this.load.image('level1', '/assets/tilemaps/level1.png');
+    this.load.image('level2', '/assets/tilemaps/level2.png');
+    // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load unit and tower sprites
-    this.load.atlas('sprites', 'assets/spritesheet.png', 'assets/spritesheet.json');
+    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
     this.load.image('bullet', 'assets/bullet.png');
-    this.load.image('goblin', 'assets/goblin.png');
+    this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
+    this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
+    this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
+    this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
+    this.load.image('goldCoin', 'assets/goldCoin.png');
+    this.load.image('heart', 'assets/heart.png');
+
+    //load wave data
+    this.load.text('waveText', 'data/waves/windingPath');
 }
 
 function generateEnemyClass(data){
@@ -69,7 +84,8 @@ function generateEnemyClass(data){
         function Enemy (scene)
         {
             // Replace with infantry image when complete
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'infantry');
+            //Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
             this.name = data['name']
             this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
             this.speed = data['base_speed'] / SPEED_SCALE;
@@ -77,6 +93,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
+            this.angle = 90;
         },
 
         startOnPath: function ()
@@ -90,6 +107,20 @@ function generateEnemyClass(data){
             // set the x and y of our enemy to the received from the previous step
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
 
+            this.hp = data['base_hp'];
+
+        },
+
+        receiveDamage: function(damage) {
+            this.hp =  this.hp - (damage - this.armor);           
+            
+            // if hp drops below 0 we deactivate this enemy
+            if(this.hp <= 0) {
+                this.setActive(false);
+                this.setVisible(false);
+                gold += this.gold;
+                goldText.setText(gold);
+            }
         },
 
         update: function (time, delta)
@@ -108,6 +139,8 @@ function generateEnemyClass(data){
             {
                 this.setActive(false);
                 this.setVisible(false);
+                life -= 1;
+                lifeText.setText(life);
             }
         }
     });
@@ -126,7 +159,7 @@ function generateTowerClass(data){
         function Tower (scene)
         {
             let data = game.cache.json.get('arrow');
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'sprites', 'turret');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'tower');
             this.nextTic = 0;
 
             this.name = data['name'];
@@ -163,10 +196,10 @@ function generateTowerClass(data){
         },
 
         fire: function() {
-            var enemy = getEnemy(this.x, this.y, 100);
+            var enemy = getEnemy(this.x, this.y, this.range);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
-                addProjectile(this.x, this.y, angle);
+                addProjectile(this.x, this.y, angle, this.damage);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             }
         },
@@ -181,7 +214,7 @@ function generateTowerClass(data){
             // time to shoot
             if(time > this.nextTic) {
                 this.fire()
-                this.nextTic = time + 1000;
+                this.nextTic = time + this.rate;
             }
         }
     });
@@ -203,11 +236,12 @@ function generateProjectileClass(data){
         this.dx = 0;
         this.dy = 0;
         this.lifespan = 0;
+        this.damage = 0;
  
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
  
-    fire: function (x, y, angle)
+    fire: function (x, y, angle, damage)
     {
         this.setActive(true);
         this.setVisible(true);
@@ -221,6 +255,7 @@ function generateProjectileClass(data){
         this.dy = Math.sin(angle);
  
         this.lifespan = 300;
+        this.damage = damage;
     },
  
     update: function (time, delta)
@@ -242,16 +277,19 @@ function generateProjectileClass(data){
     return Projectile;
 }
 
-function addProjectile(x, y, angle) {
+function addProjectile(x, y, angle, damage) {
     var projectile = Projectiles.get();
     if (projectile)
     {
-        projectile.fire(x, y, angle);
+        projectile.fire(x, y, angle, damage);
     }
 }
 
 function getEnemy(x, y, distance) {
-    var enemyUnits = enemies.getChildren();
+    //get ALL enemies
+    var speedy = speedyGroup.getChildren();
+    var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
     for(var i = 0; i < enemyUnits.length; i++) {       
         if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)
             return enemyUnits[i];
@@ -259,20 +297,31 @@ function getEnemy(x, y, distance) {
     return false;
 }
 
-
-function drawGrid(graphics) {
-    graphics.lineStyle(1, 0x006400, 0.5);
-    for (var i = 0; i < 16; i++) {
-        graphics.moveTo((i*100)/2, 0);
-        graphics.lineTo((i*100)/2, 600);
+function damageEnemy(enemy, bullet) {  
+    // only if both enemy and bullet are alive
+    if (enemy.active === true && bullet.active === true) {
+        // we remove the bullet right away
+        bullet.setActive(false);
+        bullet.setVisible(false);    
+        
+        // decrease the enemy hp with BULLET_DAMAGE
+        enemy.receiveDamage(bullet.damage);
     }
-
-    for (var i = 0; i < 12;  i++) {
-        graphics.moveTo(0, (i*100)/2);
-        graphics.lineTo(800, (i*100)/2);
-    }
-    graphics.strokePath();
 }
+
+// function drawGrid(graphics) {
+//     graphics.lineStyle(1, 0x006400, 0.5);
+//     for (var i = 0; i < 16; i++) {
+//         graphics.moveTo((i*100)/2, 0);
+//         graphics.lineTo((i*100)/2, 600);
+//     }
+
+//     for (var i = 0; i < 12;  i++) {
+//         graphics.moveTo(0, (i*100)/2);
+//         graphics.lineTo(800, (i*100)/2);
+//     }
+//     graphics.strokePath();
+// }
 
 function placeTurret(pointer) {
     var i = Math.floor(pointer.y/50);
@@ -323,12 +372,50 @@ function parseMap(maptext){
     return map;
 }
 
+function parseWaveText(waveText){
+    var waves = [[]]
+
+    //split up each wave's data
+    var textIntoWaves = waveText.split('\n');
+    for (var i = 0; i < textIntoWaves.length; i++) {
+        //split each individual wave 
+        var wave = textIntoWaves[i].split(' ')
+        for (var j = 0; j < wave.length; j++) {
+            //convert strings to ints
+            var converted = parseInt(wave[j],10);
+            //if parseInt fails (if parameter isn't numeric), NaN is returned.  Don't replace if converted is NaN
+            if (!isNaN(converted)) { 
+                wave[j] = converted;
+            }
+        }
+        waves.push(wave);
+    }
+    waves.shift()//first row is empty, remove empty row
+    return waves; 
+}
+
+function allEnemiesDead(){
+    var speedy = speedyGroup.getChildren();
+    var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+    for (var i = 0; i < enemyUnits.length; i++) {
+        if (enemyUnits[i].active) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function create() {
-    this.add.image(400, 300, 'background');
+    this.add.image(400, 300, 'level1');
+    this.add.image(20, 21, 'goldCoin');
+    this.add.image(758, 20, 'heart');
+    goldText = this.add.text(38, 12, '0', {fontSize: '20px'});
+    lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
-    drawGrid(graphics);
+    // drawGrid(graphics);
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -338,7 +425,10 @@ function create() {
     levelMap1 = parseMap(level1);       // Currently unused.
     levelMap2 = parseMap(level2);
     levelMap3 = parseMap(level3);
-  
+
+    let waveText = this.cache.text.get('waveText');
+    this.waveData = parseWaveText(waveText); 
+    
     // the path for our enemies
     // parameters are the start x and y of our path
     path = this.add.path(0, 75);
@@ -355,7 +445,8 @@ function create() {
     path.lineTo(175,425);
     path.lineTo(175,600);
 
-    graphics.lineStyle(3, 0xffffff, 1);
+    // Change alpha to 1 to see the path
+    graphics.lineStyle(3, 0xffffff, 0);
     // visualize the path
     path.draw(graphics);
 
@@ -370,14 +461,11 @@ function create() {
     const Flying = generateEnemyClass(flyingData);
     const Speedy = generateEnemyClass(speedyData);
 
-    enemies = this.add.group({ classType: Infantry, runChildUpdate: true });
-    this.nextEnemy = 0;
-
-    // Individual groups for each enemy type ?
-    infantryGroup = this.add.group({ classType: Infantry, runChildUpdate: true });
-    heavyGroup = this.add.group({ classType: Heavy, runChildUpdate: true });
-    flyingGroup = this.add.group({ classType: Flying, runChildUpdate: true });
-    speedyGroup = this.add.group({ classType: Speedy, runChildUpdate: true });
+    // Individual groups for each enemy type
+    infantryGroup = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
+    heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
+    flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
+    speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
 
     // Do the same thing with towers
     let arrowData = game.cache.json.get('arrow');
@@ -394,25 +482,72 @@ function create() {
 
     //as with projectiles
     const Projectile = generateProjectileClass({"image":"bullet"});
-    Projectiles = this.add.group({ classType: Projectile, runChildUpdate: true });
+    Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
 
+    //add collisions between enemies and projectiles.
+    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
+
+    //clicks place turrets
     this.input.on('pointerdown', placeTurret);
+    
+    //variables to assist in spawning enemies in waves
+    this.nextEnemy = 0;
+    this.nextEnemyIndex = 0;
+    this.timeToNextEnemyIndex = 1;
+    this.waveIndex = 0;
 }
 
 function update(time, delta) {
-    // if its time for the next enemy
+
     if (time > this.nextEnemy)
     {
-        var enemy = enemies.get();
+        var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
+
+        var enemy;
+        switch(enemyType){
+            case 'i':
+                enemy = infantryGroup.get()
+                break;
+            case 'h':
+                enemy = heavyGroup.get()
+                break;
+            case 'f':
+                enemy = flyingGroup.get()
+                break;
+            case 's':
+                enemy = speedyGroup.get()
+                break;
+        }
+
         if (enemy)
-        {
+        {   
             enemy.setActive(true);
             enemy.setVisible(true);
-
-            // place the enemy at the start of the path
             enemy.startOnPath();
 
-            this.nextEnemy = time + 1000;
+            this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
+            this.nextEnemyIndex = this.nextEnemyIndex + 2;
+            this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
         }
     }
+
+    if (this.waveIndex < this.waveData.length - 1) {
+        //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
+        if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
+            allEnemiesDead()) {
+            //time for a new wave!
+            this.nextEnemyIndex = 0;
+            this.timeToNextEnemyIndex = 1;
+            this.waveIndex++;
+            this.nextEnemy = time + 10000; //10 sec until next wave
+        }
+    }
+
+    else if (allEnemiesDead()){
+        console.log("game over!")
+    }
+
 }

@@ -423,6 +423,7 @@ function create() {
     this.add.image(758, 20, 'heart');
     goldText = this.add.text(38, 12, '200', {fontSize: '20px'});
     lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
+    this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px'});
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
@@ -553,6 +554,7 @@ function update(time, delta) {
             this.nextEnemyIndex = 0;
             this.timeToNextEnemyIndex = 1;
             this.waveIndex++;
+            this.waveText.setText("Wave " + (this.waveIndex + 1));
             this.nextEnemy = time + 10000; //10 sec until next wave
         }
     }

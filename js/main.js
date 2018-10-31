@@ -516,12 +516,16 @@ function create() {
     this.nextEnemyIndex = 0;
     this.timeToNextEnemyIndex = 1;
     this.waveIndex = 0;
+    this.showCountdown = false;
 }
 
 function update(time, delta) {
 
     if (time > this.nextEnemy)
     {
+        this.showCountdown = false;
+        this.waveText.setText("Wave " + (this.waveIndex + 1));
+        this.waveText.x = 360
         var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
 
         var enemy;
@@ -552,6 +556,12 @@ function update(time, delta) {
         }
     }
 
+    if (this.showCountdown){
+        var timer = Math.round((this.nextEnemy - time)/1000);
+        this.waveText.setText("Next Wave in " + timer + "!")
+        this.waveText.x = 300;
+    }
+
     if (this.waveIndex < this.waveData.length - 1) {
         //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
         if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
@@ -560,8 +570,8 @@ function update(time, delta) {
             this.nextEnemyIndex = 0;
             this.timeToNextEnemyIndex = 1;
             this.waveIndex++;
-            this.waveText.setText("Wave " + (this.waveIndex + 1));
             this.nextEnemy = time + 10000; //10 sec until next wave
+            this.showCountdown = true;
         }
     }
 

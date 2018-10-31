@@ -93,7 +93,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
-            this.angle = 90;
+
         },
 
         startOnPath: function ()
@@ -109,6 +109,8 @@ function generateEnemyClass(data){
 
             this.hp = data['base_hp'];
 
+            //shrink up the hitbox a bit.
+            this.body.setCircle(15);
         },
 
         receiveDamage: function(damage) {
@@ -311,7 +313,6 @@ function damageEnemy(enemy, bullet) {
         // we remove the bullet right away
         bullet.setActive(false);
         bullet.setVisible(false);    
-        
         // decrease the enemy hp with BULLET_DAMAGE
         enemy.receiveDamage(bullet.damage);
     }
@@ -502,7 +503,7 @@ function create() {
     Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
 
     //add collisions between enemies and projectiles.
-    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);

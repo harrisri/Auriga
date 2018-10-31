@@ -131,9 +131,14 @@ function generateEnemyClass(data){
             // get the new x and y coordinates in vec
             path.getPoint(this.follower.t, this.follower.vec);
 
+            //rotate to face correct direction
+            var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
+            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            this.setRotation(angle)
+
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
+            
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
@@ -421,9 +426,9 @@ function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
     this.add.image(758, 20, 'heart');
-    goldText = this.add.text(38, 12, '200', {fontSize: '20px'});
-    lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
-    this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px'});
+    goldText = this.add.text(38, 12, '200', {fontSize: '20px', fontStyle: 'Bold'});
+    lifeText = this.add.text(770, 12, '20', {fontSize: '20px', fontStyle: 'Bold'});
+    this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px', fontStyle: 'Bold'});
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();

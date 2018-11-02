@@ -93,7 +93,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
-            this.angle = 90;
+
         },
 
         startOnPath: function ()
@@ -109,6 +109,8 @@ function generateEnemyClass(data){
 
             this.hp = data['base_hp'];
 
+            //shrink up the hitbox a bit.
+            this.body.setCircle(15);
         },
 
         receiveDamage: function(damage) {
@@ -131,9 +133,14 @@ function generateEnemyClass(data){
             // get the new x and y coordinates in vec
             path.getPoint(this.follower.t, this.follower.vec);
 
+            //rotate to face correct direction
+            var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
+            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            this.setRotation(angle)
+
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
-
+            
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
@@ -306,7 +313,6 @@ function damageEnemy(enemy, bullet) {
         // we remove the bullet right away
         bullet.setActive(false);
         bullet.setVisible(false);    
-        
         // decrease the enemy hp with BULLET_DAMAGE
         enemy.receiveDamage(bullet.damage);
     }
@@ -421,9 +427,9 @@ function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
     this.add.image(758, 20, 'heart');
-    goldText = this.add.text(38, 12, '200', {fontSize: '20px'});
-    lifeText = this.add.text(770, 12, '20', {fontSize: '20px'});
-    this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px'});
+    goldText = this.add.text(38, 12, '200', {fontSize: '20px', fontStyle: 'Bold'});
+    lifeText = this.add.text(770, 12, '20', {fontSize: '20px', fontStyle: 'Bold'});
+    this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px', fontStyle: 'Bold'});
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
@@ -497,7 +503,7 @@ function create() {
     Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
 
     //add collisions between enemies and projectiles.
-    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy);
+    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
@@ -510,12 +516,16 @@ function create() {
     this.nextEnemyIndex = 0;
     this.timeToNextEnemyIndex = 1;
     this.waveIndex = 0;
+    this.showCountdown = false;
 }
 
 function update(time, delta) {
 
     if (time > this.nextEnemy)
     {
+        this.showCountdown = false;
+        this.waveText.setText("Wave " + (this.waveIndex + 1));
+        this.waveText.x = 360
         var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
 
         var enemy;
@@ -546,6 +556,12 @@ function update(time, delta) {
         }
     }
 
+    if (this.showCountdown){
+        var timer = Math.round((this.nextEnemy - time)/1000);
+        this.waveText.setText("Next Wave in " + timer + "!")
+        this.waveText.x = 300;
+    }
+
     if (this.waveIndex < this.waveData.length - 1) {
         //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
         if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
@@ -554,8 +570,8 @@ function update(time, delta) {
             this.nextEnemyIndex = 0;
             this.timeToNextEnemyIndex = 1;
             this.waveIndex++;
-            this.waveText.setText("Wave " + (this.waveIndex + 1));
             this.nextEnemy = time + 10000; //10 sec until next wave
+            this.showCountdown = true;
         }
     }
 

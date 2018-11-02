@@ -25,18 +25,18 @@ var goldText;
 var life = 20;
 var lifeText;
 
-var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
 function preload() {
     // Load unit and tower files
@@ -61,7 +61,10 @@ function preload() {
     // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load unit and tower sprites
-    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
+    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
+    this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
+    this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
+    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png')
     this.load.image('bullet', 'assets/bullet.png');
     this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
     this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
@@ -69,6 +72,7 @@ function preload() {
     this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
+    this.load.image('choiceTile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile267.png')
 
     //load wave data
     this.load.text('waveText', 'data/waves/windingPath');
@@ -138,6 +142,8 @@ function generateEnemyClass(data){
             this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.setRotation(angle)
 
+            
+
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
             
@@ -165,8 +171,7 @@ function generateTowerClass(data){
         initialize:
         function Tower (scene)
         {
-            let data = game.cache.json.get('arrow');
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'tower');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
             this.nextTic = 0;
 
             this.name = data['name'];
@@ -423,6 +428,36 @@ function allEnemiesDead(){
     return true;
 }
 
+// Test function
+// function sayHi(){
+//     console.log('hi');
+// }
+
+function enterButtonHoverState(button) {
+    button.setTint(0xd3d3d3);
+}
+
+function enterButtonRestState(button) {
+    button.setTint(0xffffff);
+}
+
+function selectArrowTowerForPlacement() {
+    console.log("arrow");
+    // this.input.on('pointerdown', placeTurret);
+}
+
+function selectBombTowerForPlacement() {
+    console.log("bomb");
+}
+
+function selectFireTowerForPlacement() {
+    console.log("fire");
+}
+
+function selectIceTowerForPlacement() {
+    console.log("ice");
+}
+
 function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
@@ -496,7 +531,11 @@ function create() {
     const Fire = generateTowerClass(fireData);
     const Ice = generateTowerClass(iceData);
 
-    turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+    // Individual groups for each tower type
+    arrowGroup = this.add.group({ classType: Arrow, runChildUpdate: true });
+    bombGroup = this.add.group({ classType: Bomb, runChildUpdate: true });
+    fireGroup = this.add.group({ classType: Fire, runChildUpdate: true });
+    iceGroup = this.add.group({ classType: Ice, runChildUpdate: true });
 
     //as with projectiles
     const Projectile = generateProjectileClass({"image":"bullet"});
@@ -508,8 +547,55 @@ function create() {
     this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
 
-    //clicks place turrets
-    this.input.on('pointerdown', placeTurret);
+    // Arrow tower button
+    this.add.text(750, 55, 'Arrow');
+    this.add.text(760, 125, "$" + arrowData.cost.level_1);
+    this.arrowTowerButton = this.add.image(775, 100, 'arrow');
+    this.arrowTowerButton.setInteractive();
+    this.arrowTowerButton.on('pointerover', () => enterButtonHoverState(this.arrowTowerButton));
+    this.arrowTowerButton.on('pointerout', () => enterButtonRestState(this.arrowTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.arrowTowerButton.on('pointerdown', () => selectArrowTowerForPlacement());
+
+    // Bomb tower button
+    this.add.text(755, 155, 'Bomb');
+    this.add.text(760, 220, "$" + bombData.cost.level_1);
+    this.bombTowerButton = this.add.image(775, 200, 'bomb');
+    this.bombTowerButton.setInteractive();
+    this.bombTowerButton.on('pointerover', () => enterButtonHoverState(this.bombTowerButton));
+    this.bombTowerButton.on('pointerout', () => enterButtonRestState(this.bombTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.bombTowerButton.on('pointerdown', () => selectBombTowerForPlacement());
+
+    // Fire tower button
+    this.add.text(755, 255, 'Fire');
+    this.add.text(755, 330, "$" + fireData.cost.level_1);
+    this.fireTowerButton = this.add.image(775, 300, 'fire');
+    this.fireTowerButton.setInteractive();
+    this.fireTowerButton.on('pointerover', () => enterButtonHoverState(this.fireTowerButton));
+    this.fireTowerButton.on('pointerout', () => enterButtonRestState(this.fireTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.fireTowerButton.on('pointerdown', () => selectFireTowerForPlacement());
+
+    // Ice tower button
+    this.add.text(760, 355, 'Ice');
+    this.add.text(755, 430, "$" + iceData.cost.level_1);
+    this.iceTowerButton = this.add.image(775, 400, 'ice');
+    this.iceTowerButton.setInteractive();
+    this.iceTowerButton.on('pointerover', () => enterButtonHoverState(this.iceTowerButton));
+    this.iceTowerButton.on('pointerout', () => enterButtonRestState(this.iceTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.iceTowerButton.on('pointerdown', () => selectIceTowerForPlacement());
+
+    // Current choice box
+    this.add.text(741, 525, 'CHOICE');
+    this.add.image(775, 575, 'choiceTile');
+
+    // **************************************
+    // ADD IMAGE OF CURRENT SELECTED TOWER
+    // MAYBE IN select____TowerForPlacement()
+    // **************************************
+    
     
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;

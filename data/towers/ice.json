@@ -14,16 +14,16 @@
         "level_4": 6
     },
     "range":{
-        "level_1": 150,
+        "level_1": 100,
         "level_2": 200,
-        "level_3": 300,
-        "level_4": 800
+        "level_3": 200,
+        "level_4": 200
     },
     "rate":{
-        "level_1": -1,
-        "level_2": -1,
-        "level_3": -1,
-        "level_4": -1
+        "level_1": 1000,
+        "level_2": 1000,
+        "level_3": 1000,
+        "level_4": 1000
     },
     "radius":{
         "level_1": -1,
@@ -38,10 +38,10 @@
         "level_4": 0.65
     },
     "duration":{
-        "level_1": 1.5,
-        "level_2": 2.25,
-        "level_3": 2.25,
-        "level_4": 2.25
+        "level_1": 1500,
+        "level_2": 2250,
+        "level_3": 2250,
+        "level_4": 2250
     },
     "final_ability": "freeze"
 }

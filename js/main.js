@@ -24,7 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-var selectedTurret = "Bomb";
+var selectedTurret = "Ice";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -63,7 +63,7 @@ function preload() {
 
     // Load tower sprites
     this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
-    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile226.png');
+    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
     this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
     this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
 
@@ -101,6 +101,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
+            this.slowed = false;
 
         },
 
@@ -121,9 +122,16 @@ function generateEnemyClass(data){
             this.body.setCircle(15);
         },
 
-        receiveDamage: function(damage) {
+        receiveDamage: function(damage, slow, duration) {
             this.hp =  this.hp - (damage - this.armor);           
             
+            if (!this.slowed && slow > 0) {
+                this.originalSpeed = this.speed;
+                this.speed = this.speed * slow;
+                this.slowed = true;
+                this.slowTimer = this.time + duration;
+            }
+
             // if hp drops below 0 we deactivate this enemy
             if(this.hp <= 0) {
                 this.setActive(false);
@@ -134,7 +142,14 @@ function generateEnemyClass(data){
         },
 
         update: function (time, delta)
-        {
+        {   
+            this.time = time; //used for slow timer
+
+            if (this.slowed && time > this.slowTimer) {
+                this.speed = this.originalSpeed;
+                this.slowed = false;
+            }
+
             // move the t point along the path, 0 is the start and 0 is the end
             this.follower.t += this.speed * delta;
 
@@ -217,6 +232,17 @@ function generateTowerClass(data){
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             }
         },
+
+        iceFire: function() {
+            var speedy = speedyGroup.getChildren();
+            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+            for(var i = 0; i < enemyUnits.length; i++) {       
+                if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
+                    enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                }
+            }
+        },
         // we will place the turret according to the grid
         place: function(i, j) {
             this.y = i * 50 + 50/2;
@@ -230,7 +256,12 @@ function generateTowerClass(data){
         {
             // time to shoot
             if(time > this.nextTic) {
-                this.fire()
+                if (this.name == "ice") {
+                    this.iceFire();
+                }
+                else{
+                    this.fire()
+                }
                 this.nextTic = time + this.rate;
             }
         }
@@ -328,7 +359,6 @@ function damageEnemy(enemy, bullet) {
 
             for(var i = 0; i < enemyUnits.length; i++) {       
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
-                    console.log("Aoe Damage!")
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }

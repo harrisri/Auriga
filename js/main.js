@@ -130,6 +130,7 @@ function generateEnemyClass(data){
                 this.speed = this.speed * slow;
                 this.slowed = true;
                 this.slowTimer = this.time + duration;
+                this.setTint(0x87CEFA);
             }
 
             // if hp drops below 0 we deactivate this enemy
@@ -148,6 +149,7 @@ function generateEnemyClass(data){
             if (this.slowed && time > this.slowTimer) {
                 this.speed = this.originalSpeed;
                 this.slowed = false;
+                this.setTint(0xffffff);
             }
 
             // move the t point along the path, 0 is the start and 0 is the end

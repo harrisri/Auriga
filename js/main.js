@@ -24,6 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
+var selectedTurret = "Fire";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -60,13 +61,20 @@ function preload() {
     this.load.image('level2', 'assets/tilemaps/level2.png');
     // this.load.image('level3', '/assets/tilemaps/level3.png');
 
-    // Load unit and tower sprites
-    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
-    this.load.image('bullet', 'assets/bullet.png');
+    // Load tower sprites
+    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
+    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile226.png');
+    this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
+    this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
+
+    // Load enemy sprites
     this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
     this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
     this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
     this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
+    
+    // Load other sprites
+    this.load.image('bullet', 'assets/bullet.png');
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
 
@@ -165,8 +173,7 @@ function generateTowerClass(data){
         initialize:
         function Tower (scene)
         {
-            let data = game.cache.json.get('arrow');
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'tower');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
             this.nextTic = 0;
 
             this.name = data['name'];
@@ -318,25 +325,25 @@ function damageEnemy(enemy, bullet) {
     }
 }
 
-// function drawGrid(graphics) {
-//     graphics.lineStyle(1, 0x006400, 0.5);
-//     for (var i = 0; i < 16; i++) {
-//         graphics.moveTo((i*100)/2, 0);
-//         graphics.lineTo((i*100)/2, 600);
-//     }
-
-//     for (var i = 0; i < 12;  i++) {
-//         graphics.moveTo(0, (i*100)/2);
-//         graphics.lineTo(800, (i*100)/2);
-//     }
-//     graphics.strokePath();
-// }
-
 function placeTurret(pointer) {
     var i = Math.floor(pointer.y/50);
     var j = Math.floor(pointer.x/50);
     if(canPlaceTurret(i, j)) {
-        var turret = turrets.get();
+        var turret;
+        switch(selectedTurret){
+            case 'Arrow':
+                turret = arrowTurrets.get()
+                break;
+            case 'Bomb':
+                turret = bombTurrets.get()
+                break;
+            case 'Ice':
+                turret = iceTurrets.get()
+                break;
+            case 'Fire':
+                turret = fireTurrets.get()
+                break;
+        }
         if (turret)
         {
             if (gold - turret.cost >= 0)
@@ -433,7 +440,6 @@ function create() {
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
-    // drawGrid(graphics);
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -496,7 +502,10 @@ function create() {
     const Fire = generateTowerClass(fireData);
     const Ice = generateTowerClass(iceData);
 
-    turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+    arrowTurrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+    bombTurrets = this.add.group({ classType: Bomb, runChildUpdate: true });
+    fireTurrets = this.add.group({ classType: Fire, runChildUpdate: true });
+    iceTurrets = this.add.group({ classType: Ice, runChildUpdate: true });
 
     //as with projectiles
     const Projectile = generateProjectileClass({"image":"bullet"});

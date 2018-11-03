@@ -75,6 +75,7 @@ function preload() {
     
     // Load other sprites
     this.load.image('bullet', 'assets/bullet.png');
+    this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
 
@@ -326,6 +327,44 @@ function generateProjectileClass(data){
     return Projectile;
 }
 
+function generateGroundFireClass(data){
+    var GroundFire = new Phaser.Class({
+ 
+    Extends: Phaser.GameObjects.Image,
+ 
+    initialize:
+ 
+    function GroundFire (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, groundFire);
+ 
+        this.x = data.x;
+        this.y = data.y;
+        this.lifespan = data.duration;
+        this.damage = data.damage;
+    },
+ 
+ 
+    update: function (time, delta)
+    {
+        this.lifespan -= delta;
+ 
+        this.x += this.dx * (this.speed * delta);
+        this.y += this.dy * (this.speed * delta);
+ 
+        if (this.lifespan <= 0)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+ 
+    });
+
+    return GroundFire;
+}
+
+
 function addProjectile(x, y, angle, damage, radius) {
     var projectile = Projectiles.get();
     if (projectile)
@@ -355,6 +394,7 @@ function damageEnemy(enemy, bullet) {
         bullet.setActive(false);
         bullet.setVisible(false);
         
+        //check if BOMB AOE
         if(bullet.radius > 0){
             var speedy = speedyGroup.getChildren();
             var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());

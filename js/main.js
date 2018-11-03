@@ -24,7 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-var selectedTurret = "Fire";
+var selectedTurret = "Bomb";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -213,7 +213,7 @@ function generateTowerClass(data){
             var enemy = getEnemy(this.x, this.y, this.range);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
-                addProjectile(this.x, this.y, angle, this.damage);
+                addProjectile(this.x, this.y, angle, this.damage, this.radius);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             }
         },
@@ -272,7 +272,6 @@ function generateProjectileClass(data){
         this.dy = Math.sin(angle);
  
         this.lifespan = 300;
-        this.damage = damage;
     },
  
     update: function (time, delta)
@@ -294,11 +293,13 @@ function generateProjectileClass(data){
     return Projectile;
 }
 
-function addProjectile(x, y, angle, damage) {
+function addProjectile(x, y, angle, damage, radius) {
     var projectile = Projectiles.get();
     if (projectile)
     {
-        projectile.fire(x, y, angle, damage);
+        projectile.damage = damage;
+        projectile.radius = radius;
+        projectile.fire(x, y, angle);
     }
 }
 
@@ -319,9 +320,22 @@ function damageEnemy(enemy, bullet) {
     if (enemy.active === true && bullet.active === true) {
         // we remove the bullet right away
         bullet.setActive(false);
-        bullet.setVisible(false);    
-        // decrease the enemy hp with BULLET_DAMAGE
-        enemy.receiveDamage(bullet.damage);
+        bullet.setVisible(false);
+        
+        if(bullet.radius > 0){
+            var speedy = speedyGroup.getChildren();
+            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+            for(var i = 0; i < enemyUnits.length; i++) {       
+                if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
+                    console.log("Aoe Damage!")
+                    enemyUnits[i].receiveDamage(bullet.damage);
+                }
+            }
+        }    
+        else{
+            enemy.receiveDamage(bullet.damage);
+        }    
     }
 }
 

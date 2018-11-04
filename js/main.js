@@ -24,7 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-var selectedTurret = "Ice";
+var selectedTurret = "Fire";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -62,7 +62,7 @@ function preload() {
     // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load tower sprites
-    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
+    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');
     this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
     this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
     this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
@@ -73,9 +73,14 @@ function preload() {
     this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
     this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
     
-    // Load other sprites
+    // Load projectile sprites
     this.load.image('bullet', 'assets/bullet.png');
-    this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
+    this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
+    this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
+    this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+
+
+    // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
 
@@ -161,7 +166,6 @@ function generateEnemyClass(data){
 
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
-            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.setRotation(angle)
 
             // update enemy x and y to the newly obtained x and y
@@ -231,8 +235,8 @@ function generateTowerClass(data){
             var enemy = getEnemy(this.x, this.y, this.range);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
-                addProjectile(this.x, this.y, angle, this.damage, this.radius);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius);
             }
         },
 
@@ -292,16 +296,14 @@ function generateProjectileClass(data){
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
  
-    fire: function (x, y, angle, damage)
+    fire: function (x, y, angle)
     {
         this.setActive(true);
         this.setVisible(true);
  
         //  Bullets fire from the middle of the screen to the given x/y
         this.setPosition(x, y);
- 
-        this.setRotation(angle);
- 
+
         this.dx = Math.cos(angle);
         this.dy = Math.sin(angle);
  
@@ -365,10 +367,22 @@ function generateGroundFireClass(data){
 }
 
 
-function addProjectile(x, y, angle, damage, radius) {
+function addProjectile(name, x, y, angle, damage, radius) {
     var projectile = Projectiles.get();
+    switch(name){
+            //change projectile sprite if needed
+            case 'bomb':
+                projectile.setTexture('missle')
+                projectile.setRotation(angle + Math.PI/2);
+                break;
+            case 'fire':
+                projectile.setTexture('fireBullet');
+                projectile.setRotation(angle - Math.PI/2);
+                break;
+        }
     if (projectile)
     {
+        projectile.name = name;
         projectile.damage = damage;
         projectile.radius = radius;
         projectile.fire(x, y, angle);

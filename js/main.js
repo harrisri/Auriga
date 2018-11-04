@@ -236,7 +236,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius);
+                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -338,22 +338,12 @@ function generateGroundFireClass(data){
  
     function GroundFire (scene)
     {
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, groundFire);
- 
-        this.x = data.x;
-        this.y = data.y;
-        this.lifespan = data.duration;
-        this.damage = data.damage;
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'groundFire');
     },
- 
  
     update: function (time, delta)
     {
         this.lifespan -= delta;
- 
-        this.x += this.dx * (this.speed * delta);
-        this.y += this.dy * (this.speed * delta);
- 
         if (this.lifespan <= 0)
         {
             this.setActive(false);
@@ -367,7 +357,7 @@ function generateGroundFireClass(data){
 }
 
 
-function addProjectile(name, x, y, angle, damage, radius) {
+function addProjectile(name, x, y, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
     switch(name){
             //change projectile sprite if needed
@@ -385,6 +375,7 @@ function addProjectile(name, x, y, angle, damage, radius) {
         projectile.name = name;
         projectile.damage = damage;
         projectile.radius = radius;
+        projectile.duration = duration;
         projectile.fire(x, y, angle);
     }
 }
@@ -409,7 +400,7 @@ function damageEnemy(enemy, bullet) {
         bullet.setVisible(false);
         
         //check if BOMB AOE
-        if(bullet.radius > 0){
+        if(bullet.name == 'bomb'){
             var speedy = speedyGroup.getChildren();
             var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
@@ -418,10 +409,30 @@ function damageEnemy(enemy, bullet) {
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }
-        }    
+        }   
+
+        else if (bullet.name == 'fire'){
+            //drop ground fire!
+            var fire = GroundFireGroup.get();
+            fire.x = enemy.x;
+            fire.y = enemy.y;
+            fire.damage = bullet.damage;
+            fire.lifespan = bullet.duration;
+            fire.body.setCircle(15);
+            fire.setVisible(true);
+            fire.setActive(true);
+            enemy.receiveDamage(bullet.damage);      
+        }
+
         else{
             enemy.receiveDamage(bullet.damage);
         }    
+    }
+}
+
+function groundFireDamageEnemy(enemy, groundFire){
+    if (enemy.active === true && groundFire.active === true) {
+        enemy.receiveDamage(groundFire.damage/10) //base damage is way overpowered.
     }
 }
 
@@ -611,11 +622,22 @@ function create() {
     const Projectile = generateProjectileClass({"image":"bullet"});
     Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
 
+    //add ground fire
+    const GroundFire = generateGroundFireClass(fireData);
+    GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
+
     //add collisions between enemies and projectiles.
     this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
+
+    //add collisions between enemies and groundFire.
+    this.physics.add.overlap(infantryGroup, GroundFireGroup, groundFireDamageEnemy, null, null);
+    this.physics.add.overlap(heavyGroup, GroundFireGroup, groundFireDamageEnemy);
+    this.physics.add.overlap(flyingGroup, GroundFireGroup, groundFireDamageEnemy);
+    this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
+
 
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);

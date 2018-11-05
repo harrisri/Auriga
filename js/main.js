@@ -131,6 +131,13 @@ function generateEnemyClass(data){
         receiveDamage: function(damage, slow, duration) {
             this.hp =  this.hp - (damage - this.armor);           
             
+            //tint red when taking damage
+            if (!this.slowed) {
+                this.setTint(0xffb2b2)
+                this.damageTimer = this.time + 100;
+            }
+            
+            
             if (!this.slowed && slow > 0) {
                 this.originalSpeed = this.speed;
                 this.speed = this.speed * slow;
@@ -150,8 +157,14 @@ function generateEnemyClass(data){
 
         update: function (time, delta)
         {   
-            this.time = time; //used for slow timer
+            this.time = time; //used for slow/damage timers
+            
+            //damage timer is up and no longer 
+            if (time > this.damageTimer && !this.slowed) {
+                this.setTint(0xffffff);
+            }
 
+            //no longer slowed, set to normal color.
             if (this.slowed && time > this.slowTimer) {
                 this.speed = this.originalSpeed;
                 this.slowed = false;
@@ -418,7 +431,7 @@ function damageEnemy(enemy, bullet) {
             fire.y = enemy.y;
             fire.damage = bullet.damage;
             fire.lifespan = bullet.duration;
-            fire.body.setCircle(15);
+            fire.body.setCircle(5);
             fire.setVisible(true);
             fire.setActive(true);
             enemy.receiveDamage(bullet.damage);      

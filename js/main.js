@@ -24,20 +24,21 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-var selectedTurret = "Fire";
 
-var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+var selectedTurret = "Arrow";
+
+var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
 function preload() {
     // Load unit and tower files
@@ -83,6 +84,7 @@ function preload() {
     // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
+    this.load.image('choiceTile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile267.png')
 
     //load wave data
     this.load.text('waveText', 'data/waves/windingPath');
@@ -429,7 +431,7 @@ function damageEnemy(enemy, bullet) {
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }
-        }   
+        }
 
         else if (bullet.name == 'fire'){
             //drop ground fire!
@@ -561,6 +563,30 @@ function allEnemiesDead(){
     return true;
 }
 
+function enterButtonHoverState(button) {
+    button.setTint(0xd3d3d3);
+}
+ function enterButtonRestState(button) {
+    button.setTint(0xffffff);
+}
+
+function selectArrowTowerForPlacement() {
+    selectedTurret = "Arrow";
+    console.log(selectedTurret);
+}
+ function selectBombTowerForPlacement() {
+    selectedTurret = "Bomb";
+    console.log(selectedTurret);
+}
+ function selectFireTowerForPlacement() {
+    selectedTurret = "Fire";
+    console.log(selectedTurret);
+}
+ function selectIceTowerForPlacement() {
+    selectedTurret = "Ice";
+    console.log(selectedTurret);
+}
+
 function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
@@ -661,7 +687,60 @@ function create() {
 
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);
-    
+
+    // Arrow tower button
+    this.add.text(750, 55, 'Arrow');
+    this.add.text(760, 128, "$" + arrowData.cost.level_1);
+    this.arrowTowerButton = this.add.image(775, 100, 'arrow');
+    this.arrowTowerButton.setInteractive();
+    this.arrowTowerButton.on('pointerover', () => enterButtonHoverState(this.arrowTowerButton));
+    this.arrowTowerButton.on('pointerout', () => enterButtonRestState(this.arrowTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.arrowTowerButton.on('pointerdown', () => selectArrowTowerForPlacement());
+
+     // Bomb tower button
+    this.add.text(755, 155, 'Bomb');
+    this.add.text(758, 220, "$" + bombData.cost.level_1);
+    this.bombTowerButton = this.add.image(775, 200, 'bomb');
+    this.bombTowerButton.setInteractive();
+    this.bombTowerButton.on('pointerover', () => enterButtonHoverState(this.bombTowerButton));
+    this.bombTowerButton.on('pointerout', () => enterButtonRestState(this.bombTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.bombTowerButton.on('pointerdown', () => selectBombTowerForPlacement());
+     // Fire tower button
+    this.add.text(755, 255, 'Fire');
+    this.add.text(755, 330, "$" + fireData.cost.level_1);
+    this.fireTowerButton = this.add.image(775, 300, 'fire');
+    this.fireTowerButton.setInteractive();
+    this.fireTowerButton.on('pointerover', () => enterButtonHoverState(this.fireTowerButton));
+    this.fireTowerButton.on('pointerout', () => enterButtonRestState(this.fireTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.fireTowerButton.on('pointerdown', () => selectFireTowerForPlacement());
+     // Ice tower button
+    this.add.text(760, 355, 'Ice');
+    this.add.text(755, 430, "$" + iceData.cost.level_1);
+    this.iceTowerButton = this.add.image(775, 400, 'ice');
+    this.iceTowerButton.setInteractive();
+    this.iceTowerButton.on('pointerover', () => enterButtonHoverState(this.iceTowerButton));
+    this.iceTowerButton.on('pointerout', () => enterButtonRestState(this.iceTowerButton));
+    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
+    this.iceTowerButton.on('pointerdown', () => selectIceTowerForPlacement());
+
+    // Current choice box
+    this.add.text(741, 525, 'CHOICE');
+    this.add.image(775, 575, 'choiceTile');
+
+    this.arrowChoice = this.add.image(770, 570, "arrow");
+    this.bombChoice = this.add.image(770, 570, "bomb");
+    this.iceChoice = this.add.image(770, 570, "ice");
+    this.fireChoice = this.add.image(770, 570, "fire");
+
+    // Default choice shown is Arrow
+    this.arrowChoice.setVisible(true);
+    this.bombChoice.setVisible(false);
+    this.iceChoice.setVisible(false);
+    this.fireChoice.setVisible(false);
+
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;
     this.nextEnemyIndex = 0;
@@ -705,6 +784,32 @@ function update(time, delta) {
             this.nextEnemyIndex = this.nextEnemyIndex + 2;
             this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
         }
+    }
+
+    switch (selectedTurret) {
+        case "Arrow": 
+            this.arrowChoice.setVisible(true);
+            this.bombChoice.setVisible(false);
+            this.iceChoice.setVisible(false);
+            this.fireChoice.setVisible(false);
+            break;
+        case "Bomb":
+            this.arrowChoice.setVisible(false);
+            this.bombChoice.setVisible(true);
+            this.iceChoice.setVisible(false);
+            this.fireChoice.setVisible(false);
+            break;
+        case "Ice":
+            this.arrowChoice.setVisible(false);
+            this.bombChoice.setVisible(false);
+            this.iceChoice.setVisible(true);
+            this.fireChoice.setVisible(false);
+            break;
+        case "Fire":
+            this.arrowChoice.setVisible(false);
+            this.bombChoice.setVisible(false);
+            this.iceChoice.setVisible(false);
+            this.fireChoice.setVisible(true);
     }
 
     if (this.showCountdown){

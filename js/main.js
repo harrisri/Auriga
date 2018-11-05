@@ -128,8 +128,15 @@ function generateEnemyClass(data){
             this.body.setCircle(15);
         },
 
-        receiveDamage: function(damage, slow, duration) {
-            this.hp =  this.hp - (damage - this.armor);           
+        receiveDamage: function(damage, slow, duration, fire) {
+            
+            //fire damage ignores armor.
+            if (fire) {
+                this.hp = this.hp - damage;
+            }
+            else{
+                this.hp =  this.hp - (damage - this.armor);           
+            }
             
             //tint red when taking damage
             if (!this.slowed) {
@@ -434,7 +441,7 @@ function damageEnemy(enemy, bullet) {
             fire.body.setCircle(5);
             fire.setVisible(true);
             fire.setActive(true);
-            enemy.receiveDamage(bullet.damage);      
+            enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor      
         }
 
         else{
@@ -445,7 +452,7 @@ function damageEnemy(enemy, bullet) {
 
 function groundFireDamageEnemy(enemy, groundFire){
     if (enemy.active === true && groundFire.active === true) {
-        enemy.receiveDamage(groundFire.damage/10) //base damage is way overpowered.
+        enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
     }
 }
 

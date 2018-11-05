@@ -190,6 +190,8 @@ function generateEnemyClass(data){
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
             this.setRotation(angle)
 
+            
+
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
             
@@ -695,7 +697,6 @@ function create() {
     this.arrowTowerButton.setInteractive();
     this.arrowTowerButton.on('pointerover', () => enterButtonHoverState(this.arrowTowerButton));
     this.arrowTowerButton.on('pointerout', () => enterButtonRestState(this.arrowTowerButton));
-    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
     this.arrowTowerButton.on('pointerdown', () => selectArrowTowerForPlacement());
 
      // Bomb tower button
@@ -705,25 +706,24 @@ function create() {
     this.bombTowerButton.setInteractive();
     this.bombTowerButton.on('pointerover', () => enterButtonHoverState(this.bombTowerButton));
     this.bombTowerButton.on('pointerout', () => enterButtonRestState(this.bombTowerButton));
-    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
     this.bombTowerButton.on('pointerdown', () => selectBombTowerForPlacement());
-     // Fire tower button
+    
+    // Fire tower button
     this.add.text(755, 255, 'Fire');
     this.add.text(755, 330, "$" + fireData.cost.level_1);
     this.fireTowerButton = this.add.image(775, 300, 'fire');
     this.fireTowerButton.setInteractive();
     this.fireTowerButton.on('pointerover', () => enterButtonHoverState(this.fireTowerButton));
     this.fireTowerButton.on('pointerout', () => enterButtonRestState(this.fireTowerButton));
-    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
     this.fireTowerButton.on('pointerdown', () => selectFireTowerForPlacement());
-     // Ice tower button
+    
+    // Ice tower button
     this.add.text(760, 355, 'Ice');
     this.add.text(755, 430, "$" + iceData.cost.level_1);
     this.iceTowerButton = this.add.image(775, 400, 'ice');
     this.iceTowerButton.setInteractive();
     this.iceTowerButton.on('pointerover', () => enterButtonHoverState(this.iceTowerButton));
     this.iceTowerButton.on('pointerout', () => enterButtonRestState(this.iceTowerButton));
-    // Add Code to Display a picture of the tower to be placed underneath all the other pictures of towers.
     this.iceTowerButton.on('pointerdown', () => selectIceTowerForPlacement());
 
     // Current choice box

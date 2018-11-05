@@ -24,6 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
+var selectedTurret = "Fire";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -60,13 +61,26 @@ function preload() {
     this.load.image('level2', 'assets/tilemaps/level2.png');
     // this.load.image('level3', '/assets/tilemaps/level3.png');
 
-    // Load unit and tower sprites
-    this.load.image('tower', 'assets/2DTDassets/PNG/Default size/towerDefense_tile203.png');
-    this.load.image('bullet', 'assets/bullet.png');
+    // Load tower sprites
+    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');
+    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
+    this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
+    this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
+
+    // Load enemy sprites
     this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
     this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
     this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
     this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
+    
+    // Load projectile sprites
+    this.load.image('bullet', 'assets/bullet.png');
+    this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
+    this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
+    this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+
+
+    // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
 
@@ -93,6 +107,7 @@ function generateEnemyClass(data){
             this.armor = data['base_armor'];
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
+            this.slowed = false;
 
         },
 
@@ -113,9 +128,31 @@ function generateEnemyClass(data){
             this.body.setCircle(15);
         },
 
-        receiveDamage: function(damage) {
-            this.hp =  this.hp - (damage - this.armor);           
+        receiveDamage: function(damage, slow, duration, fire) {
             
+            //fire damage ignores armor.
+            if (fire) {
+                this.hp = this.hp - damage;
+            }
+            else{
+                this.hp =  this.hp - (damage - this.armor);           
+            }
+            
+            //tint red when taking damage
+            if (!this.slowed) {
+                this.setTint(0xffb2b2)
+                this.damageTimer = this.time + 100;
+            }
+            
+            
+            if (!this.slowed && slow > 0) {
+                this.originalSpeed = this.speed;
+                this.speed = this.speed * slow;
+                this.slowed = true;
+                this.slowTimer = this.time + duration;
+                this.setTint(0x87CEFA);
+            }
+
             // if hp drops below 0 we deactivate this enemy
             if(this.hp <= 0) {
                 this.setActive(false);
@@ -126,7 +163,21 @@ function generateEnemyClass(data){
         },
 
         update: function (time, delta)
-        {
+        {   
+            this.time = time; //used for slow/damage timers
+            
+            //damage timer is up and no longer 
+            if (time > this.damageTimer && !this.slowed) {
+                this.setTint(0xffffff);
+            }
+
+            //no longer slowed, set to normal color.
+            if (this.slowed && time > this.slowTimer) {
+                this.speed = this.originalSpeed;
+                this.slowed = false;
+                this.setTint(0xffffff);
+            }
+
             // move the t point along the path, 0 is the start and 0 is the end
             this.follower.t += this.speed * delta;
 
@@ -135,7 +186,6 @@ function generateEnemyClass(data){
 
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
-            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.setRotation(angle)
 
             // update enemy x and y to the newly obtained x and y
@@ -165,8 +215,7 @@ function generateTowerClass(data){
         initialize:
         function Tower (scene)
         {
-            let data = game.cache.json.get('arrow');
-            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'tower');
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
             this.nextTic = 0;
 
             this.name = data['name'];
@@ -206,8 +255,19 @@ function generateTowerClass(data){
             var enemy = getEnemy(this.x, this.y, this.range);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
-                addProjectile(this.x, this.y, angle, this.damage);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius, this.duration);
+            }
+        },
+
+        iceFire: function() {
+            var speedy = speedyGroup.getChildren();
+            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+            for(var i = 0; i < enemyUnits.length; i++) {       
+                if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
+                    enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                }
             }
         },
         // we will place the turret according to the grid
@@ -223,7 +283,12 @@ function generateTowerClass(data){
         {
             // time to shoot
             if(time > this.nextTic) {
-                this.fire()
+                if (this.name == "ice") {
+                    this.iceFire();
+                }
+                else{
+                    this.fire()
+                }
                 this.nextTic = time + this.rate;
             }
         }
@@ -251,21 +316,18 @@ function generateProjectileClass(data){
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
  
-    fire: function (x, y, angle, damage)
+    fire: function (x, y, angle)
     {
         this.setActive(true);
         this.setVisible(true);
  
         //  Bullets fire from the middle of the screen to the given x/y
         this.setPosition(x, y);
- 
-        this.setRotation(angle);
- 
+
         this.dx = Math.cos(angle);
         this.dy = Math.sin(angle);
  
         this.lifespan = 300;
-        this.damage = damage;
     },
  
     update: function (time, delta)
@@ -287,11 +349,54 @@ function generateProjectileClass(data){
     return Projectile;
 }
 
-function addProjectile(x, y, angle, damage) {
+function generateGroundFireClass(data){
+    var GroundFire = new Phaser.Class({
+ 
+    Extends: Phaser.GameObjects.Image,
+ 
+    initialize:
+ 
+    function GroundFire (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'groundFire');
+    },
+ 
+    update: function (time, delta)
+    {
+        this.lifespan -= delta;
+        if (this.lifespan <= 0)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+ 
+    });
+
+    return GroundFire;
+}
+
+
+function addProjectile(name, x, y, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
+    switch(name){
+            //change projectile sprite if needed
+            case 'bomb':
+                projectile.setTexture('missle')
+                projectile.setRotation(angle + Math.PI/2);
+                break;
+            case 'fire':
+                projectile.setTexture('fireBullet');
+                projectile.setRotation(angle - Math.PI/2);
+                break;
+        }
     if (projectile)
     {
-        projectile.fire(x, y, angle, damage);
+        projectile.name = name;
+        projectile.damage = damage;
+        projectile.radius = radius;
+        projectile.duration = duration;
+        projectile.fire(x, y, angle);
     }
 }
 
@@ -312,31 +417,64 @@ function damageEnemy(enemy, bullet) {
     if (enemy.active === true && bullet.active === true) {
         // we remove the bullet right away
         bullet.setActive(false);
-        bullet.setVisible(false);    
-        // decrease the enemy hp with BULLET_DAMAGE
-        enemy.receiveDamage(bullet.damage);
+        bullet.setVisible(false);
+        
+        //check if BOMB AOE
+        if(bullet.name == 'bomb'){
+            var speedy = speedyGroup.getChildren();
+            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+
+            for(var i = 0; i < enemyUnits.length; i++) {       
+                if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
+                    enemyUnits[i].receiveDamage(bullet.damage);
+                }
+            }
+        }   
+
+        else if (bullet.name == 'fire'){
+            //drop ground fire!
+            var fire = GroundFireGroup.get();
+            fire.x = enemy.x;
+            fire.y = enemy.y;
+            fire.damage = bullet.damage;
+            fire.lifespan = bullet.duration;
+            fire.body.setCircle(5);
+            fire.setVisible(true);
+            fire.setActive(true);
+            enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor      
+        }
+
+        else{
+            enemy.receiveDamage(bullet.damage);
+        }    
     }
 }
 
-// function drawGrid(graphics) {
-//     graphics.lineStyle(1, 0x006400, 0.5);
-//     for (var i = 0; i < 16; i++) {
-//         graphics.moveTo((i*100)/2, 0);
-//         graphics.lineTo((i*100)/2, 600);
-//     }
-
-//     for (var i = 0; i < 12;  i++) {
-//         graphics.moveTo(0, (i*100)/2);
-//         graphics.lineTo(800, (i*100)/2);
-//     }
-//     graphics.strokePath();
-// }
+function groundFireDamageEnemy(enemy, groundFire){
+    if (enemy.active === true && groundFire.active === true) {
+        enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+    }
+}
 
 function placeTurret(pointer) {
     var i = Math.floor(pointer.y/50);
     var j = Math.floor(pointer.x/50);
     if(canPlaceTurret(i, j)) {
-        var turret = turrets.get();
+        var turret;
+        switch(selectedTurret){
+            case 'Arrow':
+                turret = arrowTurrets.get()
+                break;
+            case 'Bomb':
+                turret = bombTurrets.get()
+                break;
+            case 'Ice':
+                turret = iceTurrets.get()
+                break;
+            case 'Fire':
+                turret = fireTurrets.get()
+                break;
+        }
         if (turret)
         {
             if (gold - turret.cost >= 0)
@@ -433,7 +571,6 @@ function create() {
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
-    // drawGrid(graphics);
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -496,17 +633,31 @@ function create() {
     const Fire = generateTowerClass(fireData);
     const Ice = generateTowerClass(iceData);
 
-    turrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+    arrowTurrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+    bombTurrets = this.add.group({ classType: Bomb, runChildUpdate: true });
+    fireTurrets = this.add.group({ classType: Fire, runChildUpdate: true });
+    iceTurrets = this.add.group({ classType: Ice, runChildUpdate: true });
 
     //as with projectiles
     const Projectile = generateProjectileClass({"image":"bullet"});
     Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
+
+    //add ground fire
+    const GroundFire = generateGroundFireClass(fireData);
+    GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
 
     //add collisions between enemies and projectiles.
     this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
     this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
+
+    //add collisions between enemies and groundFire.
+    this.physics.add.overlap(infantryGroup, GroundFireGroup, groundFireDamageEnemy, null, null);
+    this.physics.add.overlap(heavyGroup, GroundFireGroup, groundFireDamageEnemy);
+    this.physics.add.overlap(flyingGroup, GroundFireGroup, groundFireDamageEnemy);
+    this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
+
 
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);

@@ -8,22 +8,22 @@
         "level_4": 220
     },
     "damage":{
-        "level_1": 10,
-        "level_2": 13,
-        "level_3": 14,
-        "level_4": 18
+        "level_1": 3,
+        "level_2": 4,
+        "level_3": 4,
+        "level_4": 4
     },
     "range":{
-        "level_1": 25,
-        "level_2": 25,
-        "level_3": 40,
-        "level_4": 55
+        "level_1": 150,
+        "level_2": 200,
+        "level_3": 300,
+        "level_4": 800
     },
     "rate":{
-        "level_1": -1,
-        "level_2": -1,
-        "level_3": -1,
-        "level_4": -1
+        "level_1": 2000,
+        "level_2": 2000,
+        "level_3": 2000,
+        "level_4": 2000
     },
     "radius":{
         "level_1": -1,
@@ -38,10 +38,10 @@
         "level_4": -1
     },
     "duration":{
-        "level_1": -1,
-        "level_2": -1,
-        "level_3": -1,
-        "level_4": -1
+        "level_1": 1500,
+        "level_2": 2250,
+        "level_3": 2250,
+        "level_4": 2250
     },
     "final_ability": "incinerate"
 }

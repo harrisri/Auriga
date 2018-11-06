@@ -631,11 +631,8 @@ function create() {
     path.lineTo(475,425);
     path.lineTo(175,425);
     path.lineTo(175,600);
-
-    // Change alpha to 1 to see the path
-    graphics.lineStyle(3, 0xffffff, 0);
     // visualize the path
-    path.draw(graphics);
+    // path.draw(graphics);
 
     // Get enemy data and generate classes to instantiate enemies
     let infantryData = game.cache.json.get('infantry');
@@ -738,6 +735,25 @@ function create() {
     this.tempBombTower.setVisible(false);
     this.tempFireTower.setVisible(false);
     this.tempIceTower.setVisible(false);
+    
+    var graphicsArrow = this.add.graphics();
+    var graphicsBomb = this.add.graphics();
+    var graphicsFire = this.add.graphics();
+    var graphicsIce = this.add.graphics();
+    // Change alpha to 1 for white, 0 for transparent
+    graphicsArrow.lineStyle(2, 0xffffe0, 1);
+    graphicsBomb.lineStyle(2, 0xffffe0, 1);
+    graphicsFire.lineStyle(2, 0xffffe0, 1);
+    graphicsIce.lineStyle(2, 0xffffe0, 1);
+    // Generate tower range indicators
+    this.arrowCircle = graphicsArrow.strokeCircle(0, 0, arrowData.range.level_1);
+    this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);
+    this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
+    this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
+    this.arrowCircle.setVisible(false);
+    this.bombCircle.setVisible(false);
+    this.fireCircle.setVisible(false);
+    this.iceCircle.setVisible(false);
 
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;
@@ -787,12 +803,20 @@ function update(time, delta) {
     if (placing == true){
         switch(selectedTurret) {
             case "Arrow":
+                // Make the tower and it's range visible
                 this.tempArrowTower.setVisible(true);
                 this.tempBombTower.setVisible(false);
                 this.tempFireTower.setVisible(false);
                 this.tempIceTower.setVisible(false);
+                this.arrowCircle.setVisible(true);
+                this.bombCircle.setVisible(false);
+                this.fireCircle.setVisible(false);
+                this.iceCircle.setVisible(false);
+                // Make the sprite and circle follow the mouse pointer
                 this.tempArrowTower.x = this.input.activePointer.x;
-                this.tempArrowTower.y = this.input.activePointer.y;
+                this.tempArrowTower.y = this.input.activePointer.y;                
+                this.arrowCircle.x = this.input.activePointer.x;
+                this.arrowCircle.y = this.input.activePointer.y;
                 break;
             case "Bomb":
                 this.tempArrowTower.setVisible(false);
@@ -801,6 +825,13 @@ function update(time, delta) {
                 this.tempIceTower.setVisible(false);
                 this.tempBombTower.x = this.input.activePointer.x;
                 this.tempBombTower.y = this.input.activePointer.y;
+
+                this.arrowCircle.setVisible(false);
+                this.bombCircle.setVisible(true);
+                this.fireCircle.setVisible(false);
+                this.iceCircle.setVisible(false);
+                this.bombCircle.x = this.input.activePointer.x;
+                this.bombCircle.y = this.input.activePointer.y;
                 break;
             case "Ice":
                 this.tempArrowTower.setVisible(false);
@@ -809,6 +840,13 @@ function update(time, delta) {
                 this.tempIceTower.setVisible(true);
                 this.tempIceTower.x = this.input.activePointer.x;
                 this.tempIceTower.y = this.input.activePointer.y;
+                
+                this.arrowCircle.setVisible(false);
+                this.bombCircle.setVisible(false);
+                this.fireCircle.setVisible(false);
+                this.iceCircle.setVisible(true);
+                this.iceCircle.x = this.input.activePointer.x;
+                this.iceCircle.y = this.input.activePointer.y;
                 break;
             case "Fire":
                 this.tempArrowTower.setVisible(false);
@@ -817,7 +855,13 @@ function update(time, delta) {
                 this.tempIceTower.setVisible(false);
                 this.tempFireTower.x = this.input.activePointer.x;
                 this.tempFireTower.y = this.input.activePointer.y;
-                break;
+                
+                this.arrowCircle.setVisible(false);
+                this.bombCircle.setVisible(false);
+                this.fireCircle.setVisible(true);
+                this.iceCircle.setVisible(false);
+                this.fireCircle.x = this.input.activePointer.x;
+                this.fireCircle.y = this.input.activePointer.y;
         }
     }
 
@@ -826,6 +870,11 @@ function update(time, delta) {
         this.tempBombTower.setVisible(false);
         this.tempFireTower.setVisible(false);
         this.tempIceTower.setVisible(false);
+
+        this.arrowCircle.setVisible(false);
+        this.bombCircle.setVisible(false);
+        this.fireCircle.setVisible(false);
+        this.iceCircle.setVisible(false);
     }
     
     if (this.showCountdown){

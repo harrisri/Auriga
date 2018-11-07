@@ -616,9 +616,6 @@ function create() {
     goldText = this.add.text(38, 12, '200', {fontSize: '20px', fontStyle: 'Bold'});
     lifeText = this.add.text(770, 12, '20', {fontSize: '20px', fontStyle: 'Bold'});
     this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px', fontStyle: 'Bold'});
-    // this graphics element is only for visualization,
-    // its not related to our path
-    var graphics = this.add.graphics();
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -752,15 +749,15 @@ function create() {
     this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
     this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
 
-    // Hide these sprites until place mode is activated
+    // Hide all sprites initially
     this.tempArrowTower.setVisible(false);
-    this.tempBombTower.setVisible(false);
-    this.tempFireTower.setVisible(false);
-    this.tempIceTower.setVisible(false);
     this.arrowCircle.setVisible(false);
+    this.tempBombTower.setVisible(false);
     this.bombCircle.setVisible(false);
-    this.fireCircle.setVisible(false);
+    this.tempIceTower.setVisible(false);
     this.iceCircle.setVisible(false);
+    this.tempFireTower.setVisible(false);
+    this.fireCircle.setVisible(false);
 
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;
@@ -812,50 +809,26 @@ function update(time, delta) {
             case "Arrow":
                 // Make the tower and it's range visible
                 this.tempArrowTower.setVisible(true);
-                this.tempBombTower.setVisible(false);
-                this.tempFireTower.setVisible(false);
-                this.tempIceTower.setVisible(false);
                 this.arrowCircle.setVisible(true);
-                this.bombCircle.setVisible(false);
-                this.fireCircle.setVisible(false);
-                this.iceCircle.setVisible(false);
                 // Make the sprite and circle follow the mouse pointer
                 followMousePointer(this, this.tempArrowTower);
                 followMousePointer(this, this.arrowCircle);
                 break;
             case "Bomb":
-                this.tempArrowTower.setVisible(false);
                 this.tempBombTower.setVisible(true);
-                this.tempFireTower.setVisible(false);
-                this.tempIceTower.setVisible(false);
-                this.arrowCircle.setVisible(false);
                 this.bombCircle.setVisible(true);
-                this.fireCircle.setVisible(false);
-                this.iceCircle.setVisible(false);
                 followMousePointer(this, this.tempBombTower);
                 followMousePointer(this, this.bombCircle);
                 break;
             case "Ice":
-                this.tempArrowTower.setVisible(false);
-                this.tempBombTower.setVisible(false);
-                this.tempFireTower.setVisible(false);
                 this.tempIceTower.setVisible(true);
-                this.arrowCircle.setVisible(false);
-                this.bombCircle.setVisible(false);
-                this.fireCircle.setVisible(false);
                 this.iceCircle.setVisible(true);
                 followMousePointer(this, this.tempIceTower);
                 followMousePointer(this, this.iceCircle);
                 break;
             case "Fire":
-                this.tempArrowTower.setVisible(false);
-                this.tempBombTower.setVisible(false);
                 this.tempFireTower.setVisible(true);
-                this.tempIceTower.setVisible(false);
-                this.arrowCircle.setVisible(false);
-                this.bombCircle.setVisible(false);
                 this.fireCircle.setVisible(true);
-                this.iceCircle.setVisible(false);
                 followMousePointer(this, this.tempFireTower);
                 followMousePointer(this, this.fireCircle);
         }
@@ -863,13 +836,13 @@ function update(time, delta) {
 
     if (placing == false) {
         this.tempArrowTower.setVisible(false);
-        this.tempBombTower.setVisible(false);
-        this.tempFireTower.setVisible(false);
-        this.tempIceTower.setVisible(false);
         this.arrowCircle.setVisible(false);
+        this.tempBombTower.setVisible(false);
         this.bombCircle.setVisible(false);
-        this.fireCircle.setVisible(false);
+        this.tempIceTower.setVisible(false);
         this.iceCircle.setVisible(false);
+        this.tempFireTower.setVisible(false);
+        this.fireCircle.setVisible(false);
     }
     
     if (this.showCountdown){

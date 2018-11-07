@@ -581,8 +581,8 @@ function parseMap(maptext){
 }
 
 function findAdjacent(x, y, x_max, y_max){
-
-    console.log()
+// Find adjacent coordinates to [x, y] within the bounds 0 < x < x_max and 0 < y < y_max
+// Returns a 1D array of coordinate pairs
     var adj = [
         [x-1, y],   // W
         [x, y-1],   // N
@@ -603,36 +603,31 @@ function findAdjacent(x, y, x_max, y_max){
 
 
 function generatePaths(levelMap){
+// Traverses levelMap.grid, which is represented by map characters ('#', '-', Start/End Numbers)
+// Generates up to 3 PathList arrays containing in-order coordinate pairs for each enemy path
+// returns [ [<path1-coordinates>], [<path2-coordinates], [<path3-coordinates>] ]
 
     var startCoords = null;
     var endCoords = null;
 
-    var paths = [];
-    var visited = levelMap.grid.slice();
-    console.log(visited);
+    var paths = []; // Top-level array to be returned
+    var visited = levelMap.grid.slice(); // Shallow copy to keep track of visited tiles
 
     for (var k = 0; k < 3; k++){
         var pathList = [];
         if (levelMap.startCoords[k] === null){
+            // If no start tile for this path, skip it.
             paths[k] = null;
             continue;
         }
         startCoords = levelMap.startCoords[k];
         endCoords = levelMap.endCoords[k];
 
-        console.log("start: " + startCoords);
-        console.log("end: " + endCoords);
-
         pathList.push(startCoords);
         var curr = startCoords;
         var done = false;
-        var h = 0;
-        var tempx;
-        var tempy;
-        var temp;
         while (done === false){
             let adj = findAdjacent(curr[0], curr[1], COLUMN_N, ROW_N);
-
             for (var i = 0; i < adj.length; i++){
                 let tempx = adj[i][0];
                 let tempy = adj[i][1];
@@ -642,9 +637,9 @@ function generatePaths(levelMap){
                     visited[tempy][tempx] = 'X';
                     curr = [tempx, tempy];
                     pathList.push(curr);
-                    continue;
                 }
-                else if (temp === '9'){
+                // TODO: de-magic this.
+                else if (temp === '9' || temp === '8' || temp === 7){
                     curr = [tempx, tempy];
                     pathList.push(curr);
                     done = true;
@@ -695,19 +690,19 @@ function allEnemiesDead(){
 
 
 function create() {
-    // // Parse a map file and produce a 2d array of chars
-    // // that can be used to generate the level.
+    // Load and parse map data
     level1 = this.cache.text.get('level1');
     level2 = this.cache.text.get('level2');
     level3 = this.cache.text.get('level3');
-    levelMap1 = parseMap(level1);       // Currently unused.
+    levelMap1 = parseMap(level1);
     levelMap2 = parseMap(level2);
     levelMap3 = parseMap(level3);
-    levelPath3 = generatePaths(levelMap3);
+    levelPath1 = generatePaths(levelMap1);
 
-    const testmap = this.make.tilemap({ data: levelMap3.tiles, tileWidth: 64, tileHeight: 64 });
-    const tileset = testmap.addTilesetImage("tdtiles");
-    const layer = testmap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
+    // Set up tilemap using Kenney sprite sheet
+    const tilemap = this.make.tilemap({ data: levelMap1.tiles, tileWidth: 64, tileHeight: 64 });
+    const tileset = tilemap.addTilesetImage("tdtiles");
+    const layer = tilemap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
 
     this.add.image(26, 28, 'goldCoin');
     this.add.image(MAPWIDTH - 56, 28, 'heart');
@@ -721,11 +716,14 @@ function create() {
     let waveText = this.cache.text.get('waveText');
     this.waveData = parseWaveText(waveText);
 
-    var startx = levelPath3[0][0][0] * TILESIZE + TILESIZE / 2
-    var starty = levelPath3[0][0][1] * TILESIZE + TILESIZE / 2
+    // TODO: Clean this up; manually creating levels for now.
+    var startx = levelPath1[0][0][0] * TILESIZE + TILESIZE / 2
+    var starty = levelPath1[0][0][1] * TILESIZE + TILESIZE / 2
     path = this.add.path(startx, starty)
 
+    // TOOO: combine map data and functionality into an object as much as possible
     function makePath(pathStart, levelPath){
+        // Make path with Phaser based on return value of generatePaths()
         for (var i = 0; i < levelPath.length; i++){
             var curr = levelPath[i];
             pathx = curr[0] * TILESIZE + TILESIZE / 2
@@ -733,8 +731,7 @@ function create() {
             pathStart.lineTo(pathx, pathy)
         }
     }
-
-    makePath(path, levelPath3[0]);
+    makePath(path, levelPath1[0]);
 
     // Change alpha to 1 to see the path
     graphics.lineStyle(3, 0xffffff, 0);

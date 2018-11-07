@@ -5,7 +5,8 @@ const HIDDEN = '*';
 const TILESIZE = 64
 const MAPHEIGHT = TILESIZE * 12
 const MAPWIDTH = TILESIZE * 16
-
+const COLUMN_N = 16
+const ROW_N = 12
 
 var config = {
     type: Phaser.AUTO,
@@ -523,29 +524,32 @@ function parseMap(maptext){
 
     var grid = [[]]
     var levelMap = {
-        start: [null, null, null],
-        end: [null, null, null]
+        startCoords: [null, null, null],
+        endCoords: [null, null, null],
+        width: null,
+        height: null
     }
 
-    var row = 0;
-    var column = 0;
+    var y = 0;
+    var x = 0;
     for (var i = 0; i < maptext.length; i++) {
         var char = maptext[i];
         if (char !== '\n'){
-            grid[row].push(char);
+            grid[y].push(char);
+            var k;
             if (start.includes(char)){
-                levelMap.start[start.indexOf(char)] = [row, column]
+                levelMap.startCoords[start.indexOf(char)] = [x, y]
             }
             else if (end.includes(char)){
-                levelMap.end[end.indexOf(char)] = [row, column]
+                levelMap.endCoords[end.indexOf(char)] = [x, y]
             }
-        column++;
+        x++;
         }
         else if (char === '\n'){
             if (maptext[i+1]){
                 grid.push([]);
-                row++;
-                column = 0;
+                y++;
+                x = 0;
             }
         }
     }
@@ -553,14 +557,12 @@ function parseMap(maptext){
     var tiles = [];
     tiles.length = grid.length;
 
-    var msg = "";
-
     for (var i = 0; i < grid.length; i++){
         tiles[i] = [];
         tiles[i].length = grid[i].length;
         for (var j = 0; j < grid[i].length; j++){
             char = grid[i][j]
-            if (char === OPEN || (start.includes(char) || end.includes(char))) {
+            if (char === OPEN || start.includes(char) || end.includes(char)) {
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === HIDDEN){
@@ -569,9 +571,7 @@ function parseMap(maptext){
             else if (char === BLOCKING){
                 tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]
             }
-            msg = msg + " " + tiles[i][j];
         }
-        msg = msg + '\n';
     }
 
     levelMap.grid = grid;
@@ -579,6 +579,84 @@ function parseMap(maptext){
 
     return levelMap;
 }
+
+function findAdjacent(x, y, x_max, y_max){
+
+    console.log()
+    var adj = [
+        [x-1, y],   // W
+        [x, y-1],   // N
+        [x+1, y],   // E
+        [x, y+1],   // S
+    ]
+    var ret = []
+
+    for (var i = 0; i < adj.length; i++){
+        if (adj[i][0] < x_max && adj[i][0] >= 0){
+            if (adj[i][1] < y_max && adj[i][1] >= 0){
+                ret.push(adj[i]);
+            }
+        }
+    }
+    return ret;
+}
+
+
+function generatePaths(levelMap){
+
+    var startCoords = null;
+    var endCoords = null;
+
+    var paths = [];
+    var visited = levelMap.grid.slice();
+    console.log(visited);
+
+    for (var k = 0; k < 3; k++){
+        var pathList = [];
+        if (levelMap.startCoords[k] === null){
+            paths[k] = null;
+            continue;
+        }
+        startCoords = levelMap.startCoords[k];
+        endCoords = levelMap.endCoords[k];
+
+        console.log("start: " + startCoords);
+        console.log("end: " + endCoords);
+
+        pathList.push(startCoords);
+        var curr = startCoords;
+        var done = false;
+        var h = 0;
+        var tempx;
+        var tempy;
+        var temp;
+        while (done === false){
+            let adj = findAdjacent(curr[0], curr[1], COLUMN_N, ROW_N);
+
+            for (var i = 0; i < adj.length; i++){
+                let tempx = adj[i][0];
+                let tempy = adj[i][1];
+                let temp = levelMap.grid[tempy][tempx];
+                if (temp === OPEN && visited[tempy][tempx] !== 'X'){
+                    // Mark tiles already visited with an 'X'
+                    visited[tempy][tempx] = 'X';
+                    curr = [tempx, tempy];
+                    pathList.push(curr);
+                    continue;
+                }
+                else if (temp === '9'){
+                    curr = [tempx, tempy];
+                    pathList.push(curr);
+                    done = true;
+                    break;
+                }
+            }
+        }
+        paths.push(pathList);
+    }
+    return paths;
+}
+
 
 
 function parseWaveText(waveData){
@@ -615,6 +693,7 @@ function allEnemiesDead(){
     return true;
 }
 
+
 function create() {
     // // Parse a map file and produce a 2d array of chars
     // // that can be used to generate the level.
@@ -624,12 +703,12 @@ function create() {
     levelMap1 = parseMap(level1);       // Currently unused.
     levelMap2 = parseMap(level2);
     levelMap3 = parseMap(level3);
+    levelPath3 = generatePaths(levelMap3);
 
     const testmap = this.make.tilemap({ data: levelMap3.tiles, tileWidth: 64, tileHeight: 64 });
     const tileset = testmap.addTilesetImage("tdtiles");
     const layer = testmap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
 
-    // this.add.image(400, 300, 'level1');
     this.add.image(26, 28, 'goldCoin');
     this.add.image(MAPWIDTH - 56, 28, 'heart');
     goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
@@ -639,25 +718,23 @@ function create() {
     // its not related to our path
     var graphics = this.add.graphics();
 
-
     let waveText = this.cache.text.get('waveText');
     this.waveData = parseWaveText(waveText);
 
-    // the path for our enemies
-    // parameters are the start x and y of our path
-    path = this.add.path(0, 75);
-    path.lineTo(75,75);
-    path.lineTo(75,125);
-    path.lineTo(675,125);
-    path.lineTo(675,225);
-    path.lineTo(75,225);
-    path.lineTo(75,325);
-    path.lineTo(625,325);
-    path.lineTo(625,525);
-    path.lineTo(475,525);
-    path.lineTo(475,425);
-    path.lineTo(175,425);
-    path.lineTo(175,600);
+    var startx = levelPath3[0][0][0] * TILESIZE + TILESIZE / 2
+    var starty = levelPath3[0][0][1] * TILESIZE + TILESIZE / 2
+    path = this.add.path(startx, starty)
+
+    function makePath(pathStart, levelPath){
+        for (var i = 0; i < levelPath.length; i++){
+            var curr = levelPath[i];
+            pathx = curr[0] * TILESIZE + TILESIZE / 2
+            pathy = curr[1] * TILESIZE + TILESIZE / 2
+            pathStart.lineTo(pathx, pathy)
+        }
+    }
+
+    makePath(path, levelPath3[0]);
 
     // Change alpha to 1 to see the path
     graphics.lineStyle(3, 0xffffff, 0);

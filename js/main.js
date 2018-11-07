@@ -24,8 +24,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-// Default tower choice is the arrow tower
-var selectedTurret = "Arrow";
+var selectedTurret = "";
 // Controls whether to display a turret sprite on mouse pointer
 var placing = false;
 
@@ -459,38 +458,41 @@ function groundFireDamageEnemy(enemy, groundFire){
 }
 
 function placeTurret(pointer) {
-    var i = Math.floor(pointer.y/50);
-    var j = Math.floor(pointer.x/50);
-    if(canPlaceTurret(i, j)) {
-        var turret;
-        switch(selectedTurret){
-            case 'Arrow':
-                turret = arrowTurrets.get()
-                break;
-            case 'Bomb':
-                turret = bombTurrets.get()
-                break;
-            case 'Ice':
-                turret = iceTurrets.get()
-                break;
-            case 'Fire':
-                turret = fireTurrets.get()
-                break;
-        }
-        if (turret)
-        {
-            if (gold - turret.cost >= 0)
-            {
-                turret.setActive(true);
-                turret.setVisible(true);
-                turret.place(i, j);
-                placing = false;
+    if (placing == true)
+    {
+        var i = Math.floor(pointer.y/50);
+        var j = Math.floor(pointer.x/50);
+        if(canPlaceTurret(i, j)) {
+            var turret;
+            switch(selectedTurret){
+                case 'Arrow':
+                    turret = arrowTurrets.get()
+                    break;
+                case 'Bomb':
+                    turret = bombTurrets.get()
+                    break;
+                case 'Ice':
+                    turret = iceTurrets.get()
+                    break;
+                case 'Fire':
+                    turret = fireTurrets.get()
+                    break;
             }
-            else
+            if (turret)
             {
-                turret.setActive(false);
-                turret.setVisible(false);
-                placing = false;
+                if (gold - turret.cost >= 0)
+                {
+                    turret.setActive(true);
+                    turret.setVisible(true);
+                    turret.place(i, j);
+                    placing = false;
+                }
+                else
+                {
+                    turret.setActive(false);
+                    turret.setVisible(false);
+                    placing = false;
+                }
             }
         }
     }
@@ -565,6 +567,13 @@ function allEnemiesDead(){
     return true;
 }
 
+function addButtonInput(towerButton) {
+    towerButton.setInteractive();
+    towerButton.on('pointerover', () => enterButtonHoverState(towerButton));
+    towerButton.on('pointerout', () => enterButtonRestState(towerButton));
+    towerButton.on('pointerdown', () => selectTowerForPlacement(towerButton));
+}
+
 function enterButtonHoverState(button) {
     button.setTint(0xd3d3d3);
 }
@@ -572,25 +581,32 @@ function enterButtonHoverState(button) {
     button.setTint(0xffffff);
 }
 
-function selectArrowTowerForPlacement() {
-    selectedTurret = "Arrow";
-    console.log(selectedTurret);
+function selectTowerForPlacement(towerButton) {
     placing = true;
+    switch(towerButton.texture.key)
+    {
+        case 'arrow':
+            selectedTurret = "Arrow";
+            break;
+        case 'bomb':
+            selectedTurret = "Bomb";
+            break;
+        case 'fire':
+            selectedTurret = "Fire";
+            break;
+        case 'ice':
+            selectedTurret = "Ice";
+            break;
+    }
 }
- function selectBombTowerForPlacement() {
-    selectedTurret = "Bomb";
-    console.log(selectedTurret);
-    placing = true;
+
+function followMousePointer(scene, sprite) {
+    sprite.x = scene.input.activePointer.x;
+    sprite.y = scene.input.activePointer.y;
 }
- function selectFireTowerForPlacement() {
-    selectedTurret = "Fire";
-    console.log(selectedTurret);
-    placing = true;
-}
- function selectIceTowerForPlacement() {
-    selectedTurret = "Ice";
-    console.log(selectedTurret);
-    placing = true;
+
+function escapePlaceMode() {
+    placing = false;
 }
 
 function create() {
@@ -689,52 +705,37 @@ function create() {
 
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);
+    this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
     // Arrow tower button
     this.add.text(750, 55, 'Arrow');
     this.add.text(760, 128, "$" + arrowData.cost.level_1);
     this.arrowTowerButton = this.add.image(775, 100, 'arrow');
-    this.arrowTowerButton.setInteractive();
-    this.arrowTowerButton.on('pointerover', () => enterButtonHoverState(this.arrowTowerButton));
-    this.arrowTowerButton.on('pointerout', () => enterButtonRestState(this.arrowTowerButton));
-    this.arrowTowerButton.on('pointerdown', () => selectArrowTowerForPlacement());
+    addButtonInput(this.arrowTowerButton);
 
      // Bomb tower button
     this.add.text(755, 155, 'Bomb');
     this.add.text(758, 220, "$" + bombData.cost.level_1);
     this.bombTowerButton = this.add.image(775, 200, 'bomb');
-    this.bombTowerButton.setInteractive();
-    this.bombTowerButton.on('pointerover', () => enterButtonHoverState(this.bombTowerButton));
-    this.bombTowerButton.on('pointerout', () => enterButtonRestState(this.bombTowerButton));
-    this.bombTowerButton.on('pointerdown', () => selectBombTowerForPlacement());
+    addButtonInput(this.bombTowerButton);
     
     // Fire tower button
     this.add.text(755, 255, 'Fire');
     this.add.text(755, 330, "$" + fireData.cost.level_1);
     this.fireTowerButton = this.add.image(775, 300, 'fire');
-    this.fireTowerButton.setInteractive();
-    this.fireTowerButton.on('pointerover', () => enterButtonHoverState(this.fireTowerButton));
-    this.fireTowerButton.on('pointerout', () => enterButtonRestState(this.fireTowerButton));
-    this.fireTowerButton.on('pointerdown', () => selectFireTowerForPlacement());
-    
+    addButtonInput(this.fireTowerButton);
+
     // Ice tower button
     this.add.text(760, 355, 'Ice');
     this.add.text(755, 430, "$" + iceData.cost.level_1);
     this.iceTowerButton = this.add.image(775, 400, 'ice');
-    this.iceTowerButton.setInteractive();
-    this.iceTowerButton.on('pointerover', () => enterButtonHoverState(this.iceTowerButton));
-    this.iceTowerButton.on('pointerout', () => enterButtonRestState(this.iceTowerButton));
-    this.iceTowerButton.on('pointerdown', () => selectIceTowerForPlacement());
+    addButtonInput(this.iceTowerButton);
 
     // Tower sprites that will follow mouse pointer when UI button is clicked
     this.tempArrowTower = this.add.image(0, 0, 'arrow');
     this.tempBombTower = this.add.image(0, 0, 'bomb');
     this.tempFireTower = this.add.image(0, 0, 'fire');
     this.tempIceTower = this.add.image(0, 0, 'ice');
-    this.tempArrowTower.setVisible(false);
-    this.tempBombTower.setVisible(false);
-    this.tempFireTower.setVisible(false);
-    this.tempIceTower.setVisible(false);
     
     var graphicsArrow = this.add.graphics();
     var graphicsBomb = this.add.graphics();
@@ -750,6 +751,12 @@ function create() {
     this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);
     this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
     this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
+
+    // Hide these sprites until place mode is activated
+    this.tempArrowTower.setVisible(false);
+    this.tempBombTower.setVisible(false);
+    this.tempFireTower.setVisible(false);
+    this.tempIceTower.setVisible(false);
     this.arrowCircle.setVisible(false);
     this.bombCircle.setVisible(false);
     this.fireCircle.setVisible(false);
@@ -813,55 +820,44 @@ function update(time, delta) {
                 this.fireCircle.setVisible(false);
                 this.iceCircle.setVisible(false);
                 // Make the sprite and circle follow the mouse pointer
-                this.tempArrowTower.x = this.input.activePointer.x;
-                this.tempArrowTower.y = this.input.activePointer.y;                
-                this.arrowCircle.x = this.input.activePointer.x;
-                this.arrowCircle.y = this.input.activePointer.y;
+                followMousePointer(this, this.tempArrowTower);
+                followMousePointer(this, this.arrowCircle);
                 break;
             case "Bomb":
                 this.tempArrowTower.setVisible(false);
                 this.tempBombTower.setVisible(true);
                 this.tempFireTower.setVisible(false);
                 this.tempIceTower.setVisible(false);
-                this.tempBombTower.x = this.input.activePointer.x;
-                this.tempBombTower.y = this.input.activePointer.y;
-
                 this.arrowCircle.setVisible(false);
                 this.bombCircle.setVisible(true);
                 this.fireCircle.setVisible(false);
                 this.iceCircle.setVisible(false);
-                this.bombCircle.x = this.input.activePointer.x;
-                this.bombCircle.y = this.input.activePointer.y;
+                followMousePointer(this, this.tempBombTower);
+                followMousePointer(this, this.bombCircle);
                 break;
             case "Ice":
                 this.tempArrowTower.setVisible(false);
                 this.tempBombTower.setVisible(false);
                 this.tempFireTower.setVisible(false);
                 this.tempIceTower.setVisible(true);
-                this.tempIceTower.x = this.input.activePointer.x;
-                this.tempIceTower.y = this.input.activePointer.y;
-                
                 this.arrowCircle.setVisible(false);
                 this.bombCircle.setVisible(false);
                 this.fireCircle.setVisible(false);
                 this.iceCircle.setVisible(true);
-                this.iceCircle.x = this.input.activePointer.x;
-                this.iceCircle.y = this.input.activePointer.y;
+                followMousePointer(this, this.tempIceTower);
+                followMousePointer(this, this.iceCircle);
                 break;
             case "Fire":
                 this.tempArrowTower.setVisible(false);
                 this.tempBombTower.setVisible(false);
                 this.tempFireTower.setVisible(true);
                 this.tempIceTower.setVisible(false);
-                this.tempFireTower.x = this.input.activePointer.x;
-                this.tempFireTower.y = this.input.activePointer.y;
-                
                 this.arrowCircle.setVisible(false);
                 this.bombCircle.setVisible(false);
                 this.fireCircle.setVisible(true);
                 this.iceCircle.setVisible(false);
-                this.fireCircle.x = this.input.activePointer.x;
-                this.fireCircle.y = this.input.activePointer.y;
+                followMousePointer(this, this.tempFireTower);
+                followMousePointer(this, this.fireCircle);
         }
     }
 
@@ -870,7 +866,6 @@ function update(time, delta) {
         this.tempBombTower.setVisible(false);
         this.tempFireTower.setVisible(false);
         this.tempIceTower.setVisible(false);
-
         this.arrowCircle.setVisible(false);
         this.bombCircle.setVisible(false);
         this.fireCircle.setVisible(false);

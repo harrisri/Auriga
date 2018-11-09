@@ -446,7 +446,7 @@ function getEnemy(x, y, distance, turret_target) {
             if (turret_target == 'air-ground') {
                 return enemyUnits[i];
             }
-            else if (turret_target == enemyUnits[i].move_type){
+            else if (turret_target == enemyUnits[i].moveType){
                 return enemyUnits[i];
             }
         }

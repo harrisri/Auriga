@@ -456,7 +456,7 @@ function damageEnemy(enemy, bullet) {
             fire.y = enemy.y;
             fire.damage = bullet.damage;
             fire.lifespan = bullet.duration;
-            fire.body.setCircle(5);
+            fire.body.setCircle(1);
             fire.setVisible(true);
             fire.setActive(true);
             enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor

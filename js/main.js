@@ -24,20 +24,22 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
-var selectedTurret = "Fire";
+var selectedTurret = "";
+// Controls whether to display a turret sprite on mouse pointer
+var placing = false;
 
-var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
+                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
 function preload() {
     // Load unit and tower files
@@ -79,7 +81,6 @@ function preload() {
     this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
     this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
 
-
     // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
@@ -97,9 +98,7 @@ function generateEnemyClass(data){
         initialize:
         function Enemy (scene)
         {
-            // Replace with infantry image when complete
             Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
-            //Phaser.GameObjects.Image.call(this, scene, 0, 0, 'goblin', 'enemy');
             this.name = data['name']
             this.follower = { t: 0, vec: new Phaser.Math.Vector2() };
             this.speed = data['base_speed'] / SPEED_SCALE;
@@ -187,6 +186,8 @@ function generateEnemyClass(data){
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
             this.setRotation(angle)
+
+            
 
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
@@ -429,7 +430,7 @@ function damageEnemy(enemy, bullet) {
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }
-        }   
+        }
 
         else if (bullet.name == 'fire'){
             //drop ground fire!
@@ -457,36 +458,41 @@ function groundFireDamageEnemy(enemy, groundFire){
 }
 
 function placeTurret(pointer) {
-    var i = Math.floor(pointer.y/50);
-    var j = Math.floor(pointer.x/50);
-    if(canPlaceTurret(i, j)) {
-        var turret;
-        switch(selectedTurret){
-            case 'Arrow':
-                turret = arrowTurrets.get()
-                break;
-            case 'Bomb':
-                turret = bombTurrets.get()
-                break;
-            case 'Ice':
-                turret = iceTurrets.get()
-                break;
-            case 'Fire':
-                turret = fireTurrets.get()
-                break;
-        }
-        if (turret)
-        {
-            if (gold - turret.cost >= 0)
-            {
-                turret.setActive(true);
-                turret.setVisible(true);
-                turret.place(i, j);
+    if (placing == true)
+    {
+        var i = Math.floor(pointer.y/50);
+        var j = Math.floor(pointer.x/50);
+        if(canPlaceTurret(i, j)) {
+            var turret;
+            switch(selectedTurret){
+                case 'Arrow':
+                    turret = arrowTurrets.get()
+                    break;
+                case 'Bomb':
+                    turret = bombTurrets.get()
+                    break;
+                case 'Ice':
+                    turret = iceTurrets.get()
+                    break;
+                case 'Fire':
+                    turret = fireTurrets.get()
+                    break;
             }
-            else
+            if (turret)
             {
-                turret.setActive(false);
-                turret.setVisible(false);
+                if (gold - turret.cost >= 0)
+                {
+                    turret.setActive(true);
+                    turret.setVisible(true);
+                    turret.place(i, j);
+                    placing = false;
+                }
+                else
+                {
+                    turret.setActive(false);
+                    turret.setVisible(false);
+                    placing = false;
+                }
             }
         }
     }
@@ -561,6 +567,48 @@ function allEnemiesDead(){
     return true;
 }
 
+function addButtonInput(towerButton) {
+    towerButton.setInteractive();
+    towerButton.on('pointerover', () => enterButtonHoverState(towerButton));
+    towerButton.on('pointerout', () => enterButtonRestState(towerButton));
+    towerButton.on('pointerdown', () => selectTowerForPlacement(towerButton));
+}
+
+function enterButtonHoverState(button) {
+    button.setTint(0xd3d3d3);
+}
+ function enterButtonRestState(button) {
+    button.setTint(0xffffff);
+}
+
+function selectTowerForPlacement(towerButton) {
+    placing = true;
+    switch(towerButton.texture.key)
+    {
+        case 'arrow':
+            selectedTurret = "Arrow";
+            break;
+        case 'bomb':
+            selectedTurret = "Bomb";
+            break;
+        case 'fire':
+            selectedTurret = "Fire";
+            break;
+        case 'ice':
+            selectedTurret = "Ice";
+            break;
+    }
+}
+
+function followMousePointer(scene, sprite) {
+    sprite.x = scene.input.activePointer.x;
+    sprite.y = scene.input.activePointer.y;
+}
+
+function escapePlaceMode() {
+    placing = false;
+}
+
 function create() {
     this.add.image(400, 300, 'level1');
     this.add.image(20, 21, 'goldCoin');
@@ -568,9 +616,6 @@ function create() {
     goldText = this.add.text(38, 12, '200', {fontSize: '20px', fontStyle: 'Bold'});
     lifeText = this.add.text(770, 12, '20', {fontSize: '20px', fontStyle: 'Bold'});
     this.waveText = this.add.text(360,12, "Wave 1", {fontSize:'20px', fontStyle: 'Bold'});
-    // this graphics element is only for visualization,
-    // its not related to our path
-    var graphics = this.add.graphics();
 
     // Parse a map file and produce a 2d array of chars
     // that can be used to generate the level.
@@ -599,11 +644,8 @@ function create() {
     path.lineTo(475,425);
     path.lineTo(175,425);
     path.lineTo(175,600);
-
-    // Change alpha to 1 to see the path
-    graphics.lineStyle(3, 0xffffff, 0);
     // visualize the path
-    path.draw(graphics);
+    // path.draw(graphics);
 
     // Get enemy data and generate classes to instantiate enemies
     let infantryData = game.cache.json.get('infantry');
@@ -658,10 +700,65 @@ function create() {
     this.physics.add.overlap(flyingGroup, GroundFireGroup, groundFireDamageEnemy);
     this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
 
-
     //clicks place turrets
     this.input.on('pointerdown', placeTurret);
+    this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
+
+    // Arrow tower button
+    this.add.text(750, 55, 'Arrow');
+    this.add.text(760, 128, "$" + arrowData.cost.level_1);
+    this.arrowTowerButton = this.add.image(775, 100, 'arrow');
+    addButtonInput(this.arrowTowerButton);
+
+     // Bomb tower button
+    this.add.text(755, 155, 'Bomb');
+    this.add.text(758, 220, "$" + bombData.cost.level_1);
+    this.bombTowerButton = this.add.image(775, 200, 'bomb');
+    addButtonInput(this.bombTowerButton);
     
+    // Fire tower button
+    this.add.text(755, 255, 'Fire');
+    this.add.text(755, 330, "$" + fireData.cost.level_1);
+    this.fireTowerButton = this.add.image(775, 300, 'fire');
+    addButtonInput(this.fireTowerButton);
+
+    // Ice tower button
+    this.add.text(760, 355, 'Ice');
+    this.add.text(755, 430, "$" + iceData.cost.level_1);
+    this.iceTowerButton = this.add.image(775, 400, 'ice');
+    addButtonInput(this.iceTowerButton);
+
+    // Tower sprites that will follow mouse pointer when UI button is clicked
+    this.tempArrowTower = this.add.image(0, 0, 'arrow');
+    this.tempBombTower = this.add.image(0, 0, 'bomb');
+    this.tempFireTower = this.add.image(0, 0, 'fire');
+    this.tempIceTower = this.add.image(0, 0, 'ice');
+    
+    var graphicsArrow = this.add.graphics();
+    var graphicsBomb = this.add.graphics();
+    var graphicsFire = this.add.graphics();
+    var graphicsIce = this.add.graphics();
+    // Change alpha to 1 for white, 0 for transparent
+    graphicsArrow.lineStyle(2, 0xffffe0, 1);
+    graphicsBomb.lineStyle(2, 0xffffe0, 1);
+    graphicsFire.lineStyle(2, 0xffffe0, 1);
+    graphicsIce.lineStyle(2, 0xffffe0, 1);
+    // Generate tower range indicators
+    this.arrowCircle = graphicsArrow.strokeCircle(0, 0, arrowData.range.level_1);
+    this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);
+    this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
+    this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
+
+    // Hide all sprites initially
+    this.tempArrowTower.setVisible(false);
+    this.arrowCircle.setVisible(false);
+    this.tempBombTower.setVisible(false);
+    this.bombCircle.setVisible(false);
+    this.tempIceTower.setVisible(false);
+    this.iceCircle.setVisible(false);
+    this.tempFireTower.setVisible(false);
+    this.fireCircle.setVisible(false);
+
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;
     this.nextEnemyIndex = 0;
@@ -707,6 +804,47 @@ function update(time, delta) {
         }
     }
 
+    if (placing == true){
+        switch(selectedTurret) {
+            case "Arrow":
+                // Make the tower and it's range visible
+                this.tempArrowTower.setVisible(true);
+                this.arrowCircle.setVisible(true);
+                // Make the sprite and circle follow the mouse pointer
+                followMousePointer(this, this.tempArrowTower);
+                followMousePointer(this, this.arrowCircle);
+                break;
+            case "Bomb":
+                this.tempBombTower.setVisible(true);
+                this.bombCircle.setVisible(true);
+                followMousePointer(this, this.tempBombTower);
+                followMousePointer(this, this.bombCircle);
+                break;
+            case "Ice":
+                this.tempIceTower.setVisible(true);
+                this.iceCircle.setVisible(true);
+                followMousePointer(this, this.tempIceTower);
+                followMousePointer(this, this.iceCircle);
+                break;
+            case "Fire":
+                this.tempFireTower.setVisible(true);
+                this.fireCircle.setVisible(true);
+                followMousePointer(this, this.tempFireTower);
+                followMousePointer(this, this.fireCircle);
+        }
+    }
+
+    if (placing == false) {
+        this.tempArrowTower.setVisible(false);
+        this.arrowCircle.setVisible(false);
+        this.tempBombTower.setVisible(false);
+        this.bombCircle.setVisible(false);
+        this.tempIceTower.setVisible(false);
+        this.iceCircle.setVisible(false);
+        this.tempFireTower.setVisible(false);
+        this.fireCircle.setVisible(false);
+    }
+    
     if (this.showCountdown){
         var timer = Math.round((this.nextEnemy - time)/1000);
         this.waveText.setText("Next Wave in " + timer + "!")

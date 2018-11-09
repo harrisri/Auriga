@@ -33,6 +33,7 @@ var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
+var explosion;
 
 var selectedTurret = "";
 // Controls whether to display a turret sprite on mouse pointer
@@ -66,22 +67,24 @@ function preload() {
     this.load.json('ice', 'data/towers/ice.json')
     this.load.json('bomb', 'data/towers/bomb.json')
 
+    
     // Load map files
     this.load.text('level1', 'data/maps/level1');
     this.load.text('level2', 'data/maps/level2');
     this.load.text('level3', 'data/maps/level3');
 
-    // Load background images and UI elements
-    this.load.image('background', '/assets/grassBackground.jpg');
-    this.load.image('level1', 'assets/tilemaps/level1.png');
-    this.load.image('level2', 'assets/tilemaps/level2.png');
-    this.load.image('level3', '/assets/tilemaps/level3.png');
+    // // Load background images and UI elements
+    // this.load.image('background', '/assets/grassBackground.jpg');
+    // this.load.image('level1', 'assets/tilemaps/level1.png');
+    // this.load.image('level2', 'assets/tilemaps/level2.png');
+    // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load tower sprites
     this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');
     this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
     this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
     this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
+    
 
     // Load enemy sprites
     this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
@@ -101,6 +104,10 @@ function preload() {
 
     //load wave data
     this.load.text('waveText', 'data/waves/windingPath');
+
+    //load ice tower explosion;
+    this.load.setPath('assets/')
+    this.load.multiatlas('iceExplosion','Ice_Explosion.json');
 }
 
 function generateEnemyClass(data){
@@ -281,7 +288,10 @@ function generateTowerClass(data){
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                    enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                    if (enemyUnits[i].moveType === this.target) {
+                        iceExplosion(this.x, this.y);
+                        enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                    }
                 }
             }
         },
@@ -311,6 +321,8 @@ function generateTowerClass(data){
 
     return Tower;
 }
+
+
 
 function generateProjectileClass(data){
     var Projectile = new Phaser.Class({
@@ -391,6 +403,12 @@ function generateGroundFireClass(data){
     return GroundFire;
 }
 
+function iceExplosion(x,y){
+    var explosion = iceExplosions.get().setActive(true);
+    explosion.x = x;
+    explosion.y = y;
+    explosion.play('explode');
+}
 
 function addProjectile(name, x, y, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
@@ -831,6 +849,17 @@ function create() {
     const GroundFire = generateGroundFireClass(fireData);
     GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
 
+    // create ice explosion animation and group
+    var frameNames = this.anims.generateFrameNames('iceExplosion',{
+        start: 1, end: 19, suffix:'.png'
+    })
+    this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
+    
+    iceExplosions = this.add.group();
+    for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
+        var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')
+        sprite.setVisible(false);
+    }
     //add collisions between enemies and projectiles.
     this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);

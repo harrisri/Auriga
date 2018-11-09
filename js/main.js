@@ -395,16 +395,19 @@ function generateGroundFireClass(data){
 function addProjectile(name, x, y, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
     switch(name){
-            //change projectile sprite if needed
-            case 'bomb':
-                projectile.setTexture('missle')
-                projectile.setRotation(angle + Math.PI/2);
-                break;
-            case 'fire':
-                projectile.setTexture('fireBullet');
-                projectile.setRotation(angle - Math.PI/2);
-                break;
-        }
+        //change projectile sprite if needed
+        case 'arrow':
+            projectile.setTexture('bullet');
+            break;
+        case 'bomb':
+            projectile.setTexture('missle')
+            projectile.setRotation(angle + Math.PI/2);
+            break;
+        case 'fire':
+            projectile.setTexture('fireBullet');
+            projectile.setRotation(angle - Math.PI/2);
+            break;
+    }
     if (projectile)
     {
         projectile.name = name;

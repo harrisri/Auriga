@@ -267,7 +267,7 @@ function generateTowerClass(data){
         },
 
         fire: function() {
-            var enemy = getEnemy(this.x, this.y, this.range);
+            var enemy = getEnemy(this.x, this.y, this.range, this.target);
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
@@ -418,14 +418,20 @@ function addProjectile(name, x, y, angle, damage, radius, duration) {
     }
 }
 
-function getEnemy(x, y, distance) {
+function getEnemy(x, y, distance, turret_target) {
     //get ALL enemies
     var speedy = speedyGroup.getChildren();
     var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
     for(var i = 0; i < enemyUnits.length; i++) {
-        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance)
-            return enemyUnits[i];
+        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
+            if (turret_target == 'air-ground') {
+                return enemyUnits[i];
+            }
+            else if (turret_target == enemyUnits[i].move_type){
+                return enemyUnits[i];
+            }
+        }
     }
     return false;
 }

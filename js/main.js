@@ -2,11 +2,12 @@ const SPEED_SCALE = 50000;
 const BLOCKING = '#';
 const OPEN = '-';
 const HIDDEN = '*';
-const TILESIZE = 64
-const MAPHEIGHT = TILESIZE * 12
-const MAPWIDTH = TILESIZE * 16
-const COLUMN_N = 16
-const ROW_N = 12
+const TILESIZE = 64;
+const MAPHEIGHT = TILESIZE * 12;
+const MAPWIDTH = TILESIZE * 16;
+const COLUMN_N = 16;
+const ROW_N = 12;
+const SELL_PERCENTAGE = 0.8;
 
 var config = {
     type: Phaser.AUTO,
@@ -29,7 +30,7 @@ var config = {
 
 var game = new Phaser.Game(config);
 var path;
-var gold = 200;
+var gold = 2000;
 var goldText;
 var life = 20;
 var lifeText;
@@ -38,6 +39,7 @@ var explosion;
 var selectedTurret = "";
 // Controls whether to display a turret sprite on mouse pointer
 var placing = false;
+var upgradeSellFlag = false;
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -96,6 +98,8 @@ function preload() {
     // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
     this.load.image('heart', 'assets/heart.png');
+    this.load.image('upgradeButton', 'assets/UpgradeButton.png')
+    this.load.image('sellButton', 'assets/SellButton.png')
 
     //load wave data
     this.load.text('waveText', 'data/waves/windingPath');
@@ -267,7 +271,15 @@ function generateTowerClass(data){
                 this.abilityActive = true;
             }
         },
-
+        getUpgradeCost: function(){
+            if (this.level <= 3) {
+                levelKey = 'level_' + (this.level + 1);
+                return data['cost'][levelKey];
+            }
+            else{
+                return 'NA'
+            }
+        },
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
             if(enemy) {
@@ -518,9 +530,13 @@ function placeTurret(pointer) {
             {
                 if (gold - turret.cost >= 0)
                 {
+                    //put turret on map
                     turret.setActive(true);
                     turret.setVisible(true);
                     turret.place(i, j);
+
+                    //make tower interactive
+                    makeTowerButtonsInteractive('tower',turret);
                     placing = false;
                 }
                 else
@@ -536,6 +552,76 @@ function placeTurret(pointer) {
 
 function canPlaceTurret(i, j) {
     return map[i][j] === 0;
+}
+
+function showUpgradeAndSell(tower){
+    var down = tower.y + 45;
+    var left = tower.x - 40;
+    var right = tower.x + 40;
+
+    //create sell button container
+    this.sellButton.setActive(true).setVisible(true);
+    this.sellText.setText("Sell\n$"+(Math.round(tower.cost*SELL_PERCENTAGE))).setOrigin(0.5, 0.5);
+    this.sellContainer.add([this.sellButton,this.sellText]);
+    this.sellContainer.setPosition(right,down);
+
+    //create upgrade button container
+    this.upgradeButton.setActive(true).setVisible(true);
+    this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost()).setOrigin(0.5, 0.5);
+    this.upgradeContainer.add([this.upgradeButton,this.upgradeText]);
+    this.upgradeContainer.setPosition(left,down);
+
+    //so troops run underneath the buttons.
+    this.upgradeContainer.depth = 100;
+    this.sellContainer.depth = 100;
+
+    //make these buttons interactive.  First need to create a hitbox.
+    var upgradeHitbox = upgradeContainer.getBounds();
+    var sellHitbox = sellContainer.getBounds();
+    this.upgradeContainer.setSize(upgradeHitbox.width, upgradeHitbox.height);
+    this.sellContainer.setSize(sellHitbox.width, sellHitbox.height);
+
+    makeTowerButtonsInteractive('upgrade',this.upgradeContainer,tower);
+    makeTowerButtonsInteractive('sell',this.sellContainer,tower);
+
+    //flag for hiding buttons when player clicks away.
+    upgradeSellFlag = true;
+}
+
+function makeTowerButtonsInteractive(type, button, tower){
+    button.setInteractive();
+    switch(type)
+    {
+        case 'tower':
+            button.on('pointerout', () => enterButtonRestState(button));
+            button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerdown', () => showUpgradeAndSell(button));
+            break;
+        case 'upgrade':
+            button.on('pointerdown', () => upgradeTower(button, tower));
+            break;
+        case 'sell':
+            button.on('pointerdown', () => sellTower(button, tower));
+            break;
+    }
+}
+
+function upgradeTower(button, tower){
+    alert("upgrading!"); 
+}
+
+function sellTower(button, tower){
+    //add percentage of tower cost to gold.
+    gold += (tower.cost * SELL_PERCENTAGE);
+    goldText.setText(gold);
+
+    //clear out space for placing new towers.
+    var i = Math.floor(tower.y/TILESIZE);
+    var j = Math.floor(tower.x/TILESIZE);
+    map[i][j] = 0;
+
+    //deactivate this tower.
+    tower.setActive(false).setVisible(false);
 }
 
 function parseMap(maptext){
@@ -778,6 +864,16 @@ function create() {
     goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
     lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
     this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+    
+    //add two buttons for selling and upgrading towers.
+    upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    upgradeButton = this.add.image(0,0,'upgradeButton').setActive(false).setVisible(false);
+    sellText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    sellButton = this.add.image(0,0,'sellButton').setActive(false).setVisible(false);
+    upgradeContainer = this.add.container();
+    sellContainer = this.add.container();
+
+
     // this graphics element is only for visualization,
     // its not related to our path
     var graphics = this.add.graphics();
@@ -849,12 +945,13 @@ function create() {
         start: 1, end: 19, suffix:'.png'
     })
     this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
-    
     iceExplosions = this.add.group();
     for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
         var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')
         sprite.setVisible(false);
     }
+
+
     //add collisions between enemies and projectiles.
     this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
@@ -914,6 +1011,7 @@ function create() {
     graphicsBomb.lineStyle(2, 0xffffe0, 1);
     graphicsFire.lineStyle(2, 0xffffe0, 1);
     graphicsIce.lineStyle(2, 0xffffe0, 1);
+
     // Generate tower range indicators
     this.arrowCircle = graphicsArrow.strokeCircle(0, 0, arrowData.range.level_1);
     this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);

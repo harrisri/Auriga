@@ -521,11 +521,8 @@ function placeTurret(pointer) {
     var i = Math.floor(pointer.y/TILESIZE);
     var j = Math.floor(pointer.x/TILESIZE);  
 
-    console.log('upgrade x:',upgradeSellX, 'y:',upgradeSellY)
-    console.log('j',j,'i',i)
-
+    //check if user clicked away from upgrades/sell buttons.
     if (upgradeSellX != j || upgradeSellY != i) {
-        console.log('cleanUpButtons')
         cleanUpButtons();
     }
 
@@ -646,8 +643,21 @@ function sellTower(button, tower){
     map[i][j] = 0;
 
     //deactivate this tower.
-    tower.setActive(false).setVisible(false);
-
+    console.log(tower.name);
+    switch (tower.name){
+        case 'arrow':
+            arrowTurrets.remove(tower,true,true);
+            break;
+        case 'bomb':
+            bombTurrets.remove(tower,true,true);
+            break;
+        case 'ice':
+            iceTurrets.remove(tower,true,true);
+            break;
+        case 'fire':
+            fireTurrets.remove(tower,true,true);
+            break;
+    }
     cleanUpButtons();
 }
 

@@ -73,11 +73,6 @@ function preload() {
     this.load.text('level2', 'data/maps/level2');
     this.load.text('level3', 'data/maps/level3');
 
-    // // Load background images and UI elements
-    // this.load.image('background', '/assets/grassBackground.jpg');
-    // this.load.image('level1', 'assets/tilemaps/level1.png');
-    // this.load.image('level2', 'assets/tilemaps/level2.png');
-    // this.load.image('level3', '/assets/tilemaps/level3.png');
 
     // Load tower sprites
     this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');

@@ -39,7 +39,9 @@ var explosion;
 var selectedTurret = "";
 // Controls whether to display a turret sprite on mouse pointer
 var placing = false;
-var upgradeSellFlag = false;
+// used to check if we need to delete upgrade and sell buttons.
+var upgradeSellX = 0;
+var upgradeSellY = 0;
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -280,6 +282,16 @@ function generateTowerClass(data){
                 return 'NA'
             }
         },
+
+        getSellPrice: function(){
+            var total = 0;
+            for (var i = 1; i < this.level + 1; i++) {
+                levelKey = 'level_' + i;
+                total = total + data['cost'][levelKey]
+            }
+            return Math.round(total * SELL_PERCENTAGE);
+        },
+
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
             if(enemy) {
@@ -506,10 +518,20 @@ function groundFireDamageEnemy(enemy, groundFire){
 }
 
 function placeTurret(pointer) {
+    var i = Math.floor(pointer.y/TILESIZE);
+    var j = Math.floor(pointer.x/TILESIZE);  
+
+    console.log('upgrade x:',upgradeSellX, 'y:',upgradeSellY)
+    console.log('j',j,'i',i)
+
+    if (upgradeSellX != j || upgradeSellY != i) {
+        console.log('cleanUpButtons')
+        cleanUpButtons();
+    }
+
     if (placing == true)
     {
-        var i = Math.floor(pointer.y/TILESIZE);
-        var j = Math.floor(pointer.x/TILESIZE);
+
         if(canPlaceTurret(i, j)) {
             var turret;
             switch(selectedTurret){
@@ -559,42 +581,39 @@ function showUpgradeAndSell(tower){
     var left = tower.x - 40;
     var right = tower.x + 40;
 
-    //create sell button container
-    this.sellButton.setActive(true).setVisible(true);
-    this.sellText.setText("Sell\n$"+(Math.round(tower.cost*SELL_PERCENTAGE))).setOrigin(0.5, 0.5);
-    this.sellContainer.add([this.sellButton,this.sellText]);
-    this.sellContainer.setPosition(right,down);
+    var sellButton = ButtonsGroup.get(right,down,'sellButton',null,true);
+    this.sellText.setText("Sell\n$"+ tower.getSellPrice()).setPosition(right,down).setOrigin(0.5,0.5);
+    sellButton.depth = 10;
+    this.sellText.depth = 11;    
 
-    //create upgrade button container
-    this.upgradeButton.setActive(true).setVisible(true);
-    this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost()).setOrigin(0.5, 0.5);
-    this.upgradeContainer.add([this.upgradeButton,this.upgradeText]);
-    this.upgradeContainer.setPosition(left,down);
+    var upgradeButton = ButtonsGroup.get(left,down,'upgradeButton',null,true);
+    this.upgradeText.setPosition(left,down).setOrigin(0.5,0.5);
+    
+    if (tower.level === 4) {
+        this.upgradeText.setText("MAX")
+    }
+    else{
+        this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost());
+    }
+    sellButton.depth = 10;
+    this.upgradeText.depth = 11;
 
-    //so troops run underneath the buttons.
-    this.upgradeContainer.depth = 100;
-    this.sellContainer.depth = 100;
 
-    //make these buttons interactive.  First need to create a hitbox.
-    var upgradeHitbox = upgradeContainer.getBounds();
-    var sellHitbox = sellContainer.getBounds();
-    this.upgradeContainer.setSize(upgradeHitbox.width, upgradeHitbox.height);
-    this.sellContainer.setSize(sellHitbox.width, sellHitbox.height);
+    makeTowerButtonsInteractive('upgrade',upgradeButton,tower);
+    makeTowerButtonsInteractive('sell',sellButton,tower);
 
-    makeTowerButtonsInteractive('upgrade',this.upgradeContainer,tower);
-    makeTowerButtonsInteractive('sell',this.sellContainer,tower);
-
-    //flag for hiding buttons when player clicks away.
-    upgradeSellFlag = true;
+    //coords for hiding buttons when player clicks away.
+    upgradeSellX = Math.floor(tower.x/TILESIZE);
+    upgradeSellY = Math.floor(tower.y/TILESIZE);
 }
 
 function makeTowerButtonsInteractive(type, button, tower){
     button.setInteractive();
+    button.on('pointerout', () => enterButtonRestState(button));
+    button.on('pointerover', () => enterButtonHoverState(button));
     switch(type)
     {
         case 'tower':
-            button.on('pointerout', () => enterButtonRestState(button));
-            button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerdown', () => showUpgradeAndSell(button));
             break;
         case 'upgrade':
@@ -607,12 +626,18 @@ function makeTowerButtonsInteractive(type, button, tower){
 }
 
 function upgradeTower(button, tower){
-    alert("upgrading!"); 
+    if ((gold - tower.getUpgradeCost()) >= 0) {
+        gold -= tower.getUpgradeCost();
+        goldText.setText(gold);
+        tower.upgrade();
+        cleanUpButtons();
+    }
 }
+
 
 function sellTower(button, tower){
     //add percentage of tower cost to gold.
-    gold += (tower.cost * SELL_PERCENTAGE);
+    gold += tower.getSellPrice();
     goldText.setText(gold);
 
     //clear out space for placing new towers.
@@ -622,6 +647,14 @@ function sellTower(button, tower){
 
     //deactivate this tower.
     tower.setActive(false).setVisible(false);
+
+    cleanUpButtons();
+}
+
+function cleanUpButtons(){
+    this.upgradeText.setText('')
+    this.sellText.setText('')
+    var buttons = ButtonsGroup.clear(true,true);
 }
 
 function parseMap(maptext){
@@ -812,7 +845,8 @@ function addButtonInput(towerButton) {
 function enterButtonHoverState(button) {
     button.setTint(0xd3d3d3);
 }
- function enterButtonRestState(button) {
+
+function enterButtonRestState(button) {
     button.setTint(0xffffff);
 }
 
@@ -865,14 +899,10 @@ function create() {
     lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
     this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
     
-    //add two buttons for selling and upgrading towers.
-    upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
-    upgradeButton = this.add.image(0,0,'upgradeButton').setActive(false).setVisible(false);
+    //the three below are used for upgrade/sell buttons.
     sellText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
-    sellButton = this.add.image(0,0,'sellButton').setActive(false).setVisible(false);
-    upgradeContainer = this.add.container();
-    sellContainer = this.add.container();
-
+    upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    ButtonsGroup = this.add.group();
 
     // this graphics element is only for visualization,
     // its not related to our path

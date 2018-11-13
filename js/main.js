@@ -643,7 +643,6 @@ function sellTower(button, tower){
     map[i][j] = 0;
 
     //deactivate this tower.
-    console.log(tower.name);
     switch (tower.name){
         case 'arrow':
             arrowTurrets.remove(tower,true,true);

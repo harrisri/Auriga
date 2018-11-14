@@ -102,6 +102,10 @@ function preload() {
     this.load.image('heart', 'assets/heart.png');
     this.load.image('upgradeButton', 'assets/UpgradeButton.png')
     this.load.image('sellButton', 'assets/SellButton.png')
+    this.load.image('1-star', 'assets/1Star.png')
+    this.load.image('2-star', 'assets/2Star.png')
+    this.load.image('3-star', 'assets/3Star.png')
+    this.load.image('4-star', 'assets/4Star.png')
 
     //load wave data
     this.load.text('waveText', 'data/waves/windingPath');
@@ -187,7 +191,7 @@ function generateEnemyClass(data){
         {
             this.time = time; //used for slow/damage timers
 
-            //damage timer is up and no longer
+            //damage tint timer is up 
             if (time > this.damageTimer && !this.slowed) {
                 this.setTint(0xffffff);
             }
@@ -208,8 +212,6 @@ function generateEnemyClass(data){
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
             this.setRotation(angle)
-
-            
 
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
@@ -554,6 +556,9 @@ function placeTurret(pointer) {
                     turret.setVisible(true);
                     turret.place(i, j);
 
+                    //put a star below turret
+                    addTowerStar(turret);
+
                     //make tower interactive
                     makeTowerButtonsInteractive('tower',turret);
                     placing = false;
@@ -574,15 +579,24 @@ function canPlaceTurret(i, j) {
 }
 
 function showUpgradeAndSell(tower){
-    var down = tower.y + 45;
-    var left = tower.x - 40;
-    var right = tower.x + 40;
+    // handler function for when a user clicks on a placed tower.
+    // expects the tower to be passed in as it is required for getting upgrade/sell prices.
 
+    //handles case where user clicks on multiple towers in a row.
+    if (ButtonsGroup.getChildren().length > 0) {
+        cleanUpButtons();
+    }
+
+    //button placement variables
+    var down = tower.y + 50;
+    var left = tower.x - 33
+    var right = tower.x + 33;
+
+    //create sell button
     var sellButton = ButtonsGroup.get(right,down,'sellButton',null,true);
     this.sellText.setText("Sell\n$"+ tower.getSellPrice()).setPosition(right,down).setOrigin(0.5,0.5);
-    sellButton.depth = 10;
-    this.sellText.depth = 11;    
 
+    //create upgrade button.
     var upgradeButton = ButtonsGroup.get(left,down,'upgradeButton',null,true);
     this.upgradeText.setPosition(left,down).setOrigin(0.5,0.5);
     
@@ -592,10 +606,14 @@ function showUpgradeAndSell(tower){
     else{
         this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost());
     }
+
+    //setting the depth to an integer (semi random in this case) makes it so enemies are not shown over the buttons/text.
+    this.sellText.depth = 11;    
     sellButton.depth = 10;
+    upgradeButton.depth = 10;
     this.upgradeText.depth = 11;
 
-
+    //make these buttons interactive.
     makeTowerButtonsInteractive('upgrade',upgradeButton,tower);
     makeTowerButtonsInteractive('sell',sellButton,tower);
 
@@ -605,6 +623,9 @@ function showUpgradeAndSell(tower){
 }
 
 function makeTowerButtonsInteractive(type, button, tower){
+    // function used to make tower, sell, and upgrade buttons interactive.
+    // each button gets its own function upon clicking.
+
     button.setInteractive();
     button.on('pointerout', () => enterButtonRestState(button));
     button.on('pointerover', () => enterButtonHoverState(button));
@@ -623,26 +644,35 @@ function makeTowerButtonsInteractive(type, button, tower){
 }
 
 function upgradeTower(button, tower){
+    // If the player has enough money, the tower is upgraded to the next level.
+    // An additional star is added upon successful upgrade.
+
     if ((gold - tower.getUpgradeCost()) >= 0) {
         gold -= tower.getUpgradeCost();
         goldText.setText(gold);
         tower.upgrade();
         cleanUpButtons();
+        removeTowerStar(tower); //clear existing star
+        addTowerStar(tower);
     }
 }
 
 
 function sellTower(button, tower){
-    //add percentage of tower cost to gold.
+    // Function attached to sell tower button.
+    // Subtracts from the gold total a percentage of the total money spent on the tower.
+    // removes the tower from the map.
+
+    // Add percentage of tower cost to gold.
     gold += tower.getSellPrice();
     goldText.setText(gold);
 
-    //clear out space for placing new towers.
+    // Clear out space for placing new towers.
     var i = Math.floor(tower.y/TILESIZE);
     var j = Math.floor(tower.x/TILESIZE);
     map[i][j] = 0;
 
-    //deactivate this tower.
+    // Deactivate this tower.
     switch (tower.name){
         case 'arrow':
             arrowTurrets.remove(tower,true,true);
@@ -658,9 +688,38 @@ function sellTower(button, tower){
             break;
     }
     cleanUpButtons();
+    removeTowerStar(tower);
+}
+
+function addTowerStar(tower){
+    // Adds a star to the tower sprite depending on its level.
+
+    var starImage = tower.level + '-star';
+    var star = StarGroup.get(tower.x,tower.y + 25,starImage,null,true);
+}
+
+function removeTowerStar(tower){
+    // Finds the x/y coords of the tile that is occupied by the tower.
+    // Then loops through all stars on the map for a star that occupies the same tile and removes it.
+
+    var tower_x = Math.floor(tower.x/TILESIZE);
+    var tower_y = Math.floor(tower.y/TILESIZE);
+
+    var stars = StarGroup.getChildren();
+    for (var i = 0; i < stars.length; i++) {
+        var star_x = Math.floor(stars[i].x/TILESIZE);
+        var star_y = Math.floor(stars[i].y/TILESIZE);
+        if (star_x == tower_x && star_y == tower_y) {
+            StarGroup.remove(stars[i],true,true)
+            break;
+        }
+    }
 }
 
 function cleanUpButtons(){
+    // Clears out the upgrade/sell Texts- effectively making them invisible.
+    // Removes upgrade/sell buttons from ButtonsGroup.  This hides any of these buttons from the map.
+
     this.upgradeText.setText('')
     this.sellText.setText('')
     var buttons = ButtonsGroup.clear(true,true);
@@ -912,6 +971,9 @@ function create() {
     sellText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
     upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
     ButtonsGroup = this.add.group();
+
+    //group for putting stars under towers.
+    StarGroup = this.add.group();
 
     // this graphics element is only for visualization,
     // its not related to our path

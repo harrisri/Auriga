@@ -102,6 +102,7 @@ function preload() {
     this.load.image('heart', 'assets/heart.png');
     this.load.image('upgradeButton', 'assets/UpgradeButton.png')
     this.load.image('sellButton', 'assets/SellButton.png')
+    this.load.image('upgradeInfoButton', 'assets/UpgradeInfoButton.png');
     this.load.image('1-star', 'assets/1Star.png')
     this.load.image('2-star', 'assets/2Star.png')
     this.load.image('3-star', 'assets/3Star.png')
@@ -292,6 +293,58 @@ function generateTowerClass(data){
                 total = total + data['cost'][levelKey]
             }
             return Math.round(total * SELL_PERCENTAGE);
+        },
+
+        getUpgradeInformation: function(){
+            // Crazy function that loops through provided tower's json data and looks for upgrades.
+            // returns a string with upgrade information to be displayed on info button.
+
+            var currentlevelKey = 'level_' + this.level
+            var nextlevelKey = 'level_' + (this.level + 1);
+
+            var info = '';
+
+
+            //loop through data and find anything that would be upgraded
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (this.level === 3 && key === 'final_ability') {
+                        info = info + 'Final Ability!' + '\n' + data[key] + '\n'
+                    }
+                    if (typeof(data[key]) === 'object')  {
+                        //rate is a special case where having a lower number is better.  If rate drops, add to info
+                        if (key === 'rate') {
+                            if (data[key][currentlevelKey] > data[key][nextlevelKey]){
+                                info = info + key.charAt(0).toUpperCase() + key.slice(1) + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
+                            }
+                        }
+                        //check if an upgrade to the key occurs.  If so, add that info
+                        else if (data[key][currentlevelKey] < data[key][nextlevelKey]) {
+                            if (key != 'cost') { //no need to include cost.
+                                //special cases where keys could be more descriptive based on tower type.  EX: Slow Duration vs. Fire Duration.  Duration itself isnt intuitive.
+                                if (this.name === 'bomb' && key === 'radius') {
+                                    info = info + 'Blast Radius' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
+                                }                                
+                                else if (this.name === 'ice' && key === 'duration') {
+                                    info = info + 'Slow Duration' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
+                                }
+                                else if (this.name === 'ice' && key === 'slow') {
+                                    info = info + 'Slow Percentage' + '\n' + (100*data[key][currentlevelKey]) + '% -> ' + (100*data[key][nextlevelKey]) + '%\n'
+                                }
+                                else if (this.name === 'fire' && key === 'duration') {
+                                    info = info + 'Fire Duration' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
+                                }
+                                else{
+                                    info = info + key.charAt(0).toUpperCase() + key.slice(1) + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
+                                }    
+                            }
+                        }
+                    }
+                }
+            }
+            //remove ending newline
+            info = info.replace(/\n$/, "");
+            return info;
         },
 
         fire: function() {
@@ -627,20 +680,45 @@ function makeTowerButtonsInteractive(type, button, tower){
     // each button gets its own function upon clicking.
 
     button.setInteractive();
-    button.on('pointerout', () => enterButtonRestState(button));
-    button.on('pointerover', () => enterButtonHoverState(button));
     switch(type)
     {
         case 'tower':
+            button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerdown', () => showUpgradeAndSell(button));
+            button.on('pointerout', () => enterButtonRestState(button));
             break;
         case 'upgrade':
             button.on('pointerdown', () => upgradeTower(button, tower));
+            button.on('pointerover', () => showUpgradeInfo(button,tower));
+            button.on('pointerout', () => hideUpgradeInfo(button));
             break;
         case 'sell':
             button.on('pointerdown', () => sellTower(button, tower));
+            button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerout', () => enterButtonRestState(button));
             break;
     }
+}
+
+function showUpgradeInfo(button, tower){
+    if (tower.level < 4) {
+        var down = tower.y + 120;
+        var left = tower.x - 33;
+        button.setTint(0xd3d3d3);
+        this.upgradeInfoText.setText(tower.getUpgradeInformation());
+        this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
+        this.upgradeInfoText.depth = 11;
+        upgradeInfoButton.setVisible(true);
+        var buttonSize = this.upgradeInfoText.getBounds();
+        upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+        upgradeInfoButton.setPosition(left,down);
+    }
+}
+
+function hideUpgradeInfo(button){
+    button.setTint(0xffffff);
+    this.upgradeInfoText.setText('')
+    upgradeInfoButton.setVisible(false);
 }
 
 function upgradeTower(button, tower){
@@ -651,9 +729,13 @@ function upgradeTower(button, tower){
         gold -= tower.getUpgradeCost();
         goldText.setText(gold);
         tower.upgrade();
+
+        //clean up ui elements
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
+        upgradeInfoButton.setVisible(false);
+        this.upgradeInfoText.setText('')
     }
 }
 
@@ -967,9 +1049,11 @@ function create() {
     lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
     this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
     
-    //the three below are used for upgrade/sell buttons.
+    //below are used for upgrade/sell buttons.
     sellText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
     upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    upgradeInfoText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
     ButtonsGroup = this.add.group();
 
     //group for putting stars under towers.

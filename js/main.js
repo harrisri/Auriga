@@ -660,10 +660,12 @@ function showUpgradeAndSell(tower){
         this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost());
     }
 
-    //
-    var buttonSize = this.upgradeText.getBounds();
-    upgradeButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
-    sellButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+    if (tower.level != 4) {
+        var buttonSize = this.upgradeText.getBounds();
+        upgradeButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+        sellButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+    }
+
 
     //setting the depth to an integer (semi random in this case) makes it so enemies are not shown over the buttons/text.
     this.sellText.depth = 11;    

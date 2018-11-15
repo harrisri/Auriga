@@ -124,6 +124,7 @@ function generateEnemyClass(data){
             this.moveType = data['move_type'];
             this.slowed = false;
             this.healthBar = new HealthBar(scene);
+            console.log(this.healthBar);
         },
 
         startOnPath: function ()
@@ -139,9 +140,12 @@ function generateEnemyClass(data){
 
             this.hp = data['base_hp'];
             this.healthBar.getBaseHP(this.hp);
+            //this.healthBar.bar.setDepth(5);
+            this.healthBar.draw()
 
             //shrink up the hitbox a bit.
             this.body.setCircle(15);
+
         },
 
         receiveDamage: function(damage, slow, duration, fire) {
@@ -154,6 +158,7 @@ function generateEnemyClass(data){
             }
 
             this.healthBar.setHealth(this.hp);
+            this.healthBar.draw();
 
             //tint red when taking damage
             if (!this.slowed) {
@@ -173,8 +178,8 @@ function generateEnemyClass(data){
             if(this.hp <= 0) {
                 this.setActive(false);
                 this.setVisible(false);
-                this.healthBar.setActive(false);
-                this.healthBar.setVisible(false);
+                this.healthBar.bar.destroy();
+                this.healthBar.destroy();
                 gold += this.gold;
                 goldText.setText(gold);
             }
@@ -211,9 +216,7 @@ function generateEnemyClass(data){
 
             if (this.hp > 0)
             {
-                this.healthBar.x = this.x -  18;
-                this.healthBar.y = this.y - 20;
-                this.healthBar.draw();
+                this.healthBar.bar.setPosition(this.x - 18, this.y - 20);
             }
 
             // if we have reached the end of the path, remove the enemy
@@ -221,16 +224,16 @@ function generateEnemyClass(data){
             {
                 this.setActive(false);
                 this.setVisible(false);
-                this.healthBar.setActive(false);
-                this.healthBar.setVisible(false);
+                this.healthBar.bar.destroy();
+                this.healthBar.destroy();
                 life -= 1;
                 lifeText.setText(life);
             }
 
-            console.log('base health: ' + this.healthBar.baseHealth);
-            console.log('current health: ' + this.healthBar.currHealth);
-            console.log('percentage health: ' + this.healthBar.percentageHealth);
-            console.log(this.healthBar);
+            // console.log('base health: ' + this.healthBar.baseHealth);
+            // console.log('current health: ' + this.healthBar.currHealth);
+            // console.log('percentage health: ' + this.healthBar.percentageHealth);
+            // console.log(this.healthBar);
         }
     });
 
@@ -276,7 +279,7 @@ var HealthBar = new Phaser.Class({
             this.bar.fillStyle(0xff0000);
         }
 
-        this.bar.fillRect(this.x, this.y, this.percentageHealth/3, 3);
+        this.bar.fillRect(this.x + 6, this.y, this.percentageHealth/5, 3);
     }
 });
 

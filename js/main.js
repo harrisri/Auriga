@@ -460,6 +460,8 @@ function generateGroundFireClass(data){
     function GroundFire (scene)
     {
         Phaser.GameObjects.Image.call(this, scene, 0, 0, 'groundFire');
+        var size = this.getBounds();
+        this.setDisplaySize((size.width * 1.4), (size.height * 1.4));
     },
 
     update: function (time, delta)
@@ -554,9 +556,10 @@ function damageEnemy(enemy, bullet) {
             fire.y = enemy.y;
             fire.damage = bullet.damage;
             fire.lifespan = bullet.duration;
-            fire.body.setCircle(1);
+            fire.body.setCircle(10);
             fire.setVisible(true);
             fire.setActive(true);
+            fire.setDepth(0)
             enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
         }
 

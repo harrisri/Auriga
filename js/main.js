@@ -660,6 +660,11 @@ function showUpgradeAndSell(tower){
         this.upgradeText.setText("Upgrade\n$"+tower.getUpgradeCost());
     }
 
+    //
+    var buttonSize = this.upgradeText.getBounds();
+    upgradeButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+    sellButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
+
     //setting the depth to an integer (semi random in this case) makes it so enemies are not shown over the buttons/text.
     this.sellText.depth = 11;    
     sellButton.depth = 10;
@@ -1050,9 +1055,9 @@ function create() {
     this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
     
     //below are used for upgrade/sell buttons.
-    sellText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
-    upgradeText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
-    upgradeInfoText = this.add.text(0,0, '', {fontSize: '12px', fill: '#ffffff', align:'center'});
+    sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+    upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+    upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
     upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
     ButtonsGroup = this.add.group();
 

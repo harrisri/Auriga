@@ -123,8 +123,6 @@ function generateEnemyClass(data){
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
             this.slowed = false;
-            this.healthBar = new HealthBar(scene);
-            console.log(this.healthBar);
         },
 
         startOnPath: function ()
@@ -139,8 +137,12 @@ function generateEnemyClass(data){
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
 
             this.hp = data['base_hp'];
+
+            //had to move this down here because some enemies were not getting healthbars.  I believe it is because
+            //enemy sprites are reused and their hp is not corrected until the above statement resetting their hp when placed on the path.
+            this.healthBar = new HealthBar(this.scene); 
             this.healthBar.getBaseHP(this.hp);
-            //this.healthBar.bar.setDepth(5);
+            this.healthBar.bar.setDepth(5);
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
@@ -229,11 +231,6 @@ function generateEnemyClass(data){
                 life -= 1;
                 lifeText.setText(life);
             }
-
-            // console.log('base health: ' + this.healthBar.baseHealth);
-            // console.log('current health: ' + this.healthBar.currHealth);
-            // console.log('percentage health: ' + this.healthBar.percentageHealth);
-            // console.log(this.healthBar);
         }
     });
 

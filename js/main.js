@@ -11,7 +11,7 @@ const SELL_PERCENTAGE = 0.8;
 
 const ICE_MAX_CHANCE = 0.20; //chance to freeze enemy in place at MAX ice level.
 const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in ms.
-const FIRE_MAX_CHANCE = 0.05;
+const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
 
 var config = {
     type: Phaser.AUTO,
@@ -414,7 +414,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius, this.duration);
+                addProjectile(this.name, this.level, this.x, this.y, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -428,7 +428,6 @@ function generateTowerClass(data){
                         iceExplosion(this.x, this.y);
                         var freeze = Math.random().toFixed(2);
                         if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
-                            console.log('freeze!')
                             enemyUnits[i].receiveDamage(this.damage, 0, ICE_MAX_DURATION);
                         }
                         else{
@@ -555,7 +554,7 @@ function iceExplosion(x,y){
     explosion.play('explode');
 }
 
-function addProjectile(name, x, y, angle, damage, radius, duration) {
+function addProjectile(name, level, x, y, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
     switch(name){
         //change projectile sprite if needed
@@ -577,6 +576,7 @@ function addProjectile(name, x, y, angle, damage, radius, duration) {
         projectile.damage = damage;
         projectile.radius = radius;
         projectile.duration = duration;
+        projectile.level = level;
         projectile.fire(x, y, angle);
     }
 }
@@ -625,6 +625,7 @@ function damageEnemy(enemy, bullet) {
             fire.y = enemy.y;
             fire.damage = bullet.damage;
             fire.lifespan = bullet.duration;
+            fire.level = bullet.level;
             fire.body.setCircle(10);
             fire.setVisible(true);
             fire.setActive(true);
@@ -640,7 +641,14 @@ function damageEnemy(enemy, bullet) {
 
 function groundFireDamageEnemy(enemy, groundFire){
     if (enemy.active === true && groundFire.active === true) {
-        enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+        var incinerate = Math.random().toFixed(2);
+        if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
+            console.log('incinerate')
+            enemy.receiveDamage(10000, 0, 0, true);
+        }
+        else{
+            enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+        }
     }
 }
 

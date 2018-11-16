@@ -162,7 +162,7 @@ function generateEnemyClass(data){
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
-            this.body.setCircle(15);
+            this.body.setCircle(20);
 
         },
 
@@ -414,7 +414,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.level, this.x, this.y, angle, this.damage, this.radius, this.duration);
+                addProjectile(this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -479,9 +479,10 @@ function generateProjectileClass(data){
 
         this.dx = 0;
         this.dy = 0;
-        this.lifespan = 0;
         this.damage = 0;
-
+        this.xOrigin = 0;
+        this.yOrigin = 0;
+        this.range = 0;
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
 
@@ -501,16 +502,21 @@ function generateProjectileClass(data){
 
     update: function (time, delta)
     {
-        this.lifespan -= delta;
+        // this.lifespan -= delta;
 
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (this.lifespan <= 0)
-        {
+        // if (this.lifespan <= 0)
+        // {
+        //     this.setActive(false);
+        //     this.setVisible(false);
+        // }
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
             this.setActive(false);
             this.setVisible(false);
         }
+
     }
 
     });
@@ -554,8 +560,11 @@ function iceExplosion(x,y){
     explosion.play('explode');
 }
 
-function addProjectile(name, level, x, y, angle, damage, radius, duration) {
+function addProjectile(name, level, x, y, range, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
+    projectile.xOrigin = x;
+    projectile.yOrigin = y;
+    projectile.range = range;
     switch(name){
         //change projectile sprite if needed
         case 'arrow':

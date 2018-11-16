@@ -486,7 +486,7 @@ function generateProjectileClass(data){
         this.xOrigin = 0;
         this.yOrigin = 0;
         this.range = 0;
-        this.target = null;
+        this.homingTarget = null;
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
 
@@ -512,6 +512,9 @@ function generateProjectileClass(data){
     update: function (time, delta)
     {
         if (this.homingTarget) {
+            if (this.homingTarget.hp <= 0) {  //need to retarget!
+                this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
+            }
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
             this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.dx = Math.cos(angle);
@@ -522,6 +525,11 @@ function generateProjectileClass(data){
         this.y += this.dy * (this.speed * delta);
 
         if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+
+        if (allEnemiesDead()) {
             this.setActive(false);
             this.setVisible(false);
         }

@@ -100,7 +100,7 @@ function preload() {
     this.load.image('bullet', 'assets/bullet.png');
     this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
     this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
-    this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+    this.load.image('missile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
 
     // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
@@ -366,7 +366,6 @@ function generateTowerClass(data){
 
             var info = '';
 
-
             //loop through data and find anything that would be upgraded
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
@@ -496,22 +495,14 @@ function generateProjectileClass(data){
 
         this.dx = Math.cos(angle);
         this.dy = Math.sin(angle);
-
-        this.lifespan = 300;
     },
 
     update: function (time, delta)
     {
-        // this.lifespan -= delta;
 
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        // if (this.lifespan <= 0)
-        // {
-        //     this.setActive(false);
-        //     this.setVisible(false);
-        // }
         if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
             this.setActive(false);
             this.setVisible(false);
@@ -571,7 +562,7 @@ function addProjectile(name, level, x, y, range, angle, damage, radius, duration
             projectile.setTexture('bullet');
             break;
         case 'bomb':
-            projectile.setTexture('missle')
+            projectile.setTexture('missile')
             projectile.setRotation(angle + Math.PI/2);
             break;
         case 'fire':
@@ -1251,13 +1242,13 @@ function create() {
     this.cancel_msg_2 = this.add.text(973,495,'',{fontSize: '24px', fontStyle: 'Bold'});
 
     // Arrow tower button
-    this.add.text(970, 80, 'Arrow');
+    this.add.text(980, 80, 'Gun');
     this.add.text(980, 155, "$" + arrowData.cost.level_1);
     this.arrowTowerButton = this.add.image(995, 125, 'arrow');
     addButtonInput(this.arrowTowerButton);
 
      // Bomb tower button
-    this.add.text(975, 180, 'Bomb');
+    this.add.text(960, 180, 'Missile',{fontSize: '15px'});
     this.add.text(975, 245, "$" + bombData.cost.level_1);
     this.bombTowerButton = this.add.image(995, 225, 'bomb');
     addButtonInput(this.bombTowerButton);
@@ -1269,7 +1260,7 @@ function create() {
     addButtonInput(this.fireTowerButton);
 
     // Ice tower button
-    this.add.text(981, 380, 'Ice');
+    this.add.text(980, 380, 'Ice');
     this.add.text(975, 455, "$" + iceData.cost.level_1);
     this.iceTowerButton = this.add.image(995, 425, 'ice');
     addButtonInput(this.iceTowerButton);

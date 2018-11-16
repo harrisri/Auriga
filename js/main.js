@@ -182,9 +182,9 @@ function generateEnemyClass(data){
                 this.damageTimer = this.time + 100;
             }
 
-            if (!this.slowed && slow >= 0) {
+            if (!this.slowed && slow > 0) {
                 this.originalSpeed = this.speed;
-                this.speed = this.speed * slow;
+                this.speed = this.speed * (1-slow);
                 this.slowed = true;
                 this.slowTimer = this.time + duration;
                 this.setTint(0x87CEFA);
@@ -429,16 +429,14 @@ function generateTowerClass(data){
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                    if (enemyUnits[i].moveType === this.target) {
                         iceExplosion(this.x, this.y);
                         var freeze = Math.random().toFixed(2);
                         if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
-                            enemyUnits[i].receiveDamage(this.damage, 0, ICE_MAX_DURATION);
+                            enemyUnits[i].receiveDamage(this.damage, 1, ICE_MAX_DURATION);
                         }
                         else{
                             enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
                         }
-                    }
                 }
             }
         },

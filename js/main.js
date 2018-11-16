@@ -9,6 +9,10 @@ const COLUMN_N = 16;
 const ROW_N = 12;
 const SELL_PERCENTAGE = 0.8;
 
+const ICE_MAX_CHANCE = 0.20; //chance to freeze enemy in place at MAX ice level.
+const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in ms.
+const FIRE_MAX_CHANCE = 0.05;
+
 var config = {
     type: Phaser.AUTO,
     parent: 'content',
@@ -31,7 +35,7 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 
-var gold = 200;
+var gold = 2000;
 var goldText;
 var life = 20;
 var lifeText;
@@ -178,7 +182,7 @@ function generateEnemyClass(data){
                 this.damageTimer = this.time + 100;
             }
 
-            if (!this.slowed && slow > 0) {
+            if (!this.slowed && slow >= 0) {
                 this.originalSpeed = this.speed;
                 this.speed = this.speed * slow;
                 this.slowed = true;
@@ -422,7 +426,14 @@ function generateTowerClass(data){
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
                     if (enemyUnits[i].moveType === this.target) {
                         iceExplosion(this.x, this.y);
-                        enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                        var freeze = Math.random().toFixed(2);
+                        if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
+                            console.log('freeze!')
+                            enemyUnits[i].receiveDamage(this.damage, 0, ICE_MAX_DURATION);
+                        }
+                        else{
+                            enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                        }
                     }
                 }
             }

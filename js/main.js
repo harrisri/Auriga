@@ -664,7 +664,6 @@ function groundFireDamageEnemy(enemy, groundFire){
     if (enemy.active === true && groundFire.active === true) {
         var incinerate = Math.random().toFixed(2);
         if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
-            console.log('incinerate')
             enemy.receiveDamage(10000, 0, 0, true);
         }
         else{

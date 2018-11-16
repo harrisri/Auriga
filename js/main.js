@@ -48,18 +48,18 @@ var placing = false;
 var upgradeSellX = 0;
 var upgradeSellY = 0;
 
-var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+var map =      [[ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                [ -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
+                [ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0],
+                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
+                [ 0,  -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
+                [ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0],
+                [ 0,   0,  0, -1, -1, -1, -1, -1, -1, -1,  0,  0,  0, -1,  0],
+                [ 0,   0,  0, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0, -1,  0],
+                [ 0,   0,  0, -1,  0,  0,  0,  0,  0, -1, -1, -1, -1, -1,  0],
+                [ 0,   0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]];
 
 function preload() {
 
@@ -334,7 +334,13 @@ function generateTowerClass(data){
             this.radius = data['radius'][levelKey];
             this.slow = data['slow'][levelKey];
             this.duration = data['duration'][levelKey];
-            if (levelKey === 4){
+            if (this.level === 4){
+                if (this.name === 'bomb') {
+                    this.target = 'air-ground'
+                }
+                if (this.name === 'arrow') {
+                    this.target = 'air'
+                }
                 this.abilityActive = true;
             }
         },
@@ -413,7 +419,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
+                addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -482,6 +488,7 @@ function generateProjectileClass(data){
         this.xOrigin = 0;
         this.yOrigin = 0;
         this.range = 0;
+        this.target = null;
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
 
@@ -497,9 +504,22 @@ function generateProjectileClass(data){
         this.dy = Math.sin(angle);
     },
 
+    homingFire: function(x, y, enemy){
+        this.homingTarget = enemy;
+        this.setPosition(x, y);
+        // this.dx = Math.cos(angle);
+        // this.dy = Math.sin(angle);
+    },
+
     update: function (time, delta)
     {
-
+        if (this.homingTarget) {
+            var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
+            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            this.dx = Math.cos(angle);
+            this.dy = Math.sin(angle);
+        }
+    
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
@@ -551,7 +571,7 @@ function iceExplosion(x,y){
     explosion.play('explode');
 }
 
-function addProjectile(name, level, x, y, range, angle, damage, radius, duration) {
+function addProjectile(enemyTarget, name, level, x, y, range, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
     projectile.xOrigin = x;
     projectile.yOrigin = y;
@@ -577,6 +597,9 @@ function addProjectile(name, level, x, y, range, angle, damage, radius, duration
         projectile.radius = radius;
         projectile.duration = duration;
         projectile.level = level;
+        if (name === 'bomb' && level === 4) {
+            projectile.homingFire(x, y, enemyTarget);
+        }
         projectile.fire(x, y, angle);
     }
 }

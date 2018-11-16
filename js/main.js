@@ -7,6 +7,7 @@ const MAPHEIGHT = TILESIZE * 12;
 const MAPWIDTH = TILESIZE * 16;
 const COLUMN_N = 16;
 const ROW_N = 12;
+const SELL_PERCENTAGE = 0.8;
 
 var config = {
     type: Phaser.AUTO,

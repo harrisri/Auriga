@@ -862,7 +862,7 @@ function parseMap(maptext){
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === NOBUILD){
-                tiles[i][j] = 130; // Build-space tile in Kenney pack [2nd row 2nd column]
+                tiles[i][j] = 34; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === BUILD){
                 tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]

@@ -49,7 +49,7 @@ var upgradeSellY = 0;
 function preload() {
 
     // Load Kenney assets tilemap
-    this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet.png")
+    this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet_modified.png")
 
     // Load unit and tower files
     this.load.json('infantry', 'data/units/infantry.json')
@@ -99,7 +99,10 @@ function preload() {
     this.load.image('4-star', 'assets/4Star.png')
 
     //load wave data
-    this.load.text('waveText', 'data/waves/windingPath');
+    this.load.text('wave1Text', 'data/waves/level1');
+    this.load.text('wave2Text', 'data/waves/level2');
+    this.load.text('wave3Text', 'data/waves/level3');
+
 
     //load ice tower explosion;
     this.load.setPath('assets/')
@@ -622,7 +625,7 @@ function groundFireDamageEnemy(enemy, groundFire){
     }
 }
 
- function placeTurret(pointer, levelMap) {
+function placeTurret(pointer, levelMap) {
     var i = Math.floor(pointer.y/TILESIZE);
     var j = Math.floor(pointer.x/TILESIZE);
 
@@ -662,7 +665,7 @@ function groundFireDamageEnemy(enemy, groundFire){
                     addTowerStar(turret);
 
                     //make tower interactive
-                    makeTowerButtonsInteractive('tower', turret, levelMap);
+                    makeTowerButtonsInteractive('tower', turret, null, levelMap);
                     placing = false;
                 }
                 else
@@ -680,7 +683,7 @@ function canPlaceTurret(i, j, levelMap) {
     return levelMap.grid[i][j] === BUILD;
 }
 
-function showUpgradeAndSell(tower){
+function showUpgradeAndSell(tower, levelMap){
     // handler function for when a user clicks on a placed tower.
     // expects the tower to be passed in as it is required for getting upgrade/sell prices.
 
@@ -723,8 +726,8 @@ function showUpgradeAndSell(tower){
     this.upgradeText.depth = 11;
 
     //make these buttons interactive.
-    makeTowerButtonsInteractive('upgrade',upgradeButton,tower);
-    makeTowerButtonsInteractive('sell',sellButton,tower);
+    makeTowerButtonsInteractive('upgrade', upgradeButton, tower, levelMap);
+    makeTowerButtonsInteractive('sell', sellButton, tower, levelMap);
 
     //coords for hiding buttons when player clicks away.
     upgradeSellX = Math.floor(tower.x/TILESIZE);
@@ -740,7 +743,7 @@ function makeTowerButtonsInteractive(type, button, tower, levelMap){
     {
         case 'tower':
             button.on('pointerover', () => enterButtonHoverState(button));
-            button.on('pointerdown', () => showUpgradeAndSell(button));
+            button.on('pointerdown', () => showUpgradeAndSell(button, levelMap));
             button.on('pointerout', () => enterButtonRestState(button));
             break;
         case 'upgrade':
@@ -919,7 +922,7 @@ function parseMap(maptext){
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === NOBUILD){
-                tiles[i][j] = 34; // Build-space tile in Kenney pack [2nd row 2nd column]
+                tiles[i][j] = 130; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === BUILD){
                 tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]
@@ -1118,7 +1121,7 @@ function create() {
     // its not related to our path
     var graphics = this.add.graphics();
 
-    let waveText = this.cache.text.get('waveText');
+    let waveText = this.cache.text.get('wave1Text');
 
     this.waveData = parseWaveText(waveText);
 

@@ -2,10 +2,10 @@
     "name": "fire",
     "target": "ground",
     "cost":{
-        "level_1": 110,
-        "level_2": 125,
-        "level_3": 140,
-        "level_4": 220
+        "level_1": 160,
+        "level_2": 210,
+        "level_3": 265,
+        "level_4": 400
     },
     "damage":{
         "level_1": 3,

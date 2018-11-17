@@ -32,7 +32,8 @@ var config = {
 
 var game = new Phaser.Game(config);
 var path;
-var gold = 2000;
+
+var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
@@ -123,7 +124,6 @@ function generateEnemyClass(data){
             this.gold = data['gold_drop'];
             this.moveType = data['move_type'];
             this.slowed = false;
-
         },
 
         startOnPath: function ()
@@ -139,12 +139,19 @@ function generateEnemyClass(data){
 
             this.hp = data['base_hp'];
 
+            //had to move this down here because some enemies were not getting healthbars.  I believe it is because
+            //enemy sprites are reused and their hp is not corrected until the above statement resetting their hp when placed on the path.
+            this.healthBar = new HealthBar(this.scene);
+            this.healthBar.getBaseHP(this.hp);
+            this.healthBar.bar.setDepth(5);
+            this.healthBar.draw()
+
             //shrink up the hitbox a bit.
             this.body.setCircle(15);
+
         },
 
         receiveDamage: function(damage, slow, duration, fire) {
-
             //fire damage ignores armor.
             if (fire) {
                 this.hp = this.hp - damage;
@@ -152,13 +159,13 @@ function generateEnemyClass(data){
             else{
                 this.hp =  this.hp - (damage - this.armor);
             }
-
+            this.healthBar.setHealth(this.hp);
+            this.healthBar.draw();
             //tint red when taking damage
             if (!this.slowed) {
                 this.setTint(0xffb2b2)
                 this.damageTimer = this.time + 100;
             }
-
 
             if (!this.slowed && slow > 0) {
                 this.originalSpeed = this.speed;
@@ -172,6 +179,8 @@ function generateEnemyClass(data){
             if(this.hp <= 0) {
                 this.setActive(false);
                 this.setVisible(false);
+                this.healthBar.bar.destroy();
+                this.healthBar.destroy();
                 gold += this.gold;
                 goldText.setText(gold);
             }
@@ -201,16 +210,23 @@ function generateEnemyClass(data){
 
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
-            this.setRotation(angle)
+            this.setRotation(angle);
 
             // update enemy x and y to the newly obtained x and y
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
+
+            if (this.hp > 0)
+            {
+                this.healthBar.bar.setPosition(this.x - 18, this.y - 20);
+            }
 
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
                 this.setActive(false);
                 this.setVisible(false);
+                this.healthBar.bar.destroy();
+                this.healthBar.destroy();
                 life -= 1;
                 lifeText.setText(life);
             }
@@ -220,6 +236,48 @@ function generateEnemyClass(data){
     return Enemy;
 }
 
+var HealthBar = new Phaser.Class({
+    Extends: Phaser.GameObjects.Graphics,
+
+    initialize:
+    function HealthBar (scene)
+    {
+        this.bar = new Phaser.GameObjects.Graphics(scene);
+        this.baseHealth;
+        this.currHealth;
+        this.percentageHealth = 100;
+        scene.add.existing(this.bar);
+    },
+
+    getBaseHP (baseHP)
+    {
+        this.baseHealth = baseHP;
+        this.currHealth = baseHP;
+    },
+
+    setHealth (newHealth)
+    {
+        this.currHealth = newHealth;
+        this.percentageHealth = this.currHealth/this.baseHealth*100;
+    },
+
+    draw()
+    {
+        this.bar.clear();
+
+        if (this.percentageHealth > 50) {
+            this.bar.fillStyle(0x00ff00);
+        }
+        if (this.percentageHealth <= 50 && this.percentageHealth >= 30) {
+            this.bar.fillStyle(0xffa500);
+        }
+        if (this.percentageHealth < 30) {
+            this.bar.fillStyle(0xff0000);
+        }
+
+        this.bar.fillRect(this.x + 6, this.y, this.percentageHealth/5, 3);
+    }
+});
 
 function generateTowerClass(data){
 
@@ -575,7 +633,6 @@ function groundFireDamageEnemy(enemy, groundFire){
 
     if (placing == true)
     {
-
         if(canPlaceTurret(i, j, levelMap)) {
             var turret;
             switch(selectedTurret){
@@ -897,7 +954,6 @@ function findAdjacent(x, y, x_max, y_max){
     return ret;
 }
 
-
 function generatePaths(levelMap){
 // Traverses levelMap.grid, which is represented by map characters ('#', '-', Start/End Numbers)
 // Generates up to 3 PathList arrays containing in-order coordinate pairs for each enemy path
@@ -1135,7 +1191,6 @@ function create() {
         sprite.setVisible(false);
     }
 
-
     //add collisions between enemies and projectiles.
     this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
     this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
@@ -1203,16 +1258,6 @@ function create() {
     this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
     this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
 
-    // Hide all sprites initially
-    this.tempArrowTower.setVisible(false);
-    this.arrowCircle.setVisible(false);
-    this.tempBombTower.setVisible(false);
-    this.bombCircle.setVisible(false);
-    this.tempIceTower.setVisible(false);
-    this.iceCircle.setVisible(false);
-    this.tempFireTower.setVisible(false);
-    this.fireCircle.setVisible(false);
-
     //variables to assist in spawning enemies in waves
     this.nextEnemy = 0;
     this.nextEnemyIndex = 0;
@@ -1222,7 +1267,6 @@ function create() {
 }
 
 function update(time, delta) {
-
     if (time > this.nextEnemy)
     {
         this.showCountdown = false;

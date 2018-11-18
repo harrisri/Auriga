@@ -848,9 +848,9 @@ function upgradeTower(button, tower){
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
+    }
         upgradeInfoButton.setVisible(false);
         this.upgradeInfoText.setText('')
-    }
 }
 
 

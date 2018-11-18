@@ -8,19 +8,19 @@
         "level_4": 240
     },
     "damage":{
-        "level_1": 5,
-        "level_2": 3,
-        "level_3": 4,
-        "level_4": 4
+        "level_1": 10,
+        "level_2": 12,
+        "level_3": 15,
+        "level_4": 18
     },
     "range":{
-        "level_1": 150,
-        "level_2": 200,
-        "level_3": 300,
+        "level_1": 120,
+        "level_2": 160,
+        "level_3": 190,
         "level_4": 800
     },
     "rate":{
-        "level_1": 1000,
+        "level_1": 1500,
         "level_2": 1000,
         "level_3": 1000,
         "level_4": 1000

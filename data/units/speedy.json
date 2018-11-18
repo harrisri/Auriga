@@ -1,8 +1,8 @@
 {
 	"name": "speedy",
 	"move_type": "ground",
-	"base_hp": 15,
+	"base_hp": 24,
 	"base_armor": 0,
-	"base_speed": 1.5,
-	"gold_drop": 16
+	"base_speed": 1.6,
+	"gold_drop": 20
 }

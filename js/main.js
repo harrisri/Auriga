@@ -363,6 +363,15 @@ function generateTowerClass(data){
             return Math.round(total * SELL_PERCENTAGE);
         },
 
+        getUpgradeRange: function(){
+            var level = this.level;
+            if (this.level <=3) {
+                level++;
+            }
+            var levelKey = 'level_' + level;
+            return data['range'][levelKey];
+        },
+
         getUpgradeInformation: function(){
             // Crazy function that loops through provided tower's json data and looks for upgrades.
             // returns a string with upgrade information to be displayed on info button.
@@ -797,14 +806,15 @@ function makeTowerButtonsInteractive(type, button, tower){
     switch(type)
     {
         case 'tower':
-            button.on('pointerover', () => enterButtonHoverState(button));
+            // button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerover', () => towerHoverState(button));
             button.on('pointerdown', () => showUpgradeAndSell(button));
-            button.on('pointerout', () => enterButtonRestState(button));
+            button.on('pointerout', () => towerRestState(button));
             break;
         case 'upgrade':
             button.on('pointerdown', () => upgradeTower(button, tower));
             button.on('pointerover', () => showUpgradeInfo(button,tower));
-            button.on('pointerout', () => hideUpgradeInfo(button));
+            button.on('pointerout', () => hideUpgradeInfo(button,tower));
             break;
         case 'sell':
             button.on('pointerdown', () => sellTower(button, tower));
@@ -814,11 +824,33 @@ function makeTowerButtonsInteractive(type, button, tower){
     }
 }
 
+function towerHoverState(tower){
+    tower.setTint(0xd3d3d3);
+    if (!tower.rangeGraphic) {
+        tower.rangeGraphic = graphics.strokeCircle(tower.x, tower.y, tower.range)
+    }
+    tower.rangeGraphic.setVisible(true);
+    if (tower.upgradeRangeGraphic) {
+        tower.upgradeRangeGraphic.setVisible(false);
+    }
+}
+function towerRestState(tower){
+    tower.setTint(0xffffff);
+    tower.rangeGraphic.setVisible(false);
+}
+
 function showUpgradeInfo(button, tower){
+    towerRestState(tower);
     if (tower.level < 4) {
         var down = tower.y + 120;
         var left = tower.x - 33;
         button.setTint(0xd3d3d3);
+
+        if(!tower.upgradeRangeGraphic){
+            tower.upgradeRangeGraphic = graphics2.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        }
+        tower.upgradeRangeGraphic.setVisible(true);
+
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
         this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
         this.upgradeInfoText.depth = 11;
@@ -829,10 +861,11 @@ function showUpgradeInfo(button, tower){
     }
 }
 
-function hideUpgradeInfo(button){
+function hideUpgradeInfo(button,tower){
     button.setTint(0xffffff);
     this.upgradeInfoText.setText('')
     upgradeInfoButton.setVisible(false);
+    tower.upgradeRangeGraphic.setVisible(false);
 }
 
 function upgradeTower(button, tower){
@@ -1174,7 +1207,8 @@ function create() {
   
     // this graphics element is only for visualization,
     // its not related to our path
-    var graphics = this.add.graphics();
+    graphics = this.add.graphics();
+    graphics2 = this.add.graphics();
 
     let waveText = this.cache.text.get('waveText');
 

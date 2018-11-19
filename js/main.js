@@ -319,6 +319,12 @@ function generateTowerClass(data){
             this.duration = data['duration'][levelKey];
             this.ability = data['final_ability'];
             this.abilityActive = false;
+            this.rangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+            this.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+            scene.add.existing(this.rangeGraphic);
+            scene.add.existing(this.upgradeRangeGraphic);
         },
 
         // Update tower values when upgraded
@@ -826,13 +832,9 @@ function makeTowerButtonsInteractive(type, button, tower){
 
 function towerHoverState(tower){
     tower.setTint(0xd3d3d3);
-    if (!tower.rangeGraphic) {
-        tower.rangeGraphic = graphics.strokeCircle(tower.x, tower.y, tower.range)
-    }
-    tower.rangeGraphic.setVisible(true);
-    if (tower.upgradeRangeGraphic) {
-        tower.upgradeRangeGraphic.setVisible(false);
-    }
+    tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range);
+    tower.rangeGraphic.setVisible(true)
+    tower.upgradeRangeGraphic.setVisible(false);
 }
 function towerRestState(tower){
     tower.setTint(0xffffff);
@@ -846,9 +848,7 @@ function showUpgradeInfo(button, tower){
         var left = tower.x - 33;
         button.setTint(0xd3d3d3);
 
-        if(!tower.upgradeRangeGraphic){
-            tower.upgradeRangeGraphic = graphics2.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
-        }
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
         tower.upgradeRangeGraphic.setVisible(true);
 
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
@@ -881,7 +881,17 @@ function upgradeTower(button, tower){
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
+        
+        tower.rangeGraphic.clear();
+        tower.upgradeRangeGraphic.clear();
+        tower.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range)
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        tower.rangeGraphic.setVisible(false);
+        tower.upgradeRangeGraphic.setVisible(false);
     }
+        tower.upgradeRangeGraphic.setVisible(false);
         upgradeInfoButton.setVisible(false);
         this.upgradeInfoText.setText('')
 }
@@ -1207,8 +1217,8 @@ function create() {
   
     // this graphics element is only for visualization,
     // its not related to our path
-    graphics = this.add.graphics();
-    graphics2 = this.add.graphics();
+    // graphics = this.add.graphics();
+    // graphics2 = this.add.graphics();
 
     let waveText = this.cache.text.get('waveText');
 

@@ -387,10 +387,13 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-
+            if (this.name === 'fire') {
+                info = info + 'Drops 1 Additional Fire.\n'
+            }
             //loop through data and find anything that would be upgraded
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
+
                     if (this.level === 3 && key === 'final_ability') {
                         info = info + 'Final Ability!' + '\n' + data[key] + '\n'
                     }

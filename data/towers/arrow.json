@@ -3,20 +3,20 @@
     "target": "air-ground",
     "cost":{
         "level_1": 60,
-        "level_2": 120,
+        "level_2": 110,
         "level_3": 140,
         "level_4": 260
     },
     "damage":{
         "level_1": 8,
-        "level_2": 11,
-        "level_3": 11,
+        "level_2": 10,
+        "level_3": 12,
         "level_4": 14
     },
     "range":{
-        "level_1": 140,
-        "level_2": 190,
-        "level_3": 210,
+        "level_1": 155,
+        "level_2": 195,
+        "level_3": 235,
         "level_4": 800
     },
     "rate":{

@@ -2,16 +2,16 @@
     "name": "bomb",
     "target": "ground",
     "cost":{
-        "level_1": 125,
-        "level_2": 140,
-        "level_3": 185,
-        "level_4": 240
+        "level_1": 135,
+        "level_2": 180,
+        "level_3": 240,
+        "level_4": 320
     },
     "damage":{
         "level_1": 10,
         "level_2": 12,
-        "level_3": 15,
-        "level_4": 18
+        "level_3": 17,
+        "level_4": 21
     },
     "range":{
         "level_1": 120,

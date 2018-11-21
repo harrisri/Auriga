@@ -1,8 +1,8 @@
 {
 	"name": "flying",
 	"move_type": "air",
-	"base_hp": 28,
+	"base_hp": 24,
 	"base_armor": 0,
 	"base_speed": 1.1,
-	"gold_drop": 15
+	"gold_drop": 19
 }

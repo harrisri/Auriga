@@ -37,7 +37,7 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 
-var gold = 2000;
+var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;

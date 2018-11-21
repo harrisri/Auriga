@@ -3,9 +3,9 @@
     "target": "ground",
     "cost":{
         "level_1": 150,
-        "level_2": 170,
-        "level_3": 185,
-        "level_4": 220
+        "level_2": 185,
+        "level_3": 215,
+        "level_4": 310
     },
     "damage":{
         "level_1": 2,
@@ -17,13 +17,13 @@
         "level_1": 100,
         "level_2": 200,
         "level_3": 200,
-        "level_4": 200
+        "level_4": 275
     },
     "rate":{
-        "level_1": 1400,
-        "level_2": 1300,
-        "level_3": 1200,
-        "level_4": 1000
+        "level_1": 1600,
+        "level_2": 1500,
+        "level_3": 1350,
+        "level_4": 1100
     },
     "radius":{
         "level_1": -1,
@@ -33,14 +33,14 @@
     },
     "slow":{
         "level_1": 0.25,
-        "level_2": 0.25,
+        "level_2": 0.35,
         "level_3": 0.50,
         "level_4": 0.65
     },
     "duration":{
         "level_1": 1500,
-        "level_2": 2250,
-        "level_3": 2250,
+        "level_2": 1750,
+        "level_3": 2000,
         "level_4": 2250
     },
     "final_ability": "Chance to FREEZE\n enemies in place."

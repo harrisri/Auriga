@@ -1,7 +1,7 @@
 {
 	"name": "infantry",
 	"move_type": "ground",
-	"base_hp": 21,
+	"base_hp": 20,
 	"base_armor": 0,
 	"base_speed": 0.8,
 	"gold_drop": 12

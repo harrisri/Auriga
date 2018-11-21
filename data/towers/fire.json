@@ -8,10 +8,10 @@
         "level_4": 220
     },
     "damage":{
-        "level_1": 3,
-        "level_2": 4,
-        "level_3": 4,
-        "level_4": 4
+        "level_1": 10,
+        "level_2": 10,
+        "level_3": 10,
+        "level_4": 10
     },
     "range":{
         "level_1": 150,

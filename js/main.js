@@ -683,7 +683,12 @@ function damageEnemy(enemy, bullet) {
         //check if BOMB AOE
         if(bullet.name == 'bomb'){
             var speedy = speedyGroup.getChildren();
-            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            if (bullet.level != 4) {
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), infantryGroup.getChildren());
+            }
+            else{
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            }
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
@@ -719,8 +724,10 @@ function damageEnemy(enemy, bullet) {
                 //reset the t value for next fire drop
                 pathLocation.t = enemy.follower.t;
             }
-            //initial hit damage from fire bullet.
-            enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            //initial hit damage from fire bullet. Only if they are air.
+            if (enemy.moveType != 'air') {
+                enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            }
         }
 
         else{

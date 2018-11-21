@@ -11,6 +11,10 @@ const COLUMN_N = 16;
 const ROW_N = 12;
 const SELL_PERCENTAGE = 0.8;
 
+const ICE_MAX_CHANCE = 0.20; //chance to freeze enemy in place at MAX ice level.
+const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in ms.
+const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
+
 var config = {
     type: Phaser.AUTO,
     parent: 'content',
@@ -33,7 +37,7 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 
-var gold = 200;
+var gold = 2000;
 var goldText;
 var life = 20;
 var lifeText;
@@ -85,7 +89,7 @@ function preload() {
     this.load.image('bullet', 'assets/bullet.png');
     this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
     this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
-    this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+    this.load.image('missile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
 
     // Load other sprites
     this.load.image('goldCoin', 'assets/goldCoin.png');
@@ -150,7 +154,7 @@ function generateEnemyClass(data){
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
-            this.body.setCircle(15);
+            this.body.setCircle(20);
 
         },
 
@@ -172,7 +176,7 @@ function generateEnemyClass(data){
 
             if (!this.slowed && slow > 0) {
                 this.originalSpeed = this.speed;
-                this.speed = this.speed * slow;
+                this.speed = this.speed * (1-slow);
                 this.slowed = true;
                 this.slowTimer = this.time + duration;
                 this.setTint(0x87CEFA);
@@ -307,6 +311,12 @@ function generateTowerClass(data){
             this.duration = data['duration'][levelKey];
             this.ability = data['final_ability'];
             this.abilityActive = false;
+            this.rangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+            this.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+            scene.add.existing(this.rangeGraphic);
+            scene.add.existing(this.upgradeRangeGraphic);
         },
 
         // Update tower values when upgraded
@@ -322,7 +332,13 @@ function generateTowerClass(data){
             this.radius = data['radius'][levelKey];
             this.slow = data['slow'][levelKey];
             this.duration = data['duration'][levelKey];
-            if (levelKey === 4){
+            if (this.level === 4){
+                if (this.name === 'bomb') {
+                    this.target = 'air-ground'
+                }
+                if (this.name === 'arrow') {
+                    this.target = 'air'
+                }
                 this.abilityActive = true;
             }
         },
@@ -345,6 +361,15 @@ function generateTowerClass(data){
             return Math.round(total * SELL_PERCENTAGE);
         },
 
+        getUpgradeRange: function(){
+            var level = this.level;
+            if (this.level <=3) {
+                level++;
+            }
+            var levelKey = 'level_' + level;
+            return data['range'][levelKey];
+        },
+
         getUpgradeInformation: function(){
             // Crazy function that loops through provided tower's json data and looks for upgrades.
             // returns a string with upgrade information to be displayed on info button.
@@ -353,7 +378,6 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-
 
             //loop through data and find anything that would be upgraded
             for (var key in data) {
@@ -402,7 +426,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius, this.duration);
+                addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -412,10 +436,14 @@ function generateTowerClass(data){
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                    if (enemyUnits[i].moveType === this.target) {
                         iceExplosion(this.x, this.y);
-                        enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
-                    }
+                        var freeze = Math.random().toFixed(2);
+                        if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
+                            enemyUnits[i].receiveDamage(this.damage, 1, ICE_MAX_DURATION);
+                        }
+                        else{
+                            enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                        }
                 }
             }
         },
@@ -461,9 +489,11 @@ function generateProjectileClass(data){
 
         this.dx = 0;
         this.dy = 0;
-        this.lifespan = 0;
         this.damage = 0;
-
+        this.xOrigin = 0;
+        this.yOrigin = 0;
+        this.range = 0;
+        this.homingTarget = null;
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
 
@@ -477,22 +507,40 @@ function generateProjectileClass(data){
 
         this.dx = Math.cos(angle);
         this.dy = Math.sin(angle);
+    },
 
-        this.lifespan = 300;
+    homingFire: function(x, y, enemy){
+        this.homingTarget = enemy;
+        this.setPosition(x, y);
+        // this.dx = Math.cos(angle);
+        // this.dy = Math.sin(angle);
     },
 
     update: function (time, delta)
     {
-        this.lifespan -= delta;
+        if (this.homingTarget) {
+            if (this.homingTarget.hp <= 0) {  //need to retarget!
+                this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
+            }
+            var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
+            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            this.dx = Math.cos(angle);
+            this.dy = Math.sin(angle);
+        }
 
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (this.lifespan <= 0)
-        {
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
             this.setActive(false);
             this.setVisible(false);
         }
+
+        if (allEnemiesDead()) {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+
     }
 
     });
@@ -536,15 +584,18 @@ function iceExplosion(x,y){
     explosion.play('explode');
 }
 
-function addProjectile(name, x, y, angle, damage, radius, duration) {
+function addProjectile(enemyTarget, name, level, x, y, range, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
+    projectile.xOrigin = x;
+    projectile.yOrigin = y;
+    projectile.range = range;
     switch(name){
         //change projectile sprite if needed
         case 'arrow':
             projectile.setTexture('bullet');
             break;
         case 'bomb':
-            projectile.setTexture('missle')
+            projectile.setTexture('missile')
             projectile.setRotation(angle + Math.PI/2);
             break;
         case 'fire':
@@ -558,6 +609,10 @@ function addProjectile(name, x, y, angle, damage, radius, duration) {
         projectile.damage = damage;
         projectile.radius = radius;
         projectile.duration = duration;
+        projectile.level = level;
+        if (name === 'bomb' && level === 4) {
+            projectile.homingFire(x, y, enemyTarget);
+        }
         projectile.fire(x, y, angle);
     }
 }
@@ -606,6 +661,7 @@ function damageEnemy(enemy, bullet) {
             fire.y = enemy.y;
             fire.damage = bullet.damage;
             fire.lifespan = bullet.duration;
+            fire.level = bullet.level;
             fire.body.setCircle(10);
             fire.setVisible(true);
             fire.setActive(true);
@@ -621,7 +677,13 @@ function damageEnemy(enemy, bullet) {
 
 function groundFireDamageEnemy(enemy, groundFire){
     if (enemy.active === true && groundFire.active === true) {
-        enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+        var incinerate = Math.random().toFixed(2);
+        if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
+            enemy.receiveDamage(10000, 0, 0, true);
+        }
+        else{
+            enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+        }
     }
 }
 
@@ -742,14 +804,16 @@ function makeTowerButtonsInteractive(type, button, tower, levelMap){
     switch(type)
     {
         case 'tower':
+            // button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerover', () => towerHoverState(button));
             button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerdown', () => showUpgradeAndSell(button, levelMap));
-            button.on('pointerout', () => enterButtonRestState(button));
+            button.on('pointerout', () => towerRestState(button));
             break;
         case 'upgrade':
             button.on('pointerdown', () => upgradeTower(button, tower));
             button.on('pointerover', () => showUpgradeInfo(button,tower));
-            button.on('pointerout', () => hideUpgradeInfo(button));
+            button.on('pointerout', () => hideUpgradeInfo(button,tower));
             break;
         case 'sell':
             button.on('pointerdown', () => sellTower(button, tower, levelMap));
@@ -759,11 +823,27 @@ function makeTowerButtonsInteractive(type, button, tower, levelMap){
     }
 }
 
+function towerHoverState(tower){
+    tower.setTint(0xd3d3d3);
+    tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range);
+    tower.rangeGraphic.setVisible(true)
+    tower.upgradeRangeGraphic.setVisible(false);
+}
+function towerRestState(tower){
+    tower.setTint(0xffffff);
+    tower.rangeGraphic.setVisible(false);
+}
+
 function showUpgradeInfo(button, tower){
+    towerRestState(tower);
     if (tower.level < 4) {
         var down = tower.y + 120;
         var left = tower.x - 33;
         button.setTint(0xd3d3d3);
+
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        tower.upgradeRangeGraphic.setVisible(true);
+
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
         this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
         this.upgradeInfoText.depth = 11;
@@ -774,10 +854,11 @@ function showUpgradeInfo(button, tower){
     }
 }
 
-function hideUpgradeInfo(button){
+function hideUpgradeInfo(button,tower){
     button.setTint(0xffffff);
     this.upgradeInfoText.setText('')
     upgradeInfoButton.setVisible(false);
+    tower.upgradeRangeGraphic.setVisible(false);
 }
 
 function upgradeTower(button, tower){
@@ -793,9 +874,19 @@ function upgradeTower(button, tower){
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
+
+        tower.rangeGraphic.clear();
+        tower.upgradeRangeGraphic.clear();
+        tower.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range)
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        tower.rangeGraphic.setVisible(false);
+        tower.upgradeRangeGraphic.setVisible(false);
+    }
+        tower.upgradeRangeGraphic.setVisible(false);
         upgradeInfoButton.setVisible(false);
         this.upgradeInfoText.setText('')
-    }
 }
 
 
@@ -1119,7 +1210,8 @@ function create() {
 
     // this graphics element is only for visualization,
     // its not related to our path
-    var graphics = this.add.graphics();
+    // graphics = this.add.graphics();
+    // graphics2 = this.add.graphics();
 
     let waveText = this.cache.text.get('wave1Text');
 
@@ -1216,13 +1308,13 @@ function create() {
     this.cancel_msg_2 = this.add.text(973,495,'',{fontSize: '24px', fontStyle: 'Bold'});
 
     // Arrow tower button
-    this.add.text(970, 80, 'Arrow');
+    this.add.text(980, 80, 'Gun');
     this.add.text(980, 155, "$" + arrowData.cost.level_1);
     this.arrowTowerButton = this.add.image(995, 125, 'arrow');
     addButtonInput(this.arrowTowerButton);
 
      // Bomb tower button
-    this.add.text(975, 180, 'Bomb');
+    this.add.text(960, 180, 'Missile',{fontSize: '15px'});
     this.add.text(975, 245, "$" + bombData.cost.level_1);
     this.bombTowerButton = this.add.image(995, 225, 'bomb');
     addButtonInput(this.bombTowerButton);
@@ -1234,7 +1326,7 @@ function create() {
     addButtonInput(this.fireTowerButton);
 
     // Ice tower button
-    this.add.text(981, 380, 'Ice');
+    this.add.text(980, 380, 'Ice');
     this.add.text(975, 455, "$" + iceData.cost.level_1);
     this.iceTowerButton = this.add.image(995, 425, 'ice');
     addButtonInput(this.iceTowerButton);

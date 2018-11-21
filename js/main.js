@@ -141,13 +141,14 @@ function generateEnemyClass(data){
             this.slowed = false;
         },
 
-        startOnPath: function ()
+        startOnPath: function (path)
         {
+            this.path = path;
             // set the t parameter at the start of the path
             this.follower.t = 0;
 
             // get x and y of the given t point
-            path.getPoint(this.follower.t, this.follower.vec);
+            this.path.getPoint(this.follower.t, this.follower.vec);
 
             // set the x and y of our enemy to the received from the previous step
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
@@ -702,7 +703,7 @@ function damageEnemy(enemy, bullet) {
             for (var i = 0; i < dropCoords.length; i++) {
                 //move the location on the path a certain percentage dictated by getDropCoords()
                 pathLocation.t += dropCoords[i];
-                path.getPoint(pathLocation.t, pathLocation.vec);
+                enemy.path.getPoint(pathLocation.t, pathLocation.vec);
 
                 //get a groundfire object, and drop it on the map.
                 var fire = GroundFireGroup.get();
@@ -1442,7 +1443,7 @@ function update(time, delta) {
         {
             enemy.setActive(true);
             enemy.setVisible(true);
-            enemy.startOnPath();
+            enemy.startOnPath(path);
 
             this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
             this.nextEnemyIndex = this.nextEnemyIndex + 2;

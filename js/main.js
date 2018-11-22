@@ -22,6 +22,7 @@ var placing = false;
 // used to check if we need to delete upgrade and sell buttons.
 var upgradeSellX = 0;
 var upgradeSellY = 0;
+var currentLevel = "";
 
 var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1072,7 +1073,49 @@ var PauseScene = new Phaser.Class({
 
     create: function()
     {
-        
+        // Create Pause Menu Buttons
+        this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", { fontSize: 30 });
+        this.resumeGameButton.setInteractive();
+        this.resumeGameButton.on('pointerdown', () => {
+            switch(currentLevel){
+                case 'Level1Scene':
+                    this.scene.resume('Level1Scene');
+                    this.scene.stop();
+                    break;
+                case 'Level2Scene':
+                    this.scene.resume('Level2Scene');
+                    this.scene.stop();
+                    break;
+                case 'Level3Scene':
+                    this.scene.resume('Level3Scene');
+                    this.scene.stop();
+            }
+        });
+
+        this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL", { fontSize: 30 });
+        this.restartGameButton.setInteractive();
+        this.restartGameButton.on('pointerdown', () => {
+            switch(currentLevel){
+                case 'Level1Scene':
+                    this.scene.start('Level1Scene');
+                    break;
+                case 'Level2Scene':
+                    this.scene.start('Level2Scene');
+                    break;
+                case 'Level3Scene':
+                    this.scene.start('Level3Scene');
+            }
+        });
+
+        this.quitGameButton = this.add.text(400, 450, "QUIT GAME", { fontSize: 30 });
+        this.quitGameButton.setInteractive();
+        this.quitGameButton.on('pointerdown', () => {
+            this.scene.stop();
+            this.scene.stop('Level1Scene');
+            this.scene.stop('Level2Scene');
+            this.scene.stop('Level3Scene');
+            this.scene.start('TitleScene');
+        });
     }
 });
 
@@ -1158,6 +1201,7 @@ var Level1Scene = new Phaser.Class({
 
     create: function()
     {
+        currentLevel = 'Level1Scene';
         // Load and parse map data
         level1 = this.cache.text.get('level1');
         level2 = this.cache.text.get('level2');
@@ -1337,8 +1381,8 @@ var Level1Scene = new Phaser.Class({
         this.pauseButton.setInteractive();
         // on pauseButton click, pause Level1Scene, start Pause Scene with resume, restart, and quit
         this.pauseButton.on('pointerdown', () => {
-            this.scene.pause('Level1Scene');
             this.scene.launch('PauseScene');
+            this.scene.pause('Level1Scene');
         });
         this.helpButton.setInteractive();
         // on helpButton click, pause Level1Scene, start help Scene with back button

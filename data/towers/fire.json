@@ -8,10 +8,10 @@
         "level_4": 400
     },
     "damage":{
-        "level_1": 4,
-        "level_2": 6,
-        "level_3": 9,
-        "level_4": 11
+        "level_1": 10,
+        "level_2": 10,
+        "level_3": 10,
+        "level_4": 10
     },
     "range":{
         "level_1": 100,
@@ -43,5 +43,5 @@
         "level_3": 1400,
         "level_4": 1600
     },
-    "final_ability": "incinerate"
+    "final_ability": "Chance to instantly\nincinerate an enemy."
 }

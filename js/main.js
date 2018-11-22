@@ -133,13 +133,14 @@ function generateEnemyClass(data){
             this.slowed = false;
         },
 
-        startOnPath: function ()
+        startOnPath: function (path)
         {
+            this.path = path;
             // set the t parameter at the start of the path
             this.follower.t = 0;
 
             // get x and y of the given t point
-            path.getPoint(this.follower.t, this.follower.vec);
+            this.path.getPoint(this.follower.t, this.follower.vec);
 
             // set the x and y of our enemy to the received from the previous step
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
@@ -155,6 +156,7 @@ function generateEnemyClass(data){
 
             //shrink up the hitbox a bit.
             this.body.setCircle(20);
+            this.depth = 1;
 
         },
 
@@ -378,10 +380,13 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-
+            if (this.name === 'fire') {
+                info = info + 'Drops 1 Additional Fire.\n'
+            }
             //loop through data and find anything that would be upgraded
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
+
                     if (this.level === 3 && key === 'final_ability') {
                         info = info + 'Final Ability!' + '\n' + data[key] + '\n'
                     }
@@ -562,6 +567,31 @@ function generateGroundFireClass(data){
         this.setDisplaySize((size.width * 1.4), (size.height * 1.4));
     },
 
+    getDropCoords(level){
+        var dropCoords = [];
+        switch (level){
+            case 1:
+                dropCoords.push(0);
+                break;
+            case 2:
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
+                break;
+            case 3:
+                dropCoords.push(-0.008);
+                dropCoords.push(0);
+                dropCoords.push(0.008);
+                break;
+            case 4:
+                dropCoords.push(-0.012);
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
+                dropCoords.push(0.012);
+                break;
+        }
+        return dropCoords;
+    },
+
     update: function (time, delta)
     {
         this.lifespan -= delta;
@@ -645,7 +675,12 @@ function damageEnemy(enemy, bullet) {
         //check if BOMB AOE
         if(bullet.name == 'bomb'){
             var speedy = speedyGroup.getChildren();
-            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            if (bullet.level != 4) {
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), infantryGroup.getChildren());
+            }
+            else{
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            }
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
@@ -655,18 +690,36 @@ function damageEnemy(enemy, bullet) {
         }
 
         else if (bullet.name == 'fire'){
-            //drop ground fire!
-            var fire = GroundFireGroup.get();
-            fire.x = enemy.x;
-            fire.y = enemy.y;
-            fire.damage = bullet.damage;
-            fire.lifespan = bullet.duration;
-            fire.level = bullet.level;
-            fire.body.setCircle(10);
-            fire.setVisible(true);
-            fire.setActive(true);
-            fire.setDepth(0)
-            enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            //get the drop coordinates for the fire depending on level.
+            var dropCoords = GroundFireGroup.get().setActive(false).getDropCoords(bullet.level);
+
+            //current location of the hit enemy
+            var pathLocation = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
+            
+            //drop ground fire around the enemy!
+            for (var i = 0; i < dropCoords.length; i++) {
+                //move the location on the path a certain percentage dictated by getDropCoords()
+                pathLocation.t += dropCoords[i];
+                enemy.path.getPoint(pathLocation.t, pathLocation.vec);
+
+                //get a groundfire object, and drop it on the map.
+                var fire = GroundFireGroup.get();
+                fire.setPosition(pathLocation.vec.x, pathLocation.vec.y)
+                fire.damage = bullet.damage;
+                fire.lifespan = bullet.duration;
+                fire.level = bullet.level;
+                fire.body.setCircle(10);
+                fire.setVisible(true);
+                fire.setActive(true);
+                fire.setDepth(0)
+
+                //reset the t value for next fire drop
+                pathLocation.t = enemy.follower.t;
+            }
+            //initial hit damage from fire bullet. Only if they are air.
+            if (enemy.moveType != 'air') {
+                enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            }
         }
 
         else{
@@ -676,13 +729,15 @@ function damageEnemy(enemy, bullet) {
 }
 
 function groundFireDamageEnemy(enemy, groundFire){
-    if (enemy.active === true && groundFire.active === true) {
-        var incinerate = Math.random().toFixed(2);
-        if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
-            enemy.receiveDamage(10000, 0, 0, true);
-        }
-        else{
-            enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+    if (enemy.moveType != 'air') {
+        if (enemy.active === true && groundFire.active === true) {
+            var incinerate = Math.random().toFixed(2);
+            if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
+                enemy.receiveDamage(10000, 0, 0, true);
+            }
+            else{
+                enemy.receiveDamage(groundFire.damage/100, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+            }
         }
     }
 }
@@ -1389,7 +1444,7 @@ function update(time, delta) {
         {
             enemy.setActive(true);
             enemy.setVisible(true);
-            enemy.startOnPath();
+            enemy.startOnPath(path);
 
             this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
             this.nextEnemyIndex = this.nextEnemyIndex + 2;

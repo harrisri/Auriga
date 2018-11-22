@@ -298,7 +298,6 @@ function generateTowerClass(data){
         function Tower (scene)
         {
             Phaser.GameObjects.Image.call(this, scene, 0, 0, data.name);
-            this.nextTic = 0;
 
             this.name = data['name'];
             this.target = data['target'];
@@ -429,7 +428,13 @@ function generateTowerClass(data){
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
             if(enemy) {
-                var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
+                //'lead' the target by shooting at a point 0.5% ahead of where the enemy is currently.
+                var leadTarget = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
+                leadTarget.t += 0.003
+                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
+
+                //calculate the angle in which the projectile will shoot.  Also, the angle that the turret will face.
+                var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
                 addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
             }
@@ -460,6 +465,7 @@ function generateTowerClass(data){
 
             gold -= this.cost;
             goldText.setText(gold);
+            this.nextTic = 0;
         },
         update: function (time, delta)
         {

@@ -1,7 +1,9 @@
 const SPEED_SCALE = 50000;
-const BLOCKING = '#';
+const BUILD = '#';
+const NOBUILD = '^';
 const OPEN = '-';
-const HIDDEN = '*';
+const START = ['0', '1', '2']
+const END = ['9', '8', '7']
 const TILESIZE = 64;
 const MAPHEIGHT = TILESIZE * 12;
 const MAPWIDTH = TILESIZE * 16;
@@ -35,7 +37,7 @@ var config = {
 var game = new Phaser.Game(config);
 var path;
 
-var gold = 2000;
+var gold = 200;
 var goldText;
 var life = 20;
 var lifeText;
@@ -48,23 +50,10 @@ var placing = false;
 var upgradeSellX = 0;
 var upgradeSellY = 0;
 
-var map =      [[ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-                [ -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
-                [ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0],
-                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
-                [ 0,  -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-                [ 0,  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0],
-                [ 0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0],
-                [ 0,   0,  0, -1, -1, -1, -1, -1, -1, -1,  0,  0,  0, -1,  0],
-                [ 0,   0,  0, -1,  0,  0,  0,  0,  0, -1,  0,  0,  0, -1,  0],
-                [ 0,   0,  0, -1,  0,  0,  0,  0,  0, -1, -1, -1, -1, -1,  0],
-                [ 0,   0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]];
-
 function preload() {
 
     // Load Kenney assets tilemap
-    this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet.png")
+    this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet_modified.png")
 
     // Load unit and tower files
     this.load.json('infantry', 'data/units/infantry.json')
@@ -76,7 +65,7 @@ function preload() {
     this.load.json('ice', 'data/towers/ice.json')
     this.load.json('bomb', 'data/towers/bomb.json')
 
-    
+
     // Load map files
     this.load.text('level1', 'data/maps/level1');
     this.load.text('level2', 'data/maps/level2');
@@ -88,7 +77,7 @@ function preload() {
     this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
     this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
     this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
-    
+
 
     // Load enemy sprites
     this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
@@ -114,7 +103,10 @@ function preload() {
     this.load.image('4-star', 'assets/4Star.png')
 
     //load wave data
-    this.load.text('waveText', 'data/waves/windingPath');
+    this.load.text('wave1Text', 'data/waves/level1');
+    this.load.text('wave2Text', 'data/waves/level2');
+    this.load.text('wave3Text', 'data/waves/level3');
+
 
     //load ice tower explosion;
     this.load.setPath('assets/')
@@ -157,7 +149,7 @@ function generateEnemyClass(data){
 
             //had to move this down here because some enemies were not getting healthbars.  I believe it is because
             //enemy sprites are reused and their hp is not corrected until the above statement resetting their hp when placed on the path.
-            this.healthBar = new HealthBar(this.scene); 
+            this.healthBar = new HealthBar(this.scene);
             this.healthBar.getBaseHP(this.hp);
             this.healthBar.bar.setDepth(5);
             this.healthBar.draw()
@@ -206,8 +198,8 @@ function generateEnemyClass(data){
         update: function (time, delta)
         {
             this.time = time; //used for slow/damage timers
-            //damage tint timer is up 
 
+            //damage tint timer is up
             if (time > this.damageTimer && !this.slowed) {
                 this.setTint(0xffffff);
             }
@@ -271,7 +263,7 @@ var HealthBar = new Phaser.Class({
         this.baseHealth = baseHP;
         this.currHealth = baseHP;
     },
-    
+
     setHealth (newHealth)
     {
         this.currHealth = newHealth;
@@ -411,7 +403,7 @@ function generateTowerClass(data){
                                 //special cases where keys could be more descriptive based on tower type.  EX: Slow Duration vs. Fire Duration.  Duration itself isnt intuitive.
                                 if (this.name === 'bomb' && key === 'radius') {
                                     info = info + 'Blast Radius' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
-                                }                                
+                                }
                                 else if (this.name === 'ice' && key === 'duration') {
                                     info = info + 'Slow Duration' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
                                 }
@@ -423,7 +415,7 @@ function generateTowerClass(data){
                                 }
                                 else{
                                     info = info + key.charAt(0).toUpperCase() + key.slice(1) + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
-                                }    
+                                }
                             }
                         }
                     }
@@ -461,10 +453,10 @@ function generateTowerClass(data){
             }
         },
         // we will place the turret according to the grid
-        place: function(i, j) {
+        place: function(i, j, levelMap) {
             this.y = i * TILESIZE + TILESIZE/2;
             this.x = j * TILESIZE + TILESIZE/2;
-            map[i][j] = 1;
+            levelMap.grid[i][j] = 'X';
 
             gold -= this.cost;
             goldText.setText(gold);
@@ -540,7 +532,7 @@ function generateProjectileClass(data){
             this.dx = Math.cos(angle);
             this.dy = Math.sin(angle);
         }
-    
+
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
@@ -750,9 +742,9 @@ function groundFireDamageEnemy(enemy, groundFire){
     }
 }
 
-function placeTurret(pointer) {
+function placeTurret(pointer, levelMap) {
     var i = Math.floor(pointer.y/TILESIZE);
-    var j = Math.floor(pointer.x/TILESIZE);  
+    var j = Math.floor(pointer.x/TILESIZE);
 
     //check if user clicked away from upgrades/sell buttons.
     if (upgradeSellX != j || upgradeSellY != i) {
@@ -761,7 +753,7 @@ function placeTurret(pointer) {
 
     if (placing == true)
     {
-        if(canPlaceTurret(i, j)) {
+        if(canPlaceTurret(i, j, levelMap)) {
             var turret;
             switch(selectedTurret){
                 case 'Arrow':
@@ -784,13 +776,13 @@ function placeTurret(pointer) {
                     //put turret on map
                     turret.setActive(true);
                     turret.setVisible(true);
-                    turret.place(i, j);
+                    turret.place(i, j, levelMap);
 
                     //put a star below turret
                     addTowerStar(turret);
 
                     //make tower interactive
-                    makeTowerButtonsInteractive('tower',turret);
+                    makeTowerButtonsInteractive('tower', turret, null, levelMap);
                     placing = false;
                 }
                 else
@@ -804,11 +796,11 @@ function placeTurret(pointer) {
     }
 }
 
-function canPlaceTurret(i, j) {
-    return map[i][j] === 0;
+function canPlaceTurret(i, j, levelMap) {
+    return levelMap.grid[i][j] === BUILD;
 }
 
-function showUpgradeAndSell(tower){
+function showUpgradeAndSell(tower, levelMap){
     // handler function for when a user clicks on a placed tower.
     // expects the tower to be passed in as it is required for getting upgrade/sell prices.
 
@@ -829,7 +821,7 @@ function showUpgradeAndSell(tower){
     //create upgrade button.
     var upgradeButton = ButtonsGroup.get(left,down,'upgradeButton',null,true);
     this.upgradeText.setPosition(left,down).setOrigin(0.5,0.5);
-    
+
     if (tower.level === 4) {
         this.upgradeText.setText("MAX")
     }
@@ -845,21 +837,21 @@ function showUpgradeAndSell(tower){
 
 
     //setting the depth to an integer (semi random in this case) makes it so enemies are not shown over the buttons/text.
-    this.sellText.depth = 11;    
+    this.sellText.depth = 11;
     sellButton.depth = 10;
     upgradeButton.depth = 10;
     this.upgradeText.depth = 11;
 
     //make these buttons interactive.
-    makeTowerButtonsInteractive('upgrade',upgradeButton,tower);
-    makeTowerButtonsInteractive('sell',sellButton,tower);
+    makeTowerButtonsInteractive('upgrade', upgradeButton, tower, levelMap);
+    makeTowerButtonsInteractive('sell', sellButton, tower, levelMap);
 
     //coords for hiding buttons when player clicks away.
     upgradeSellX = Math.floor(tower.x/TILESIZE);
     upgradeSellY = Math.floor(tower.y/TILESIZE);
 }
 
-function makeTowerButtonsInteractive(type, button, tower){
+function makeTowerButtonsInteractive(type, button, tower, levelMap){
     // function used to make tower, sell, and upgrade buttons interactive.
     // each button gets its own function upon clicking.
 
@@ -869,7 +861,8 @@ function makeTowerButtonsInteractive(type, button, tower){
         case 'tower':
             // button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerover', () => towerHoverState(button));
-            button.on('pointerdown', () => showUpgradeAndSell(button));
+            button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerdown', () => showUpgradeAndSell(button, levelMap));
             button.on('pointerout', () => towerRestState(button));
             break;
         case 'upgrade':
@@ -878,7 +871,7 @@ function makeTowerButtonsInteractive(type, button, tower){
             button.on('pointerout', () => hideUpgradeInfo(button,tower));
             break;
         case 'sell':
-            button.on('pointerdown', () => sellTower(button, tower));
+            button.on('pointerdown', () => sellTower(button, tower, levelMap));
             button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerout', () => enterButtonRestState(button));
             break;
@@ -936,7 +929,7 @@ function upgradeTower(button, tower){
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
-        
+
         tower.rangeGraphic.clear();
         tower.upgradeRangeGraphic.clear();
         tower.rangeGraphic.lineStyle(2, 0xffffe0, 1);
@@ -952,7 +945,7 @@ function upgradeTower(button, tower){
 }
 
 
-function sellTower(button, tower){
+function sellTower(button, tower, levelMap){
     // Function attached to sell tower button.
     // Subtracts from the gold total a percentage of the total money spent on the tower.
     // removes the tower from the map.
@@ -964,7 +957,7 @@ function sellTower(button, tower){
     // Clear out space for placing new towers.
     var i = Math.floor(tower.y/TILESIZE);
     var j = Math.floor(tower.x/TILESIZE);
-    map[i][j] = 0;
+    levelMap.grid[i][j] = BUILD;
 
     // Deactivate this tower.
     switch (tower.name){
@@ -1074,10 +1067,10 @@ function parseMap(maptext){
             if (char === OPEN || start.includes(char) || end.includes(char)) {
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
-            else if (char === HIDDEN){
-                tiles[i][j] = 24; // Build-space tile in Kenney pack [2nd row 2nd column]
+            else if (char === NOBUILD){
+                tiles[i][j] = 130; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
-            else if (char === BLOCKING){
+            else if (char === BUILD){
                 tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]
             }
         }
@@ -1147,7 +1140,7 @@ function generatePaths(levelMap){
                     pathList.push(curr);
                 }
                 // TODO: de-magic this.
-                else if (temp === '9' || temp === '8' || temp === 7){
+                else if (temp === '9' || temp === '8' || temp === '7'){
                     curr = [tempx, tempy];
                     pathList.push(curr);
                     done = true;
@@ -1259,7 +1252,7 @@ function create() {
     goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
     lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
     this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
-  
+
     //below are used for upgrade/sell buttons.
     sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
     upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1269,13 +1262,13 @@ function create() {
 
     //group for putting stars under towers.
     StarGroup = this.add.group();
-  
+
     // this graphics element is only for visualization,
     // its not related to our path
     // graphics = this.add.graphics();
     // graphics2 = this.add.graphics();
 
-    let waveText = this.cache.text.get('waveText');
+    let waveText = this.cache.text.get('wave1Text');
 
     this.waveData = parseWaveText(waveText);
 
@@ -1312,7 +1305,7 @@ function create() {
     heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
     flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
     speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
-    
+
     // Do the same thing with towers
     let arrowData = game.cache.json.get('arrow');
     let bombData = game.cache.json.get('bomb');
@@ -1361,7 +1354,8 @@ function create() {
     this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
 
     //clicks place turrets
-    this.input.on('pointerdown', placeTurret);
+
+    this.input.on('pointerdown', function(pointer){placeTurret(pointer, levelMap1)});
     this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
     //Cancel: ESC message
@@ -1379,7 +1373,7 @@ function create() {
     this.add.text(975, 245, "$" + bombData.cost.level_1);
     this.bombTowerButton = this.add.image(995, 225, 'bomb');
     addButtonInput(this.bombTowerButton);
-    
+
     // Fire tower button
     this.add.text(975, 275, 'Fire');
     this.add.text(975, 350, "$" + fireData.cost.level_1);
@@ -1397,7 +1391,7 @@ function create() {
     this.tempBombTower = this.add.image(0, 0, 'bomb');
     this.tempFireTower = this.add.image(0, 0, 'fire');
     this.tempIceTower = this.add.image(0, 0, 'ice');
-    
+
     var graphicsArrow = this.add.graphics();
     var graphicsBomb = this.add.graphics();
     var graphicsFire = this.add.graphics();
@@ -1502,7 +1496,7 @@ function update(time, delta) {
         this.tempFireTower.setVisible(false);
         this.fireCircle.setVisible(false);
     }
-    
+
     if (this.showCountdown){
         var timer = Math.round((this.nextEnemy - time)/1000);
         this.waveText.setText("Next Wave in " + timer + "!")

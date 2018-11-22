@@ -2,10 +2,10 @@
     "name": "fire",
     "target": "ground",
     "cost":{
-        "level_1": 110,
-        "level_2": 125,
-        "level_3": 140,
-        "level_4": 220
+        "level_1": 150,
+        "level_2": 210,
+        "level_3": 265,
+        "level_4": 400
     },
     "damage":{
         "level_1": 10,
@@ -14,16 +14,16 @@
         "level_4": 10
     },
     "range":{
-        "level_1": 150,
-        "level_2": 200,
-        "level_3": 300,
-        "level_4": 800
+        "level_1": 100,
+        "level_2": 120,
+        "level_3": 120,
+        "level_4": 140
     },
     "rate":{
         "level_1": 2000,
         "level_2": 2000,
-        "level_3": 2000,
-        "level_4": 2000
+        "level_3": 1800,
+        "level_4": 1500
     },
     "radius":{
         "level_1": -1,
@@ -38,10 +38,10 @@
         "level_4": -1
     },
     "duration":{
-        "level_1": 1500,
-        "level_2": 2250,
-        "level_3": 2250,
-        "level_4": 2250
+        "level_1": 1000,
+        "level_2": 1200,
+        "level_3": 1400,
+        "level_4": 1600
     },
     "final_ability": "Chance to instantly\nincinerate an enemy."
 }

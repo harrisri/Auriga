@@ -10,9 +10,7 @@ const ROW_N = 12;
 const SELL_PERCENTAGE = 0.8;
 
 var path;
-var gold = 200;
 var goldText;
-var life = 20;
 var lifeText;
 var explosion;
 
@@ -23,19 +21,6 @@ var placing = false;
 var upgradeSellX = 0;
 var upgradeSellY = 0;
 var currentLevel = "";
-
-var map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
-                [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
 function generateEnemyClass(data){
 
@@ -1097,6 +1082,7 @@ var PauseScene = new Phaser.Class({
         this.restartGameButton.on('pointerdown', () => {
             switch(currentLevel){
                 case 'Level1Scene':
+                    this.scene.restart('Level1Scene');
                     this.scene.start('Level1Scene');
                     break;
                 case 'Level2Scene':
@@ -1254,6 +1240,21 @@ var Level1Scene = new Phaser.Class({
 
     create: function()
     {
+        gold = 200;
+        life = 20;
+        map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
+                    [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
+                    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
+                    [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
+                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
+                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
+                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+
         currentLevel = 'Level1Scene';
         // Load and parse map data
         level1 = this.cache.text.get('level1');
@@ -1553,8 +1554,16 @@ var Level1Scene = new Phaser.Class({
             }
         }
 
+        // Victory scene if all waves are completed
         else if (allEnemiesDead()){
             this.scene.start('YouWin');
+        }
+
+        // GameOver Scene if player is out of lives
+        if (life <= 0)
+        {
+            this.scene.stop();
+            this.scene.start('GameOver');
         }
     }
 })

@@ -1129,9 +1129,62 @@ var HelpScene = new Phaser.Class({
 
     create: function()
     {
-        
+        this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
+        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
+        this.backButton = this.add.text(400, 550, "RESUME GAME");
+        this.backButton.setInteractive();
+        this.backButton.on('pointerdown', () => {
+            this.scene.stop();
+            this.scene.resume('Level1Scene');
+        });
     }
 });
+
+var YouWin = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function YouWin ()
+    {
+        Phaser.Scene.call(this, { key: 'YouWin' });
+    },
+
+    preload: function()
+    {
+        this.load.image('youWin', 'assets/youWin.png');
+    },
+
+    create: function()
+    {
+        this.WinImage = this.add.image(530, 400, 'youWin');
+        this.WinImage.setScale(2);
+        this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
+        this.TitleReturnButton.setInteractive();
+        this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
+    }
+});
+
+var GameOver = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function GameOver ()
+    {
+        Phaser.Scene.call(this, { key: 'GameOver' });
+    },
+
+    preload: function()
+    {
+        this.load.image('gameOver', 'assets/gameOver.png');
+    },
+
+    create: function()
+    {
+        this.GameOverImage = this.add.image(530, 400, 'gameOver');
+        this.GameOverImage.setScale(2);
+        this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
+        this.TitleReturnButton.setInteractive();
+        this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
+    }
+})
 
 var Level1Scene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -1501,7 +1554,7 @@ var Level1Scene = new Phaser.Class({
         }
 
         else if (allEnemiesDead()){
-            console.log("game over!")
+            this.scene.start('YouWin');
         }
     }
 })
@@ -1514,7 +1567,7 @@ var config = {
     physics: {
         default: 'arcade'
     },
-    scene: [ TitleScene, Level1Scene, InstructionsScene, PauseScene, HelpScene ]
+    scene: [ TitleScene, Level1Scene, InstructionsScene, PauseScene, HelpScene, YouWin, GameOver ]
 };
 
 var game = new Phaser.Game(config);

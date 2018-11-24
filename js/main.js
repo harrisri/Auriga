@@ -1678,6 +1678,16 @@ var LevelScene = new Phaser.Class({
             }
         }
 
+        //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
+        this.tempArrowTower.setVisible(false);
+        this.arrowCircle.setVisible(false);
+        this.tempBombTower.setVisible(false);
+        this.bombCircle.setVisible(false);
+        this.tempIceTower.setVisible(false);
+        this.iceCircle.setVisible(false);
+        this.tempFireTower.setVisible(false);
+        this.fireCircle.setVisible(false);
+
         if (placing == true){
             this.cancel_msg_1.setText('Cancel')
             this.cancel_msg_2.setText('ESC')
@@ -1713,14 +1723,6 @@ var LevelScene = new Phaser.Class({
         if (placing == false) {
             this.cancel_msg_1.setText('');
             this.cancel_msg_2.setText('');
-            this.tempArrowTower.setVisible(false);
-            this.arrowCircle.setVisible(false);
-            this.tempBombTower.setVisible(false);
-            this.bombCircle.setVisible(false);
-            this.tempIceTower.setVisible(false);
-            this.iceCircle.setVisible(false);
-            this.tempFireTower.setVisible(false);
-            this.fireCircle.setVisible(false);
         }
 
         if (this.showCountdown){

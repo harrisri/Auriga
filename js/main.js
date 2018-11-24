@@ -15,31 +15,8 @@ const ICE_MAX_CHANCE = 0.20; //chance to freeze enemy in place at MAX ice level.
 const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in ms.
 const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
 
-var config = {
-    type: Phaser.AUTO,
-    parent: 'content',
-    width: MAPWIDTH,
-    height: MAPHEIGHT,
-    physics: {
-        default: 'arcade'
-    },
-    scene: {
-        key: 'main',
-        preload: preload,
-        create: create,
-        update: update
-    }
-};
-
-// Most of the code here was referened from https://gamedevacademy.org/how-to-make-tower-defense-game-with-phaser-3/
-// The code from this website and the assets used were modified to fit our purposes
-
-var game = new Phaser.Game(config);
 var path;
-
-var gold = 200;
 var goldText;
-var life = 20;
 var lifeText;
 var explosion;
 
@@ -49,69 +26,7 @@ var placing = false;
 // used to check if we need to delete upgrade and sell buttons.
 var upgradeSellX = 0;
 var upgradeSellY = 0;
-
-function preload() {
-
-    // Load Kenney assets tilemap
-    this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet_modified.png")
-
-    // Load unit and tower files
-    this.load.json('infantry', 'data/units/infantry.json')
-    this.load.json('heavy', 'data/units/heavy.json')
-    this.load.json('flying', 'data/units/flying.json')
-    this.load.json('speedy', 'data/units/speedy.json')
-    this.load.json('arrow', 'data/towers/arrow.json')
-    this.load.json('fire', 'data/towers/fire.json')
-    this.load.json('ice', 'data/towers/ice.json')
-    this.load.json('bomb', 'data/towers/bomb.json')
-
-
-    // Load map files
-    this.load.text('level1', 'data/maps/level1');
-    this.load.text('level2', 'data/maps/level2');
-    this.load.text('level3', 'data/maps/level3');
-
-
-    // Load tower sprites
-    this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');
-    this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
-    this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
-    this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
-
-
-    // Load enemy sprites
-    this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
-    this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
-    this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
-    this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
-
-    // Load projectile sprites
-    this.load.image('bullet', 'assets/bullet.png');
-    this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
-    this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
-    this.load.image('missile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
-
-    // Load other sprites
-    this.load.image('goldCoin', 'assets/goldCoin.png');
-    this.load.image('heart', 'assets/heart.png');
-    this.load.image('upgradeButton', 'assets/UpgradeButton.png')
-    this.load.image('sellButton', 'assets/SellButton.png')
-    this.load.image('upgradeInfoButton', 'assets/UpgradeInfoButton.png');
-    this.load.image('1-star', 'assets/1Star.png')
-    this.load.image('2-star', 'assets/2Star.png')
-    this.load.image('3-star', 'assets/3Star.png')
-    this.load.image('4-star', 'assets/4Star.png')
-
-    //load wave data
-    this.load.text('wave1Text', 'data/waves/level1');
-    this.load.text('wave2Text', 'data/waves/level2');
-    this.load.text('wave3Text', 'data/waves/level3');
-
-
-    //load ice tower explosion;
-    this.load.setPath('assets/')
-    this.load.multiatlas('iceExplosion','Ice_Explosion.json');
-}
+var currentLevel = "";
 
 function generateEnemyClass(data){
 
@@ -151,6 +66,7 @@ function generateEnemyClass(data){
             //enemy sprites are reused and their hp is not corrected until the above statement resetting their hp when placed on the path.
             this.healthBar = new HealthBar(this.scene);
             this.healthBar.getBaseHP(this.hp);
+            this.healthBar.bar.setPosition(this.x - 18, this.y - 20);
             this.healthBar.bar.setDepth(5);
             this.healthBar.draw()
 
@@ -484,8 +400,6 @@ function generateTowerClass(data){
 
     return Tower;
 }
-
-
 
 function generateProjectileClass(data){
     var Projectile = new Phaser.Class({
@@ -950,7 +864,6 @@ function upgradeTower(button, tower){
         this.upgradeInfoText.setText('')
 }
 
-
 function sellTower(button, tower, levelMap){
     // Function attached to sell tower button.
     // Subtracts from the gold total a percentage of the total money spent on the tower.
@@ -1159,8 +1072,6 @@ function generatePaths(levelMap){
     return paths;
 }
 
-
-
 function parseWaveText(waveData){
     var waves = [[]]
 
@@ -1238,292 +1149,579 @@ function escapePlaceMode() {
     placing = false;
 }
 
-function create() {
-    // Load and parse map data
-    level1 = this.cache.text.get('level1');
-    level2 = this.cache.text.get('level2');
-    level3 = this.cache.text.get('level3');
-    levelMap1 = parseMap(level1);
-    levelMap2 = parseMap(level2);
-    levelMap3 = parseMap(level3);
-    levelPath1 = generatePaths(levelMap1);
-
-    // Set up tilemap using Kenney sprite sheet
-    const tilemap = this.make.tilemap({ data: levelMap1.tiles, tileWidth: 64, tileHeight: 64 });
-    const tileset = tilemap.addTilesetImage("tdtiles");
-    const layer = tilemap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
-
-    this.add.image(26, 28, 'goldCoin');
-    this.add.image(MAPWIDTH - 56, 28, 'heart');
-    goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
-    lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
-    this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
-
-    //below are used for upgrade/sell buttons.
-    sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-    upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-    upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-    upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
-    ButtonsGroup = this.add.group();
-
-    //group for putting stars under towers.
-    StarGroup = this.add.group();
-
-    // this graphics element is only for visualization,
-    // its not related to our path
-    // graphics = this.add.graphics();
-    // graphics2 = this.add.graphics();
-
-    let waveText = this.cache.text.get('wave1Text');
-
-    this.waveData = parseWaveText(waveText);
-
-    // TODO: Clean this up; manually creating levels for now.
-    var startx = levelPath1[0][0][0] * TILESIZE + TILESIZE / 2
-    var starty = levelPath1[0][0][1] * TILESIZE + TILESIZE / 2
-    path = this.add.path(startx, starty)
-
-    // TOOO: combine map data and functionality into an object as much as possible
-    function makePath(pathStart, levelPath){
-        // Make path with Phaser based on return value of generatePaths()
-        for (var i = 0; i < levelPath.length; i++){
-            var curr = levelPath[i];
-            pathx = curr[0] * TILESIZE + TILESIZE / 2
-            pathy = curr[1] * TILESIZE + TILESIZE / 2
-            pathStart.lineTo(pathx, pathy)
-        }
-    }
-    makePath(path, levelPath1[0]);
-
-    // Get enemy data and generate classes to instantiate enemies
-    let infantryData = game.cache.json.get('infantry');
-    let heavyData = game.cache.json.get('heavy');
-    let flyingData = game.cache.json.get('flying');
-    let speedyData = game.cache.json.get('speedy');
-
-    const Infantry = generateEnemyClass(infantryData);
-    const Heavy = generateEnemyClass(heavyData);
-    const Flying = generateEnemyClass(flyingData);
-    const Speedy = generateEnemyClass(speedyData);
-
-    // Individual groups for each enemy type
-    infantryGroup = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
-    heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
-    flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
-    speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
-
-    // Do the same thing with towers
-    let arrowData = game.cache.json.get('arrow');
-    let bombData = game.cache.json.get('bomb');
-    let fireData = game.cache.json.get('fire');
-    let iceData = game.cache.json.get('ice');
-
-    const Arrow = generateTowerClass(arrowData);
-    const Bomb = generateTowerClass(bombData);
-    const Fire = generateTowerClass(fireData);
-    const Ice = generateTowerClass(iceData);
-
-    arrowTurrets = this.add.group({ classType: Arrow, runChildUpdate: true });
-    bombTurrets = this.add.group({ classType: Bomb, runChildUpdate: true });
-    fireTurrets = this.add.group({ classType: Fire, runChildUpdate: true });
-    iceTurrets = this.add.group({ classType: Ice, runChildUpdate: true });
-
-    //as with projectiles
-    const Projectile = generateProjectileClass({"image":"bullet"});
-    Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
-
-    //add ground fire
-    const GroundFire = generateGroundFireClass(fireData);
-    GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
-
-    // create ice explosion animation and group
-    var frameNames = this.anims.generateFrameNames('iceExplosion',{
-        start: 1, end: 19, suffix:'.png'
-    })
-    this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
-    iceExplosions = this.add.group();
-    for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
-        var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')
-        sprite.setVisible(false);
-    }
-
-    //add collisions between enemies and projectiles.
-    this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
-    this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
-    this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
-    this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
-
-    //add collisions between enemies and groundFire.
-    this.physics.add.overlap(infantryGroup, GroundFireGroup, groundFireDamageEnemy, null, null);
-    this.physics.add.overlap(heavyGroup, GroundFireGroup, groundFireDamageEnemy);
-    this.physics.add.overlap(flyingGroup, GroundFireGroup, groundFireDamageEnemy);
-    this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
-
-    //clicks place turrets
-
-    this.input.on('pointerdown', function(pointer){placeTurret(pointer, levelMap1)});
-    this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
-
-    //Cancel: ESC message
-    this.cancel_msg_1 = this.add.text(965,485,'',{fontStyle: 'Bold'});
-    this.cancel_msg_2 = this.add.text(973,495,'',{fontSize: '24px', fontStyle: 'Bold'});
-
-    // Arrow tower button
-    this.add.text(980, 80, 'Gun');
-    this.add.text(980, 155, "$" + arrowData.cost.level_1);
-    this.arrowTowerButton = this.add.image(995, 125, 'arrow');
-    addButtonInput(this.arrowTowerButton);
-
-     // Bomb tower button
-    this.add.text(960, 180, 'Missile',{fontSize: '15px'});
-    this.add.text(975, 245, "$" + bombData.cost.level_1);
-    this.bombTowerButton = this.add.image(995, 225, 'bomb');
-    addButtonInput(this.bombTowerButton);
-
-    // Fire tower button
-    this.add.text(975, 275, 'Fire');
-    this.add.text(975, 350, "$" + fireData.cost.level_1);
-    this.fireTowerButton = this.add.image(995, 320, 'fire');
-    addButtonInput(this.fireTowerButton);
-
-    // Ice tower button
-    this.add.text(980, 380, 'Ice');
-    this.add.text(975, 455, "$" + iceData.cost.level_1);
-    this.iceTowerButton = this.add.image(995, 425, 'ice');
-    addButtonInput(this.iceTowerButton);
-
-    // Tower sprites that will follow mouse pointer when UI button is clicked
-    this.tempArrowTower = this.add.image(0, 0, 'arrow');
-    this.tempBombTower = this.add.image(0, 0, 'bomb');
-    this.tempFireTower = this.add.image(0, 0, 'fire');
-    this.tempIceTower = this.add.image(0, 0, 'ice');
-
-    var graphicsArrow = this.add.graphics();
-    var graphicsBomb = this.add.graphics();
-    var graphicsFire = this.add.graphics();
-    var graphicsIce = this.add.graphics();
-    // Change alpha to 1 for white, 0 for transparent
-    graphicsArrow.lineStyle(2, 0xffffe0, 1);
-    graphicsBomb.lineStyle(2, 0xffffe0, 1);
-    graphicsFire.lineStyle(2, 0xffffe0, 1);
-    graphicsIce.lineStyle(2, 0xffffe0, 1);
-
-    // Generate tower range indicators
-    this.arrowCircle = graphicsArrow.strokeCircle(0, 0, arrowData.range.level_1);
-    this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);
-    this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
-    this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
-
-    //variables to assist in spawning enemies in waves
-    this.nextEnemy = 0;
-    this.nextEnemyIndex = 0;
-    this.timeToNextEnemyIndex = 1;
-    this.waveIndex = 0;
-    this.showCountdown = false;
-}
-
-function update(time, delta) {
-    if (time > this.nextEnemy)
+var TitleScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function TitleScene ()
     {
+        Phaser.Scene.call(this, { key: 'TitleScene' });
+    },
+
+    create: function()
+    {
+        this.add.text(325, 50, "AURIGA TOWER DEFENSE", { fontFamily: 'Arial', fontSize: 30 });
+
+        // Create Text Buttons that load the new scenes
+        this.level1Button = this.add.text(475, 200, "LEVEL 1", { fontSize: 20 });
+        this.level1Button.setInteractive();
+        this.level1Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
+
+        this.level2Button = this.add.text(475, 350, "LEVEL 2", { fontSize: 20 });
+        this.level2Button.setInteractive();
+        this.level2Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
+
+        this.level3Button = this.add.text(475, 500, "LEVEL 3", { fontSize: 20 });
+        this.level3Button.setInteractive();
+        this.level3Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
+
+        this.instructionsButton = this.add.text(415, 650, "GAME INSTRUCTIONS", { fontSize: 20 });
+        this.instructionsButton.setInteractive();
+        this.instructionsButton.on('pointerdown', () => this.scene.start('InstructionsScene'));
+    }
+});
+
+var InstructionsScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function InstructionsScene ()
+    {
+        Phaser.Scene.call(this, { key: 'InstructionsScene' });
+    },
+
+    create: function()
+    {
+        this.enemyInstructions = this.add.text(200, 150, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
+        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
+        this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN");
+        this.backButton.setInteractive();
+        this.backButton.on('pointerdown', () => this.scene.start('TitleScene'));
+    }
+});
+
+var PauseScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function PauseScene ()
+    {
+        Phaser.Scene.call(this, { key: 'PauseScene' });
+    },
+
+    create: function()
+    {
+        // Create Pause Menu Buttons
+        this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", { fontSize: 30 });
+        this.resumeGameButton.setInteractive();
+        this.resumeGameButton.on('pointerdown', () => {
+                this.scene.resume('LevelScene');
+                this.scene.stop();
+        });
+
+        this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL", { fontSize: 30 });
+        this.restartGameButton.setInteractive();
+        this.restartGameButton.on('pointerdown', () => {
+                this.scene.restart('LevelScene');
+                this.scene.start('LevelScene');
+        });
+
+        this.quitGameButton = this.add.text(400, 450, "QUIT GAME", { fontSize: 30 });
+        this.quitGameButton.setInteractive();
+        this.quitGameButton.on('pointerdown', () => {
+            this.scene.stop();
+            this.scene.stop('LevelScene');
+            this.scene.start('TitleScene');
+        });
+    }
+});
+
+var HelpScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function HelpScene ()
+    {
+        Phaser.Scene.call(this, { key: 'HelpScene' });
+    },
+
+    create: function()
+    {
+        this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
+        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
+        this.backButton = this.add.text(400, 550, "RESUME GAME");
+        this.backButton.setInteractive();
+        this.backButton.on('pointerdown', () => {
+            this.scene.stop();
+            this.scene.resume('LevelScene');
+        });
+    }
+});
+
+var YouWin = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function YouWin ()
+    {
+        Phaser.Scene.call(this, { key: 'YouWin' });
+    },
+
+    preload: function()
+    {
+        this.load.image('youWin', 'assets/youWin.png');
+    },
+
+    create: function()
+    {
+        this.WinImage = this.add.image(530, 400, 'youWin');
+        this.WinImage.setScale(2);
+        this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
+        this.TitleReturnButton.setInteractive();
+        this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
+    }
+});
+
+var GameOver = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function GameOver ()
+    {
+        Phaser.Scene.call(this, { key: 'GameOver' });
+    },
+
+    preload: function()
+    {
+        this.load.image('gameOver', 'assets/gameOver.png');
+    },
+
+    create: function()
+    {
+        this.GameOverImage = this.add.image(530, 400, 'gameOver');
+        this.GameOverImage.setScale(2);
+        this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
+        this.TitleReturnButton.setInteractive();
+        this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
+    }
+})
+
+var LevelScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function LevelScene ()
+    {
+        Phaser.Scene.call(this, { key: 'LevelScene' });
+    },
+
+    init: function(data){
+        this.currentLevel = data.currentLevel
+    },
+
+    preload: function()
+    {
+        // Load Kenney assets tilemap
+        this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet_modified.png")
+
+        // Load unit and tower files
+        this.load.json('infantry', 'data/units/infantry.json')
+        this.load.json('heavy', 'data/units/heavy.json')
+        this.load.json('flying', 'data/units/flying.json')
+        this.load.json('speedy', 'data/units/speedy.json')
+        this.load.json('arrow', 'data/towers/arrow.json')
+        this.load.json('fire', 'data/towers/fire.json')
+        this.load.json('ice', 'data/towers/ice.json')
+        this.load.json('bomb', 'data/towers/bomb.json')
+
+        // Load map files
+        this.load.text('level1', 'data/maps/level1');
+        this.load.text('level2', 'data/maps/level2');
+        this.load.text('level3', 'data/maps/level3');
+
+        // Load tower sprites
+        this.load.image('arrow', 'assets/2DTDassets/PNG/Default size/towerDefense_tile249.png');
+        this.load.image('ice', 'assets/2DTDassets/PNG/Default size/towerDefense_tile180.png');
+        this.load.image('bomb', 'assets/2DTDassets/PNG/Default size/towerDefense_tile206.png');
+        this.load.image('fire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile250.png');
+
+        // Load enemy sprites
+        this.load.image('infantry', 'assets/2DTDassets/PNG/Default size/towerDefense_tile245.png');
+        this.load.image('heavy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile246.png')
+        this.load.image('flying', 'assets/2DTDassets/PNG/Default size/towerDefense_tile271.png')
+        this.load.image('speedy', 'assets/2DTDassets/PNG/Default size/towerDefense_tile247.png')
+
+        // Load projectile sprites
+        this.load.image('bullet', 'assets/bullet.png');
+        this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
+        this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
+        this.load.image('missile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+
+        // Load other sprites
+        this.load.image('goldCoin', 'assets/goldCoin.png');
+        this.load.image('heart', 'assets/heart.png');
+        this.load.image('upgradeButton', 'assets/UpgradeButton.png')
+        this.load.image('sellButton', 'assets/SellButton.png')
+        this.load.image('upgradeInfoButton', 'assets/UpgradeInfoButton.png');
+        this.load.image('1-star', 'assets/1Star.png')
+        this.load.image('2-star', 'assets/2Star.png')
+        this.load.image('3-star', 'assets/3Star.png')
+        this.load.image('4-star', 'assets/4Star.png')
+        this.load.spritesheet('icons', 'assets/icons_32x32.png', { frameWidth: 32, frameHeight: 32 });
+
+        //load wave data
+        this.load.text('wave1Text', 'data/waves/level1');
+        this.load.text('wave2aText', 'data/waves/level2-a');
+        this.load.text('wave2bText', 'data/waves/level2-b');
+        this.load.text('wave3aText', 'data/waves/level3-a');
+        this.load.text('wave3bText', 'data/waves/level3-b');
+
+        //load ice tower explosion;
+        this.load.setPath('assets/')
+        this.load.multiatlas('iceExplosion','Ice_Explosion.json');
+    },
+
+    create: function()
+    {
+        gold = 200;
+        life = 20;
+        switch(this.currentLevel){
+        //---------------------------LEVEL 1---------------------------------------
+            case 'level1':
+                var level = this.cache.text.get('level1');
+                var waveText = this.cache.text.get('wave1Text');
+                break;
+        //---------------------------LEVEL 2---------------------------------------
+            case 'level2':
+                var level = this.cache.text.get('level2');
+                //2 paths
+                var waveText = this.cache.text.get('wave2aText');
+                var waveText2 = this.cache.text.get('wave2bText');
+                break;
+        //---------------------------LEVEL 2---------------------------------------
+            case 'level3':
+                var level = this.cache.text.get('level3');
+                //2 paths
+                var waveText = this.cache.text.get('wave3aText');
+                var waveText2 = this.cache.text.get('wave3bText');
+                break;
+        }
+
+        // Load and parse map data
+        levelMap = parseMap(level)
+        levelPath = generatePaths(levelMap);
+
+        //set up wave text
+        this.waveData = parseWaveText(waveText);
+        if (waveText2) {
+            this.waveData2 = parseWaveText(waveText2);
+        }
+
+        // Set up tilemap using Kenney sprite sheet
+        const tilemap = this.make.tilemap({ data: levelMap.tiles, tileWidth: 64, tileHeight: 64 });
+        const tileset = tilemap.addTilesetImage("tdtiles");
+        const layer = tilemap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
+
+        //UI elements
+        this.add.image(26, 28, 'goldCoin');
+        this.add.image(MAPWIDTH - 56, 28, 'heart');
+        goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+    
+        //below are used for upgrade/sell buttons.
+        sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
+        ButtonsGroup = this.add.group();
+
+        //group for putting stars under towers.
+        StarGroup = this.add.group();
+    
+        // this graphics element is only for visualization,
+        // its not related to our path
+        var graphics = this.add.graphics();
+
+        // TODO: Clean this up; manually creating levels for now.
+        var startx = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
+        var starty = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
+        path = this.add.path(startx, starty);
+        
+        // TOOO: combine map data and functionality into an object as much as possible
+        function makePath(pathStart, levelPath){
+            // Make path with Phaser based on return value of generatePaths()
+            for (var i = 0; i < levelPath.length; i++){
+                var curr = levelPath[i];
+                pathx = curr[0] * TILESIZE + TILESIZE / 2
+                pathy = curr[1] * TILESIZE + TILESIZE / 2
+                pathStart.lineTo(pathx, pathy)
+            }
+        }
+        makePath(path, levelPath[0]);
+
+        // Get enemy data and generate classes to instantiate enemies
+        let infantryData = game.cache.json.get('infantry');
+        let heavyData = game.cache.json.get('heavy');
+        let flyingData = game.cache.json.get('flying');
+        let speedyData = game.cache.json.get('speedy');
+
+        const Infantry = generateEnemyClass(infantryData);
+        const Heavy = generateEnemyClass(heavyData);
+        const Flying = generateEnemyClass(flyingData);
+        const Speedy = generateEnemyClass(speedyData);
+
+        // Individual groups for each enemy type
+        infantryGroup = this.physics.add.group({ classType: Infantry, runChildUpdate: true });
+        heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
+        flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
+        speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
+        
+        // Do the same thing with towers
+        let arrowData = game.cache.json.get('arrow');
+        let bombData = game.cache.json.get('bomb');
+        let fireData = game.cache.json.get('fire');
+        let iceData = game.cache.json.get('ice');
+
+        const Arrow = generateTowerClass(arrowData);
+        const Bomb = generateTowerClass(bombData);
+        const Fire = generateTowerClass(fireData);
+        const Ice = generateTowerClass(iceData);
+
+        arrowTurrets = this.add.group({ classType: Arrow, runChildUpdate: true });
+        bombTurrets = this.add.group({ classType: Bomb, runChildUpdate: true });
+        fireTurrets = this.add.group({ classType: Fire, runChildUpdate: true });
+        iceTurrets = this.add.group({ classType: Ice, runChildUpdate: true });
+
+        //as with projectiles
+        const Projectile = generateProjectileClass({"image":"bullet"});
+        Projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
+
+        //add ground fire
+        const GroundFire = generateGroundFireClass(fireData);
+        GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
+
+        // create ice explosion animation and group
+        if (!this.anims.anims.has('explode')) {
+            var frameNames = this.anims.generateFrameNames('iceExplosion',{
+                start: 1, end: 19, suffix:'.png'
+            })
+            this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
+        }
+
+        iceExplosions = this.add.group();
+        for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
+            var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')
+            sprite.setVisible(false);
+        }
+
+        //add collisions between enemies and projectiles.
+        this.physics.add.overlap(infantryGroup, Projectiles, damageEnemy, null, null);
+        this.physics.add.overlap(heavyGroup, Projectiles, damageEnemy);
+        this.physics.add.overlap(flyingGroup, Projectiles, damageEnemy);
+        this.physics.add.overlap(speedyGroup, Projectiles, damageEnemy);
+
+        //add collisions between enemies and groundFire.
+        this.physics.add.overlap(infantryGroup, GroundFireGroup, groundFireDamageEnemy, null, null);
+        this.physics.add.overlap(heavyGroup, GroundFireGroup, groundFireDamageEnemy);
+        this.physics.add.overlap(flyingGroup, GroundFireGroup, groundFireDamageEnemy);
+        this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
+
+        //clicks place turrets
+        this.input.on('pointerdown', function(pointer){placeTurret(pointer, levelMap)});
+        this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
+
+        //Cancel: ESC message
+        this.cancel_msg_1 = this.add.text(965,485,'',{fontStyle: 'Bold'});
+        this.cancel_msg_2 = this.add.text(973,495,'',{fontSize: '24px', fontStyle: 'Bold'});
+
+        // Arrow tower button
+        this.add.text(970, 80, 'Arrow');
+        this.add.text(980, 155, "$" + arrowData.cost.level_1);
+        this.arrowTowerButton = this.add.image(995, 125, 'arrow');
+        addButtonInput(this.arrowTowerButton);
+
+        // Bomb tower button
+        this.add.text(975, 180, 'Bomb');
+        this.add.text(975, 245, "$" + bombData.cost.level_1);
+        this.bombTowerButton = this.add.image(995, 225, 'bomb');
+        addButtonInput(this.bombTowerButton);
+        
+        // Fire tower button
+        this.add.text(975, 275, 'Fire');
+        this.add.text(975, 350, "$" + fireData.cost.level_1);
+        this.fireTowerButton = this.add.image(995, 320, 'fire');
+        addButtonInput(this.fireTowerButton);
+
+        // Ice tower button
+        this.add.text(981, 380, 'Ice');
+        this.add.text(975, 455, "$" + iceData.cost.level_1);
+        this.iceTowerButton = this.add.image(995, 425, 'ice');
+        addButtonInput(this.iceTowerButton);
+
+        // Tower sprites that will follow mouse pointer when UI button is clicked
+        this.tempArrowTower = this.add.image(0, 0, 'arrow');
+        this.tempBombTower = this.add.image(0, 0, 'bomb');
+        this.tempFireTower = this.add.image(0, 0, 'fire');
+        this.tempIceTower = this.add.image(0, 0, 'ice');
+        
+        var graphicsArrow = this.add.graphics();
+        var graphicsBomb = this.add.graphics();
+        var graphicsFire = this.add.graphics();
+        var graphicsIce = this.add.graphics();
+        // Change alpha to 1 for white, 0 for transparent
+        graphicsArrow.lineStyle(2, 0xffffe0, 1);
+        graphicsBomb.lineStyle(2, 0xffffe0, 1);
+        graphicsFire.lineStyle(2, 0xffffe0, 1);
+        graphicsIce.lineStyle(2, 0xffffe0, 1);
+
+        // Generate tower range indicators
+        this.arrowCircle = graphicsArrow.strokeCircle(0, 0, arrowData.range.level_1);
+        this.bombCircle = graphicsBomb.strokeCircle(0, 0, bombData.range.level_1);
+        this.fireCircle = graphicsFire.strokeCircle(0, 0, fireData.range.level_1);
+        this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
+
+        // Add pause and help icons
+        this.pauseButton = this.add.image(980, 750, 'icons', 22);
+        this.helpButton = this.add.image(1010, 750, 'icons', 39);
+        this.pauseButton.setInteractive();
+        // on pauseButton click, pause LevelScene, start Pause Scene with resume, restart, and quit
+        this.pauseButton.on('pointerdown', () => {
+            this.scene.launch('PauseScene');
+            this.scene.pause('LevelScene');
+        });
+        this.helpButton.setInteractive();
+        // on helpButton click, pause LevelScene, start help Scene with back button
+        this.helpButton.on('pointerdown', () => {
+            this.scene.pause('LevelScene');
+            this.scene.launch('HelpScene');
+        });
+
+        //variables to assist in spawning enemies in waves
+        this.nextEnemy = 0;
+        this.nextEnemyIndex = 0;
+        this.timeToNextEnemyIndex = 1;
+        this.waveIndex = 0;
         this.showCountdown = false;
-        this.waveText.setText("Wave " + (this.waveIndex + 1));
-        this.waveText.x = MAPWIDTH / 2 - 46;
-        var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
+    },
 
-        var enemy;
-        switch(enemyType){
-            case 'i':
-                enemy = infantryGroup.get()
-                break;
-            case 'h':
-                enemy = heavyGroup.get()
-                break;
-            case 'f':
-                enemy = flyingGroup.get()
-                break;
-            case 's':
-                enemy = speedyGroup.get()
-                break;
-        }
-
-        if (enemy)
+    update: function(time, delta)
+    {
+        if (time > this.nextEnemy)
         {
-            enemy.setActive(true);
-            enemy.setVisible(true);
-            enemy.startOnPath(path);
+            this.showCountdown = false;
+            this.waveText.setText("Wave " + (this.waveIndex + 1));
+            this.waveText.x = MAPWIDTH / 2 - 46;
+            var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
 
-            this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
-            this.nextEnemyIndex = this.nextEnemyIndex + 2;
-            this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
+            var enemy;
+            switch(enemyType){
+                case 'i':
+                    enemy = infantryGroup.get()
+                    break;
+                case 'h':
+                    enemy = heavyGroup.get()
+                    break;
+                case 'f':
+                    enemy = flyingGroup.get()
+                    break;
+                case 's':
+                    enemy = speedyGroup.get()
+                    break;
+            }
+
+            if (enemy)
+            {
+                enemy.startOnPath(path);
+                enemy.setActive(true);
+                enemy.setVisible(true);
+
+                this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
+                this.nextEnemyIndex = this.nextEnemyIndex + 2;
+                this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
+            }
+        }
+
+        if (placing == true){
+            this.cancel_msg_1.setText('Cancel')
+            this.cancel_msg_2.setText('ESC')
+            switch(selectedTurret) {
+                case "Arrow":
+                    // Make the tower and it's range visible
+                    this.tempArrowTower.setVisible(true);
+                    this.arrowCircle.setVisible(true);
+                    // Make the sprite and circle follow the mouse pointer
+                    followMousePointer(this, this.tempArrowTower);
+                    followMousePointer(this, this.arrowCircle);
+                    break;
+                case "Bomb":
+                    this.tempBombTower.setVisible(true);
+                    this.bombCircle.setVisible(true);
+                    followMousePointer(this, this.tempBombTower);
+                    followMousePointer(this, this.bombCircle);
+                    break;
+                case "Ice":
+                    this.tempIceTower.setVisible(true);
+                    this.iceCircle.setVisible(true);
+                    followMousePointer(this, this.tempIceTower);
+                    followMousePointer(this, this.iceCircle);
+                    break;
+                case "Fire":
+                    this.tempFireTower.setVisible(true);
+                    this.fireCircle.setVisible(true);
+                    followMousePointer(this, this.tempFireTower);
+                    followMousePointer(this, this.fireCircle);
+            }
+        }
+
+        if (placing == false) {
+            this.cancel_msg_1.setText('');
+            this.cancel_msg_2.setText('');
+            this.tempArrowTower.setVisible(false);
+            this.arrowCircle.setVisible(false);
+            this.tempBombTower.setVisible(false);
+            this.bombCircle.setVisible(false);
+            this.tempIceTower.setVisible(false);
+            this.iceCircle.setVisible(false);
+            this.tempFireTower.setVisible(false);
+            this.fireCircle.setVisible(false);
+        }
+
+        if (this.showCountdown){
+            var timer = Math.round((this.nextEnemy - time)/1000);
+            this.waveText.setText("Next Wave in " + timer + "!")
+            this.waveText.x = MAPWIDTH / 2 - 100;
+        }
+
+        if (this.waveIndex < this.waveData.length - 1) {
+            //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
+            if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
+                allEnemiesDead()) {
+                //time for a new wave!
+                this.nextEnemyIndex = 0;
+                this.timeToNextEnemyIndex = 1;
+                this.waveIndex++;
+                this.nextEnemy = time + 10000; //10 sec until next wave
+                this.showCountdown = true;
+            }
+        }
+
+        // Victory scene if all waves are completed
+        else if (allEnemiesDead()){
+            this.scene.start('YouWin');
+        }
+
+        // GameOver Scene if player is out of lives
+        if (life <= 0)
+        {
+            this.scene.stop();
+            this.scene.start('GameOver');
         }
     }
+});
 
-    if (placing == true){
-        this.cancel_msg_1.setText('Cancel')
-        this.cancel_msg_2.setText('ESC')
-        switch(selectedTurret) {
-            case "Arrow":
-                // Make the tower and it's range visible
-                this.tempArrowTower.setVisible(true);
-                this.arrowCircle.setVisible(true);
-                // Make the sprite and circle follow the mouse pointer
-                followMousePointer(this, this.tempArrowTower);
-                followMousePointer(this, this.arrowCircle);
-                break;
-            case "Bomb":
-                this.tempBombTower.setVisible(true);
-                this.bombCircle.setVisible(true);
-                followMousePointer(this, this.tempBombTower);
-                followMousePointer(this, this.bombCircle);
-                break;
-            case "Ice":
-                this.tempIceTower.setVisible(true);
-                this.iceCircle.setVisible(true);
-                followMousePointer(this, this.tempIceTower);
-                followMousePointer(this, this.iceCircle);
-                break;
-            case "Fire":
-                this.tempFireTower.setVisible(true);
-                this.fireCircle.setVisible(true);
-                followMousePointer(this, this.tempFireTower);
-                followMousePointer(this, this.fireCircle);
-        }
-    }
+var config = {
+    type: Phaser.AUTO,
+    parent: 'content',
+    width: MAPWIDTH,
+    height: MAPHEIGHT,
+    physics: {
+        default: 'arcade'
+    },
+    scene: [ TitleScene, LevelScene, InstructionsScene, PauseScene, HelpScene, YouWin, GameOver ]
+};
 
-    if (placing == false) {
-        this.cancel_msg_1.setText('');
-        this.cancel_msg_2.setText('');
-        this.tempArrowTower.setVisible(false);
-        this.arrowCircle.setVisible(false);
-        this.tempBombTower.setVisible(false);
-        this.bombCircle.setVisible(false);
-        this.tempIceTower.setVisible(false);
-        this.iceCircle.setVisible(false);
-        this.tempFireTower.setVisible(false);
-        this.fireCircle.setVisible(false);
-    }
-
-    if (this.showCountdown){
-        var timer = Math.round((this.nextEnemy - time)/1000);
-        this.waveText.setText("Next Wave in " + timer + "!")
-        this.waveText.x = MAPWIDTH / 2 - 100;
-    }
-
-    if (this.waveIndex < this.waveData.length - 1) {
-        //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
-        if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
-            allEnemiesDead()) {
-            //time for a new wave!
-            this.nextEnemyIndex = 0;
-            this.timeToNextEnemyIndex = 1;
-            this.waveIndex++;
-            this.nextEnemy = time + 10000; //10 sec until next wave
-            this.showCountdown = true;
-        }
-    }
-
-    else if (allEnemiesDead()){
-        console.log("game over!")
-    }
-
-}
+var game = new Phaser.Game(config);

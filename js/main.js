@@ -1342,7 +1342,7 @@ var LevelScene = new Phaser.Class({
         this.load.image('bullet', 'assets/bullet.png');
         this.load.image('fireBullet', 'assets/2DTDassets/PNG/Default size/towerDefense_tile295.png');
         this.load.image('groundFire', 'assets/2DTDassets/PNG/Default size/towerDefense_tile298.png');
-        this.load.image('missle', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
+        this.load.image('missile', 'assets/2DTDassets/PNG/Default size/towerDefense_tile252.png');
 
         // Load other sprites
         this.load.image('goldCoin', 'assets/goldCoin.png');

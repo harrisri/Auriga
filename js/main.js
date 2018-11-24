@@ -1639,6 +1639,7 @@ var LevelScene = new Phaser.Class({
         this.timeToNextEnemyIndex = 1;
         this.waveIndex = 0;
         this.showCountdown = false;
+        console.log(this.waveData);
     },
 
     update: function(time, delta)
@@ -1745,7 +1746,9 @@ var LevelScene = new Phaser.Class({
         }
 
         // Victory scene if all waves are completed
-        else if (allEnemiesDead()){
+        else if (allEnemiesDead() && (this.waveData.length - 1 === this.waveIndex)){
+            console.log('win!')
+            this.scene.stop();
             this.scene.start('YouWin');
         }
 

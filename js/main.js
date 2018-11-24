@@ -1382,6 +1382,9 @@ var LevelScene = new Phaser.Class({
     {
         gold = 200;
         life = 20;
+
+        this.secondPath = false;
+
         switch(this.currentLevel){
         //---------------------------LEVEL 1---------------------------------------
             case 'level1':
@@ -1395,6 +1398,7 @@ var LevelScene = new Phaser.Class({
                 //2 paths
                 var waveData = this.cache.text.get('wave2aData');
                 var waveData2 = this.cache.text.get('wave2bData');
+                this.secondPath = true;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
@@ -1402,6 +1406,7 @@ var LevelScene = new Phaser.Class({
                 //2 paths
                 var waveData = this.cache.text.get('wave3aData');
                 var waveData2 = this.cache.text.get('wave3bData');
+                this.secondPath = true;
                 break;
         }
 
@@ -1411,7 +1416,7 @@ var LevelScene = new Phaser.Class({
 
         //set up wave text
         this.waveData = parseWaveData(waveData);
-        if (waveData2) {
+        if (waveData2 !== null) {
             this.waveData2 = parseWaveData(waveData2);
         }
 
@@ -1442,9 +1447,19 @@ var LevelScene = new Phaser.Class({
         var graphics = this.add.graphics();
 
         // TODO: Clean this up; manually creating levels for now.
-        var startx = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
-        var starty = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
-        path = this.add.path(startx, starty);
+        var path1StartX = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
+        var path1StartY = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
+        path = this.add.path(path1StartX, path1StartY);
+
+        if (this.secondPath === true){
+            console.log(levelPath);
+            if (levelPath[1] !== []){
+                var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
+                var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
+                // figure out how to pass this around to enemy classes in update()
+                path2 = this.add.path(path2StartX, path2StartY);
+            }
+        }
 
         // TOOO: combine map data and functionality into an object as much as possible
         function makePath(pathStart, levelPath){
@@ -1457,6 +1472,9 @@ var LevelScene = new Phaser.Class({
             }
         }
         makePath(path, levelPath[0]);
+        if (this.secondPath === true){
+            makePath(path2, levelPath[1]);
+        }
 
         // Get enemy data and generate classes to instantiate enemies
         let infantryData = game.cache.json.get('infantry');
@@ -1626,6 +1644,10 @@ var LevelScene = new Phaser.Class({
                 case 's':
                     enemy = speedyGroup.get()
                     break;
+            }
+
+            if (this.waveData2 !== null){
+
             }
 
             if (enemy)

@@ -1353,10 +1353,13 @@ var Level1Scene = new Phaser.Class({
         GroundFireGroup = this.physics.add.group({classType: GroundFire, runChildUpdate: true});
 
         // create ice explosion animation and group
-        var frameNames = this.anims.generateFrameNames('iceExplosion',{
-            start: 1, end: 19, suffix:'.png'
-        })
-        this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
+        if (!this.anims.anims.has('explode')) {
+            var frameNames = this.anims.generateFrameNames('iceExplosion',{
+                start: 1, end: 19, suffix:'.png'
+            })
+            this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
+        }
+
         iceExplosions = this.add.group();
         for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
             var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')

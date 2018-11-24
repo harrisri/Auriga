@@ -1,13 +1,19 @@
 const SPEED_SCALE = 50000;
-const BLOCKING = '#';
+const BUILD = '#';
+const NOBUILD = '^';
 const OPEN = '-';
-const HIDDEN = '*';
+const START = ['0', '1', '2']
+const END = ['9', '8', '7']
 const TILESIZE = 64;
 const MAPHEIGHT = TILESIZE * 12;
 const MAPWIDTH = TILESIZE * 16;
 const COLUMN_N = 16;
 const ROW_N = 12;
 const SELL_PERCENTAGE = 0.8;
+
+const ICE_MAX_CHANCE = 0.20; //chance to freeze enemy in place at MAX ice level.
+const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in ms.
+const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
 
 var path;
 var goldText;
@@ -42,13 +48,14 @@ function generateEnemyClass(data){
             this.slowed = false;
         },
 
-        startOnPath: function ()
+        startOnPath: function (path)
         {
+            this.path = path;
             // set the t parameter at the start of the path
             this.follower.t = 0;
 
             // get x and y of the given t point
-            path.getPoint(this.follower.t, this.follower.vec);
+            this.path.getPoint(this.follower.t, this.follower.vec);
 
             // set the x and y of our enemy to the received from the previous step
             this.setPosition(this.follower.vec.x, this.follower.vec.y);
@@ -57,13 +64,15 @@ function generateEnemyClass(data){
 
             //had to move this down here because some enemies were not getting healthbars.  I believe it is because
             //enemy sprites are reused and their hp is not corrected until the above statement resetting their hp when placed on the path.
-            this.healthBar = new HealthBar(this.scene); 
+            this.healthBar = new HealthBar(this.scene);
             this.healthBar.getBaseHP(this.hp);
+            this.healthBar.bar.setPosition(this.x - 18, this.y - 20);
             this.healthBar.bar.setDepth(5);
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
-            this.body.setCircle(15);
+            this.body.setCircle(20);
+            this.depth = 1;
 
         },
 
@@ -85,7 +94,7 @@ function generateEnemyClass(data){
 
             if (!this.slowed && slow > 0) {
                 this.originalSpeed = this.speed;
-                this.speed = this.speed * slow;
+                this.speed = this.speed * (1-slow);
                 this.slowed = true;
                 this.slowTimer = this.time + duration;
                 this.setTint(0x87CEFA);
@@ -105,8 +114,8 @@ function generateEnemyClass(data){
         update: function (time, delta)
         {
             this.time = time; //used for slow/damage timers
-            //damage tint timer is up 
 
+            //damage tint timer is up
             if (time > this.damageTimer && !this.slowed) {
                 this.setTint(0xffffff);
             }
@@ -170,7 +179,7 @@ var HealthBar = new Phaser.Class({
         this.baseHealth = baseHP;
         this.currHealth = baseHP;
     },
-    
+
     setHealth (newHealth)
     {
         this.currHealth = newHealth;
@@ -220,6 +229,12 @@ function generateTowerClass(data){
             this.duration = data['duration'][levelKey];
             this.ability = data['final_ability'];
             this.abilityActive = false;
+            this.rangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic = new Phaser.GameObjects.Graphics(scene);
+            this.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+            this.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+            scene.add.existing(this.rangeGraphic);
+            scene.add.existing(this.upgradeRangeGraphic);
         },
 
         // Update tower values when upgraded
@@ -235,7 +250,13 @@ function generateTowerClass(data){
             this.radius = data['radius'][levelKey];
             this.slow = data['slow'][levelKey];
             this.duration = data['duration'][levelKey];
-            if (levelKey === 4){
+            if (this.level === 4){
+                if (this.name === 'bomb') {
+                    this.target = 'air-ground'
+                }
+                if (this.name === 'arrow') {
+                    this.target = 'air'
+                }
                 this.abilityActive = true;
             }
         },
@@ -258,6 +279,15 @@ function generateTowerClass(data){
             return Math.round(total * SELL_PERCENTAGE);
         },
 
+        getUpgradeRange: function(){
+            var level = this.level;
+            if (this.level <=3) {
+                level++;
+            }
+            var levelKey = 'level_' + level;
+            return data['range'][levelKey];
+        },
+
         getUpgradeInformation: function(){
             // Crazy function that loops through provided tower's json data and looks for upgrades.
             // returns a string with upgrade information to be displayed on info button.
@@ -266,11 +296,13 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-
-
+            if (this.name === 'fire') {
+                info = info + 'Drops 1 Additional Fire.\n'
+            }
             //loop through data and find anything that would be upgraded
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
+
                     if (this.level === 3 && key === 'final_ability') {
                         info = info + 'Final Ability!' + '\n' + data[key] + '\n'
                     }
@@ -287,7 +319,7 @@ function generateTowerClass(data){
                                 //special cases where keys could be more descriptive based on tower type.  EX: Slow Duration vs. Fire Duration.  Duration itself isnt intuitive.
                                 if (this.name === 'bomb' && key === 'radius') {
                                     info = info + 'Blast Radius' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
-                                }                                
+                                }
                                 else if (this.name === 'ice' && key === 'duration') {
                                     info = info + 'Slow Duration' + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
                                 }
@@ -299,7 +331,7 @@ function generateTowerClass(data){
                                 }
                                 else{
                                     info = info + key.charAt(0).toUpperCase() + key.slice(1) + '\n' + data[key][currentlevelKey] + ' -> ' + data[key][nextlevelKey] + '\n'
-                                }    
+                                }
                             }
                         }
                     }
@@ -315,7 +347,7 @@ function generateTowerClass(data){
             if(enemy) {
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
-                addProjectile(this.name, this.x, this.y, angle, this.damage, this.radius, this.duration);
+                addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
             }
         },
 
@@ -325,18 +357,22 @@ function generateTowerClass(data){
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                    if (enemyUnits[i].moveType === this.target) {
                         iceExplosion(this.x, this.y);
-                        enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
-                    }
+                        var freeze = Math.random().toFixed(2);
+                        if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
+                            enemyUnits[i].receiveDamage(this.damage, 1, ICE_MAX_DURATION);
+                        }
+                        else{
+                            enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
+                        }
                 }
             }
         },
         // we will place the turret according to the grid
-        place: function(i, j) {
+        place: function(i, j, levelMap) {
             this.y = i * TILESIZE + TILESIZE/2;
             this.x = j * TILESIZE + TILESIZE/2;
-            map[i][j] = 1;
+            levelMap.grid[i][j] = 'X';
 
             gold -= this.cost;
             goldText.setText(gold);
@@ -359,8 +395,6 @@ function generateTowerClass(data){
     return Tower;
 }
 
-
-
 function generateProjectileClass(data){
     var Projectile = new Phaser.Class({
 
@@ -374,9 +408,11 @@ function generateProjectileClass(data){
 
         this.dx = 0;
         this.dy = 0;
-        this.lifespan = 0;
         this.damage = 0;
-
+        this.xOrigin = 0;
+        this.yOrigin = 0;
+        this.range = 0;
+        this.homingTarget = null;
         this.speed = Phaser.Math.GetSpeed(600, 1);
     },
 
@@ -390,22 +426,40 @@ function generateProjectileClass(data){
 
         this.dx = Math.cos(angle);
         this.dy = Math.sin(angle);
+    },
 
-        this.lifespan = 300;
+    homingFire: function(x, y, enemy){
+        this.homingTarget = enemy;
+        this.setPosition(x, y);
+        // this.dx = Math.cos(angle);
+        // this.dy = Math.sin(angle);
     },
 
     update: function (time, delta)
     {
-        this.lifespan -= delta;
+        if (this.homingTarget) {
+            if (this.homingTarget.hp <= 0) {  //need to retarget!
+                this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
+            }
+            var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
+            this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
+            this.dx = Math.cos(angle);
+            this.dy = Math.sin(angle);
+        }
 
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (this.lifespan <= 0)
-        {
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
             this.setActive(false);
             this.setVisible(false);
         }
+
+        if (allEnemiesDead()) {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+
     }
 
     });
@@ -425,6 +479,31 @@ function generateGroundFireClass(data){
         Phaser.GameObjects.Image.call(this, scene, 0, 0, 'groundFire');
         var size = this.getBounds();
         this.setDisplaySize((size.width * 1.4), (size.height * 1.4));
+    },
+
+    getDropCoords(level){
+        var dropCoords = [];
+        switch (level){
+            case 1:
+                dropCoords.push(0);
+                break;
+            case 2:
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
+                break;
+            case 3:
+                dropCoords.push(-0.008);
+                dropCoords.push(0);
+                dropCoords.push(0.008);
+                break;
+            case 4:
+                dropCoords.push(-0.012);
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
+                dropCoords.push(0.012);
+                break;
+        }
+        return dropCoords;
     },
 
     update: function (time, delta)
@@ -449,15 +528,18 @@ function iceExplosion(x,y){
     explosion.play('explode');
 }
 
-function addProjectile(name, x, y, angle, damage, radius, duration) {
+function addProjectile(enemyTarget, name, level, x, y, range, angle, damage, radius, duration) {
     var projectile = Projectiles.get();
+    projectile.xOrigin = x;
+    projectile.yOrigin = y;
+    projectile.range = range;
     switch(name){
         //change projectile sprite if needed
         case 'arrow':
             projectile.setTexture('bullet');
             break;
         case 'bomb':
-            projectile.setTexture('missle')
+            projectile.setTexture('missile')
             projectile.setRotation(angle + Math.PI/2);
             break;
         case 'fire':
@@ -471,6 +553,10 @@ function addProjectile(name, x, y, angle, damage, radius, duration) {
         projectile.damage = damage;
         projectile.radius = radius;
         projectile.duration = duration;
+        projectile.level = level;
+        if (name === 'bomb' && level === 4) {
+            projectile.homingFire(x, y, enemyTarget);
+        }
         projectile.fire(x, y, angle);
     }
 }
@@ -503,7 +589,12 @@ function damageEnemy(enemy, bullet) {
         //check if BOMB AOE
         if(bullet.name == 'bomb'){
             var speedy = speedyGroup.getChildren();
-            var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            if (bullet.level != 4) {
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), infantryGroup.getChildren());
+            }
+            else{
+                var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
+            }
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(enemy.x, enemy.y, enemyUnits[i].x, enemyUnits[i].y) <= bullet.radius){
@@ -513,17 +604,36 @@ function damageEnemy(enemy, bullet) {
         }
 
         else if (bullet.name == 'fire'){
-            //drop ground fire!
-            var fire = GroundFireGroup.get();
-            fire.x = enemy.x;
-            fire.y = enemy.y;
-            fire.damage = bullet.damage;
-            fire.lifespan = bullet.duration;
-            fire.body.setCircle(10);
-            fire.setVisible(true);
-            fire.setActive(true);
-            fire.setDepth(0)
-            enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            //get the drop coordinates for the fire depending on level.
+            var dropCoords = GroundFireGroup.get().setActive(false).getDropCoords(bullet.level);
+
+            //current location of the hit enemy
+            var pathLocation = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
+            
+            //drop ground fire around the enemy!
+            for (var i = 0; i < dropCoords.length; i++) {
+                //move the location on the path a certain percentage dictated by getDropCoords()
+                pathLocation.t += dropCoords[i];
+                enemy.path.getPoint(pathLocation.t, pathLocation.vec);
+
+                //get a groundfire object, and drop it on the map.
+                var fire = GroundFireGroup.get();
+                fire.setPosition(pathLocation.vec.x, pathLocation.vec.y)
+                fire.damage = bullet.damage;
+                fire.lifespan = bullet.duration;
+                fire.level = bullet.level;
+                fire.body.setCircle(10);
+                fire.setVisible(true);
+                fire.setActive(true);
+                fire.setDepth(0)
+
+                //reset the t value for next fire drop
+                pathLocation.t = enemy.follower.t;
+            }
+            //initial hit damage from fire bullet. Only if they are air.
+            if (enemy.moveType != 'air') {
+                enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
+            }
         }
 
         else{
@@ -533,14 +643,22 @@ function damageEnemy(enemy, bullet) {
 }
 
 function groundFireDamageEnemy(enemy, groundFire){
-    if (enemy.active === true && groundFire.active === true) {
-        enemy.receiveDamage(groundFire.damage/10, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+    if (enemy.moveType != 'air') {
+        if (enemy.active === true && groundFire.active === true) {
+            var incinerate = Math.random().toFixed(2);
+            if (groundFire.level == 4 && incinerate <= FIRE_MAX_CHANCE) {
+                enemy.receiveDamage(10000, 0, 0, true);
+            }
+            else{
+                enemy.receiveDamage(groundFire.damage/100, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+            }
+        }
     }
 }
 
-function placeTurret(pointer) {
+function placeTurret(pointer, levelMap) {
     var i = Math.floor(pointer.y/TILESIZE);
-    var j = Math.floor(pointer.x/TILESIZE);  
+    var j = Math.floor(pointer.x/TILESIZE);
 
     //check if user clicked away from upgrades/sell buttons.
     if (upgradeSellX != j || upgradeSellY != i) {
@@ -549,7 +667,7 @@ function placeTurret(pointer) {
 
     if (placing == true)
     {
-        if(canPlaceTurret(i, j)) {
+        if(canPlaceTurret(i, j, levelMap)) {
             var turret;
             switch(selectedTurret){
                 case 'Arrow':
@@ -572,13 +690,13 @@ function placeTurret(pointer) {
                     //put turret on map
                     turret.setActive(true);
                     turret.setVisible(true);
-                    turret.place(i, j);
+                    turret.place(i, j, levelMap);
 
                     //put a star below turret
                     addTowerStar(turret);
 
                     //make tower interactive
-                    makeTowerButtonsInteractive('tower',turret);
+                    makeTowerButtonsInteractive('tower', turret, null, levelMap);
                     placing = false;
                 }
                 else
@@ -592,11 +710,11 @@ function placeTurret(pointer) {
     }
 }
 
-function canPlaceTurret(i, j) {
-    return map[i][j] === 0;
+function canPlaceTurret(i, j, levelMap) {
+    return levelMap.grid[i][j] === BUILD;
 }
 
-function showUpgradeAndSell(tower){
+function showUpgradeAndSell(tower, levelMap){
     // handler function for when a user clicks on a placed tower.
     // expects the tower to be passed in as it is required for getting upgrade/sell prices.
 
@@ -617,7 +735,7 @@ function showUpgradeAndSell(tower){
     //create upgrade button.
     var upgradeButton = ButtonsGroup.get(left,down,'upgradeButton',null,true);
     this.upgradeText.setPosition(left,down).setOrigin(0.5,0.5);
-    
+
     if (tower.level === 4) {
         this.upgradeText.setText("MAX")
     }
@@ -633,21 +751,21 @@ function showUpgradeAndSell(tower){
 
 
     //setting the depth to an integer (semi random in this case) makes it so enemies are not shown over the buttons/text.
-    this.sellText.depth = 11;    
+    this.sellText.depth = 11;
     sellButton.depth = 10;
     upgradeButton.depth = 10;
     this.upgradeText.depth = 11;
 
     //make these buttons interactive.
-    makeTowerButtonsInteractive('upgrade',upgradeButton,tower);
-    makeTowerButtonsInteractive('sell',sellButton,tower);
+    makeTowerButtonsInteractive('upgrade', upgradeButton, tower, levelMap);
+    makeTowerButtonsInteractive('sell', sellButton, tower, levelMap);
 
     //coords for hiding buttons when player clicks away.
     upgradeSellX = Math.floor(tower.x/TILESIZE);
     upgradeSellY = Math.floor(tower.y/TILESIZE);
 }
 
-function makeTowerButtonsInteractive(type, button, tower){
+function makeTowerButtonsInteractive(type, button, tower, levelMap){
     // function used to make tower, sell, and upgrade buttons interactive.
     // each button gets its own function upon clicking.
 
@@ -655,28 +773,46 @@ function makeTowerButtonsInteractive(type, button, tower){
     switch(type)
     {
         case 'tower':
+            // button.on('pointerover', () => enterButtonHoverState(button));
+            button.on('pointerover', () => towerHoverState(button));
             button.on('pointerover', () => enterButtonHoverState(button));
-            button.on('pointerdown', () => showUpgradeAndSell(button));
-            button.on('pointerout', () => enterButtonRestState(button));
+            button.on('pointerdown', () => showUpgradeAndSell(button, levelMap));
+            button.on('pointerout', () => towerRestState(button));
             break;
         case 'upgrade':
             button.on('pointerdown', () => upgradeTower(button, tower));
             button.on('pointerover', () => showUpgradeInfo(button,tower));
-            button.on('pointerout', () => hideUpgradeInfo(button));
+            button.on('pointerout', () => hideUpgradeInfo(button,tower));
             break;
         case 'sell':
-            button.on('pointerdown', () => sellTower(button, tower));
+            button.on('pointerdown', () => sellTower(button, tower, levelMap));
             button.on('pointerover', () => enterButtonHoverState(button));
             button.on('pointerout', () => enterButtonRestState(button));
             break;
     }
 }
 
+function towerHoverState(tower){
+    tower.setTint(0xd3d3d3);
+    tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range);
+    tower.rangeGraphic.setVisible(true)
+    tower.upgradeRangeGraphic.setVisible(false);
+}
+function towerRestState(tower){
+    tower.setTint(0xffffff);
+    tower.rangeGraphic.setVisible(false);
+}
+
 function showUpgradeInfo(button, tower){
+    towerRestState(tower);
     if (tower.level < 4) {
         var down = tower.y + 120;
         var left = tower.x - 33;
         button.setTint(0xd3d3d3);
+
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        tower.upgradeRangeGraphic.setVisible(true);
+
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
         this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
         this.upgradeInfoText.depth = 11;
@@ -687,10 +823,11 @@ function showUpgradeInfo(button, tower){
     }
 }
 
-function hideUpgradeInfo(button){
+function hideUpgradeInfo(button,tower){
     button.setTint(0xffffff);
     this.upgradeInfoText.setText('')
     upgradeInfoButton.setVisible(false);
+    tower.upgradeRangeGraphic.setVisible(false);
 }
 
 function upgradeTower(button, tower){
@@ -706,13 +843,22 @@ function upgradeTower(button, tower){
         cleanUpButtons();
         removeTowerStar(tower); //clear existing star
         addTowerStar(tower);
+
+        tower.rangeGraphic.clear();
+        tower.upgradeRangeGraphic.clear();
+        tower.rangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.upgradeRangeGraphic.lineStyle(2, 0xffffe0, 1);
+        tower.rangeGraphic.strokeCircle(tower.x, tower.y, tower.range)
+        tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
+        tower.rangeGraphic.setVisible(false);
+        tower.upgradeRangeGraphic.setVisible(false);
+    }
+        tower.upgradeRangeGraphic.setVisible(false);
         upgradeInfoButton.setVisible(false);
         this.upgradeInfoText.setText('')
-    }
 }
 
-
-function sellTower(button, tower){
+function sellTower(button, tower, levelMap){
     // Function attached to sell tower button.
     // Subtracts from the gold total a percentage of the total money spent on the tower.
     // removes the tower from the map.
@@ -724,7 +870,7 @@ function sellTower(button, tower){
     // Clear out space for placing new towers.
     var i = Math.floor(tower.y/TILESIZE);
     var j = Math.floor(tower.x/TILESIZE);
-    map[i][j] = 0;
+    levelMap.grid[i][j] = BUILD;
 
     // Deactivate this tower.
     switch (tower.name){
@@ -834,10 +980,10 @@ function parseMap(maptext){
             if (char === OPEN || start.includes(char) || end.includes(char)) {
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
-            else if (char === HIDDEN){
-                tiles[i][j] = 24; // Build-space tile in Kenney pack [2nd row 2nd column]
+            else if (char === NOBUILD){
+                tiles[i][j] = 130; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
-            else if (char === BLOCKING){
+            else if (char === BUILD){
                 tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]
             }
         }
@@ -907,7 +1053,7 @@ function generatePaths(levelMap){
                     pathList.push(curr);
                 }
                 // TODO: de-magic this.
-                else if (temp === '9' || temp === '8' || temp === 7){
+                else if (temp === '9' || temp === '8' || temp === '7'){
                     curr = [tempx, tempy];
                     pathList.push(curr);
                     done = true;
@@ -919,8 +1065,6 @@ function generatePaths(levelMap){
     }
     return paths;
 }
-
-
 
 function parseWaveText(waveData){
     var waves = [[]]
@@ -1014,15 +1158,15 @@ var TitleScene = new Phaser.Class({
         // Create Text Buttons that load the new scenes
         this.level1Button = this.add.text(475, 200, "LEVEL 1", { fontSize: 20 });
         this.level1Button.setInteractive();
-        this.level1Button.on('pointerdown', () => this.scene.start('Level1Scene'));
+        this.level1Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
 
         this.level2Button = this.add.text(475, 350, "LEVEL 2", { fontSize: 20 });
         this.level2Button.setInteractive();
-        this.level2Button.on('pointerdown', () => this.scene.start('Level2Scene'));
+        this.level2Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
 
         this.level3Button = this.add.text(475, 500, "LEVEL 3", { fontSize: 20 });
         this.level3Button.setInteractive();
-        this.level3Button.on('pointerdown', () => this.scene.start('Level3Scene'));
+        this.level3Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
 
         this.instructionsButton = this.add.text(415, 650, "GAME INSTRUCTIONS", { fontSize: 20 });
         this.instructionsButton.setInteractive();
@@ -1062,44 +1206,22 @@ var PauseScene = new Phaser.Class({
         this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", { fontSize: 30 });
         this.resumeGameButton.setInteractive();
         this.resumeGameButton.on('pointerdown', () => {
-            switch(currentLevel){
-                case 'Level1Scene':
-                    this.scene.resume('Level1Scene');
-                    this.scene.stop();
-                    break;
-                case 'Level2Scene':
-                    this.scene.resume('Level2Scene');
-                    this.scene.stop();
-                    break;
-                case 'Level3Scene':
-                    this.scene.resume('Level3Scene');
-                    this.scene.stop();
-            }
+                this.scene.resume('LevelScene');
+                this.scene.stop();
         });
 
         this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL", { fontSize: 30 });
         this.restartGameButton.setInteractive();
         this.restartGameButton.on('pointerdown', () => {
-            switch(currentLevel){
-                case 'Level1Scene':
-                    this.scene.restart('Level1Scene');
-                    this.scene.start('Level1Scene');
-                    break;
-                case 'Level2Scene':
-                    this.scene.start('Level2Scene');
-                    break;
-                case 'Level3Scene':
-                    this.scene.start('Level3Scene');
-            }
+                this.scene.restart('LevelScene');
+                this.scene.start('LevelScene');
         });
 
         this.quitGameButton = this.add.text(400, 450, "QUIT GAME", { fontSize: 30 });
         this.quitGameButton.setInteractive();
         this.quitGameButton.on('pointerdown', () => {
             this.scene.stop();
-            this.scene.stop('Level1Scene');
-            this.scene.stop('Level2Scene');
-            this.scene.stop('Level3Scene');
+            this.scene.stop('LevelScene');
             this.scene.start('TitleScene');
         });
     }
@@ -1121,7 +1243,7 @@ var HelpScene = new Phaser.Class({
         this.backButton.setInteractive();
         this.backButton.on('pointerdown', () => {
             this.scene.stop();
-            this.scene.resume('Level1Scene');
+            this.scene.resume('LevelScene');
         });
     }
 });
@@ -1172,18 +1294,22 @@ var GameOver = new Phaser.Class({
     }
 })
 
-var Level1Scene = new Phaser.Class({
+var LevelScene = new Phaser.Class({
     Extends: Phaser.Scene,
     initialize:
-    function Level1Scene ()
+    function LevelScene ()
     {
-        Phaser.Scene.call(this, { key: 'Level1Scene' });
+        Phaser.Scene.call(this, { key: 'LevelScene' });
+    },
+
+    init: function(data){
+        this.currentLevel = data.currentLevel
     },
 
     preload: function()
     {
         // Load Kenney assets tilemap
-        this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet.png")
+        this.load.image("tdtiles", "assets/2DTDassets/Tilesheet/towerDefense_tilesheet_modified.png")
 
         // Load unit and tower files
         this.load.json('infantry', 'data/units/infantry.json')
@@ -1231,7 +1357,11 @@ var Level1Scene = new Phaser.Class({
         this.load.spritesheet('icons', 'assets/icons_32x32.png', { frameWidth: 32, frameHeight: 32 });
 
         //load wave data
-        this.load.text('waveText', 'data/waves/windingPath');
+        this.load.text('wave1Text', 'data/waves/level1');
+        this.load.text('wave2aText', 'data/waves/level2-a');
+        this.load.text('wave2bText', 'data/waves/level2-b');
+        this.load.text('wave3aText', 'data/waves/level3-a');
+        this.load.text('wave3bText', 'data/waves/level3-b');
 
         //load ice tower explosion;
         this.load.setPath('assets/')
@@ -1242,34 +1372,44 @@ var Level1Scene = new Phaser.Class({
     {
         gold = 200;
         life = 20;
-        map =      [[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [ -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
-                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0],
-                    [ 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [ 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0],
-                    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-                    [ 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, 0],
-                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0],
-                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0],
-                    [ 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+        switch(this.currentLevel){
+        //---------------------------LEVEL 1---------------------------------------
+            case 'level1':
+                var level = this.cache.text.get('level1');
+                var waveText = this.cache.text.get('wave1Text');
+                break;
+        //---------------------------LEVEL 2---------------------------------------
+            case 'level2':
+                var level = this.cache.text.get('level2');
+                //2 paths
+                var waveText = this.cache.text.get('wave2aText');
+                var waveText2 = this.cache.text.get('wave2bText');
+                break;
+        //---------------------------LEVEL 2---------------------------------------
+            case 'level3':
+                var level = this.cache.text.get('level3');
+                //2 paths
+                var waveText = this.cache.text.get('wave3aText');
+                var waveText2 = this.cache.text.get('wave3bText');
+                break;
+        }
 
-        currentLevel = 'Level1Scene';
         // Load and parse map data
-        level1 = this.cache.text.get('level1');
-        level2 = this.cache.text.get('level2');
-        level3 = this.cache.text.get('level3');
-        levelMap1 = parseMap(level1);
-        levelMap2 = parseMap(level2);
-        levelMap3 = parseMap(level3);
-        levelPath1 = generatePaths(levelMap1);
+        levelMap = parseMap(level)
+        levelPath = generatePaths(levelMap);
+
+        //set up wave text
+        this.waveData = parseWaveText(waveText);
+        if (waveText2) {
+            this.waveData2 = parseWaveText(waveText2);
+        }
 
         // Set up tilemap using Kenney sprite sheet
-        const tilemap = this.make.tilemap({ data: levelMap1.tiles, tileWidth: 64, tileHeight: 64 });
+        const tilemap = this.make.tilemap({ data: levelMap.tiles, tileWidth: 64, tileHeight: 64 });
         const tileset = tilemap.addTilesetImage("tdtiles");
         const layer = tilemap.createStaticLayer(0, tileset, 0, 0); // layer index, tileset, x, y
 
+        //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 56, 28, 'heart');
         goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
@@ -1290,15 +1430,11 @@ var Level1Scene = new Phaser.Class({
         // its not related to our path
         var graphics = this.add.graphics();
 
-        let waveText = this.cache.text.get('waveText');
-
-        this.waveData = parseWaveText(waveText);
-
         // TODO: Clean this up; manually creating levels for now.
-        var startx = levelPath1[0][0][0] * TILESIZE + TILESIZE / 2
-        var starty = levelPath1[0][0][1] * TILESIZE + TILESIZE / 2
-        path = this.add.path(startx, starty)
-
+        var startx = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
+        var starty = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
+        path = this.add.path(startx, starty);
+        
         // TOOO: combine map data and functionality into an object as much as possible
         function makePath(pathStart, levelPath){
             // Make path with Phaser based on return value of generatePaths()
@@ -1309,7 +1445,7 @@ var Level1Scene = new Phaser.Class({
                 pathStart.lineTo(pathx, pathy)
             }
         }
-        makePath(path, levelPath1[0]);
+        makePath(path, levelPath[0]);
 
         // Get enemy data and generate classes to instantiate enemies
         let infantryData = game.cache.json.get('infantry');
@@ -1379,7 +1515,7 @@ var Level1Scene = new Phaser.Class({
         this.physics.add.overlap(speedyGroup, GroundFireGroup, groundFireDamageEnemy);
 
         //clicks place turrets
-        this.input.on('pointerdown', placeTurret);
+        this.input.on('pointerdown', function(pointer){placeTurret(pointer, levelMap)});
         this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
         //Cancel: ESC message
@@ -1436,15 +1572,15 @@ var Level1Scene = new Phaser.Class({
         this.pauseButton = this.add.image(980, 750, 'icons', 22);
         this.helpButton = this.add.image(1010, 750, 'icons', 39);
         this.pauseButton.setInteractive();
-        // on pauseButton click, pause Level1Scene, start Pause Scene with resume, restart, and quit
+        // on pauseButton click, pause LevelScene, start Pause Scene with resume, restart, and quit
         this.pauseButton.on('pointerdown', () => {
             this.scene.launch('PauseScene');
-            this.scene.pause('Level1Scene');
+            this.scene.pause('LevelScene');
         });
         this.helpButton.setInteractive();
-        // on helpButton click, pause Level1Scene, start help Scene with back button
+        // on helpButton click, pause LevelScene, start help Scene with back button
         this.helpButton.on('pointerdown', () => {
-            this.scene.pause('Level1Scene');
+            this.scene.pause('LevelScene');
             this.scene.launch('HelpScene');
         });
 
@@ -1483,9 +1619,9 @@ var Level1Scene = new Phaser.Class({
 
             if (enemy)
             {
+                enemy.startOnPath(path);
                 enemy.setActive(true);
                 enemy.setVisible(true);
-                enemy.startOnPath();
 
                 this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
                 this.nextEnemyIndex = this.nextEnemyIndex + 2;
@@ -1537,7 +1673,7 @@ var Level1Scene = new Phaser.Class({
             this.tempFireTower.setVisible(false);
             this.fireCircle.setVisible(false);
         }
-        
+
         if (this.showCountdown){
             var timer = Math.round((this.nextEnemy - time)/1000);
             this.waveText.setText("Next Wave in " + timer + "!")
@@ -1569,7 +1705,7 @@ var Level1Scene = new Phaser.Class({
             this.scene.start('GameOver');
         }
     }
-})
+});
 
 var config = {
     type: Phaser.AUTO,
@@ -1579,7 +1715,7 @@ var config = {
     physics: {
         default: 'arcade'
     },
-    scene: [ TitleScene, Level1Scene, InstructionsScene, PauseScene, HelpScene, YouWin, GameOver ]
+    scene: [ TitleScene, LevelScene, InstructionsScene, PauseScene, HelpScene, YouWin, GameOver ]
 };
 
 var game = new Phaser.Game(config);

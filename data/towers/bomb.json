@@ -8,10 +8,10 @@
         "level_4": 320
     },
     "damage":{
-        "level_1": 10,
-        "level_2": 12,
-        "level_3": 17,
-        "level_4": 21
+        "level_1": 7,
+        "level_2": 11,
+        "level_3": 13,
+        "level_4": 13
     },
     "range":{
         "level_1": 120,
@@ -21,7 +21,7 @@
     },
     "rate":{
         "level_1": 1500,
-        "level_2": 1000,
+        "level_2": 1200,
         "level_3": 1000,
         "level_4": 1000
     },
@@ -29,7 +29,7 @@
         "level_1": 50,
         "level_2": 60,
         "level_3": 70,
-        "level_4": 80
+        "level_4": 70
     },
     "slow":{
         "level_1": -1,

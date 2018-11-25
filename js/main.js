@@ -741,7 +741,7 @@ function showUpgradeAndSell(tower, levelMap){
 
     if (left < 0) {
         left = tower.x;
-        right = tower.x + 66;   
+        right = tower.x + 66;
     }
 
     if (right > MAPWIDTH) {
@@ -832,14 +832,14 @@ function showUpgradeInfo(button, tower){
         button.setTint(0xd3d3d3);
         tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
         tower.upgradeRangeGraphic.setVisible(true);
-        
+
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
         this.upgradeInfoText.depth = 11;
         upgradeInfoButton.depth = 10;
 
         var buttonSize = this.upgradeInfoText.getBounds();
         upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 10);
-        
+
         var upgradeButtonBounds = button.getBounds();
         var infoButtonBounds = upgradeInfoButton.getBounds();
 
@@ -858,12 +858,12 @@ function showUpgradeInfo(button, tower){
         //too far left
         if (upgradeInfoButton.getBounds().left < 0){
             x = infoButtonBounds.width/2 + 10;
-        } 
+        }
 
         //too far right
         if (upgradeInfoButton.getBounds().right > MAPWIDTH){
             x = MAPWIDTH - infoButtonBounds.width/2 - 10;
-        } 
+        }
 
         //reset position since x,y may have changed.
         upgradeInfoButton.setPosition(x,y)
@@ -1774,7 +1774,7 @@ var LevelScene = new Phaser.Class({
                 }
             }
         }
-      
+
         //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
         this.tempArrowTower.setVisible(false);
         this.arrowCircle.setVisible(false);

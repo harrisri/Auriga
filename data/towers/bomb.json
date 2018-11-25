@@ -3,15 +3,15 @@
     "target": "ground",
     "cost":{
         "level_1": 135,
-        "level_2": 180,
-        "level_3": 240,
-        "level_4": 320
+        "level_2": 190,
+        "level_3": 270,
+        "level_4": 365
     },
     "damage":{
-        "level_1": 7,
-        "level_2": 11,
-        "level_3": 13,
-        "level_4": 13
+        "level_1": 8,
+        "level_2": 9,
+        "level_3": 10,
+        "level_4": 17
     },
     "range":{
         "level_1": 120,
@@ -20,16 +20,16 @@
         "level_4": 800
     },
     "rate":{
-        "level_1": 1500,
-        "level_2": 1200,
-        "level_3": 1000,
-        "level_4": 1000
+        "level_1": 1800,
+        "level_2": 1500,
+        "level_3": 1500,
+        "level_4": 2500
     },
     "radius":{
-        "level_1": 50,
-        "level_2": 60,
-        "level_3": 70,
-        "level_4": 70
+        "level_1": 65,
+        "level_2": 70,
+        "level_3": 75,
+        "level_4": 90
     },
     "slow":{
         "level_1": -1,

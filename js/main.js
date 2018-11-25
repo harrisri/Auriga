@@ -1448,7 +1448,6 @@ var LevelScene = new Phaser.Class({
 
     create: function()
     {
-        gold = 200;
         life = 20;
 
         this.secondPath = false;
@@ -1460,6 +1459,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
                 this.secondPath = false;
+                gold = 200;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
@@ -1468,6 +1468,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave2aData');
                 var waveData2 = this.cache.text.get('wave2bData');
                 this.secondPath = true;
+                gold = 360;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
@@ -1477,6 +1478,7 @@ var LevelScene = new Phaser.Class({
                 var waveData2 = this.cache.text.get('wave3bData');
                 // TODO: set second path to true once second path is built
                 this.secondPath = false;
+                gold = 450;
                 break;
         }
 
@@ -1498,7 +1500,7 @@ var LevelScene = new Phaser.Class({
         //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
-        goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
+        goldText = this.add.text(42, 16, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
         lifeText = this.add.text(MAPWIDTH - 35, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
         this.waveText = this.add.text(MAPWIDTH - 640, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
 

@@ -9,8 +9,8 @@
     },
     "damage":{
         "level_1": 11,
-        "level_2": 13,
-        "level_3": 15,
+        "level_2": 14,
+        "level_3": 14,
         "level_4": 17
     },
     "range":{
@@ -38,9 +38,9 @@
         "level_4": -1
     },
     "duration":{
-        "level_1": 1500,
-        "level_2": 1600,
-        "level_3": 1900,
+        "level_1": 1750,
+        "level_2": 1900,
+        "level_3": 2000,
         "level_4": 2250
     },
     "final_ability": "Chance to instantly\nincinerate an enemy."

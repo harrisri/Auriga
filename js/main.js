@@ -1324,12 +1324,19 @@ var HelpScene = new Phaser.Class({
     {
         Phaser.Scene.call(this, { key: 'HelpScene' });
     },
+    preload: function(){
+        this.load.image('infoscreen','assets/infoScreen.png')
+    },
 
     create: function()
     {
-        this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
-        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
-        this.backButton = this.add.text(400, 550, "RESUME GAME");
+        var background = this.add.image(0, 0, 'infoscreen').setOrigin(0,0).setScale(.648)
+        background.setPosition(-8, 0)
+        // this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
+        // this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
+        this.backButton = this.add.text(400, 650, "RESUME GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 50);
+        // this.backButton = this.add.text(400, 550, "RESUME GAME");
         titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => {
             this.scene.stop();

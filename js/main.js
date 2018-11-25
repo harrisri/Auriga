@@ -734,6 +734,21 @@ function showUpgradeAndSell(tower, levelMap){
     var left = tower.x - 33
     var right = tower.x + 33;
 
+    if (down > MAPHEIGHT) {
+        down = tower.y - 50;
+    }
+
+    if (left < 0) {
+        left = tower.x;
+        right = tower.x + 66;   
+    }
+
+    if (right > MAPWIDTH) {
+        left = tower.x - 66;
+        right = tower.x;
+    }
+
+
     //create sell button
     var sellButton = ButtonsGroup.get(right,down,'sellButton',null,true);
     this.sellText.setText("Sell\n$"+ tower.getSellPrice()).setPosition(right,down).setOrigin(0.5,0.5);
@@ -804,6 +819,7 @@ function towerHoverState(tower){
     tower.rangeGraphic.setVisible(true)
     tower.upgradeRangeGraphic.setVisible(false);
 }
+
 function towerRestState(tower){
     tower.setTint(0xffffff);
     tower.rangeGraphic.setVisible(false);
@@ -812,20 +828,47 @@ function towerRestState(tower){
 function showUpgradeInfo(button, tower){
     towerRestState(tower);
     if (tower.level < 4) {
-        var down = tower.y + 120;
-        var left = tower.x - 33;
         button.setTint(0xd3d3d3);
-
         tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
         tower.upgradeRangeGraphic.setVisible(true);
-
+        
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
-        this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
         this.upgradeInfoText.depth = 11;
-        upgradeInfoButton.setVisible(true);
+        upgradeInfoButton.depth = 10;
+
         var buttonSize = this.upgradeInfoText.getBounds();
-        upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
-        upgradeInfoButton.setPosition(left,down);
+        upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 10);
+        
+        var upgradeButtonBounds = button.getBounds();
+        var infoButtonBounds = upgradeInfoButton.getBounds();
+
+        var y = upgradeButtonBounds.bottom + infoButtonBounds.height/2 + 10;
+        var x = button.x;
+
+        //set initial position
+        upgradeInfoButton.setPosition(x,y)
+
+        //check if info popup has appeared off screen. Adjust x,y accordingly.
+        //too low
+        if (upgradeInfoButton.getBounds().bottom > MAPHEIGHT) {
+            y = upgradeButtonBounds.top - infoButtonBounds.height/2 - 10;
+        }
+
+        //too far left
+        if (upgradeInfoButton.getBounds().left < 0){
+            x = infoButtonBounds.width/2 + 10;
+        } 
+
+        //too far right
+        if (upgradeInfoButton.getBounds().right > MAPWIDTH){
+            x = MAPWIDTH - infoButtonBounds.width/2 - 10;
+        } 
+
+        //reset position since x,y may have changed.
+        upgradeInfoButton.setPosition(x,y)
+        this.upgradeInfoText.setPosition(x,y).setOrigin(0.5,0.5);
+
+        upgradeInfoButton.setVisible(true);
     }
 }
 
@@ -1635,6 +1678,16 @@ var LevelScene = new Phaser.Class({
             }
         }
 
+        //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
+        this.tempArrowTower.setVisible(false);
+        this.arrowCircle.setVisible(false);
+        this.tempBombTower.setVisible(false);
+        this.bombCircle.setVisible(false);
+        this.tempIceTower.setVisible(false);
+        this.iceCircle.setVisible(false);
+        this.tempFireTower.setVisible(false);
+        this.fireCircle.setVisible(false);
+
         if (placing == true){
             this.cancel_msg_1.setText('Cancel')
             this.cancel_msg_2.setText('ESC')
@@ -1670,14 +1723,6 @@ var LevelScene = new Phaser.Class({
         if (placing == false) {
             this.cancel_msg_1.setText('');
             this.cancel_msg_2.setText('');
-            this.tempArrowTower.setVisible(false);
-            this.arrowCircle.setVisible(false);
-            this.tempBombTower.setVisible(false);
-            this.bombCircle.setVisible(false);
-            this.tempIceTower.setVisible(false);
-            this.iceCircle.setVisible(false);
-            this.tempFireTower.setVisible(false);
-            this.fireCircle.setVisible(false);
         }
 
         if (this.showCountdown){
@@ -1700,7 +1745,8 @@ var LevelScene = new Phaser.Class({
         }
 
         // Victory scene if all waves are completed
-        else if (allEnemiesDead()){
+        else if (allEnemiesDead() && (this.waveData.length - 1 === this.waveIndex)){
+            this.scene.stop();
             this.scene.start('YouWin');
         }
 

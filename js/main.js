@@ -16,6 +16,7 @@ const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in
 const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
 
 var path;
+var path2;
 var goldText;
 var lifeText;
 var explosion;
@@ -73,7 +74,6 @@ function generateEnemyClass(data){
             //shrink up the hitbox a bit.
             this.body.setCircle(20);
             this.depth = 1;
-
         },
 
         receiveDamage: function(damage, slow, duration, fire) {
@@ -131,7 +131,7 @@ function generateEnemyClass(data){
             this.follower.t += this.speed * delta;
 
             // get the new x and y coordinates in vec
-            path.getPoint(this.follower.t, this.follower.vec);
+            this.path.getPoint(this.follower.t, this.follower.vec);
 
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
@@ -1452,7 +1452,6 @@ var LevelScene = new Phaser.Class({
         path = this.add.path(path1StartX, path1StartY);
 
         if (this.secondPath === true){
-            console.log(levelPath);
             if (levelPath[1] !== []){
                 var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
                 var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
@@ -1615,21 +1614,24 @@ var LevelScene = new Phaser.Class({
 
         //variables to assist in spawning enemies in waves
         this.nextEnemy = 0;
+        this.nextEnemy2 = 0;
         this.nextEnemyIndex = 0;
+        this.nextEnemyIndex2 = 0;
         this.timeToNextEnemyIndex = 1;
+        this.timeToNextEnemyIndex2 = 1;
         this.waveIndex = 0;
         this.showCountdown = false;
     },
 
     update: function(time, delta)
     {
+        //first path
         if (time > this.nextEnemy)
         {
             this.showCountdown = false;
             this.waveText.setText("Wave " + (this.waveIndex + 1));
             this.waveText.x = MAPWIDTH / 2 - 68;
             var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
-
             var enemy;
             switch(enemyType){
                 case 'i':
@@ -1646,10 +1648,6 @@ var LevelScene = new Phaser.Class({
                     break;
             }
 
-            if (this.waveData2 !== null){
-
-            }
-
             if (enemy)
             {
                 enemy.startOnPath(path);
@@ -1657,10 +1655,47 @@ var LevelScene = new Phaser.Class({
                 enemy.setVisible(true);
 
                 this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
-                this.nextEnemyIndex = this.nextEnemyIndex + 2;
-                this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
+                this.nextEnemyIndex += 2;
+                this.timeToNextEnemyIndex += 2;
             }
         }
+
+        //second Path
+        if (this.secondPath) {
+            if (time > this.nextEnemy2){
+                this.showCountdown = false;
+                this.waveText.x = MAPWIDTH / 2 - 68;
+                this.waveText.setText("Wave " + (this.waveIndex + 1));
+                var enemyType2 = this.waveData2[this.waveIndex][this.nextEnemyIndex2];
+                var enemy2;
+                switch(enemyType2){
+                    case 'i':
+                        enemy2 = infantryGroup.get()
+                        break;
+                    case 'h':
+                        enemy2 = heavyGroup.get()
+                        break;
+                    case 'f':
+                        enemy2 = flyingGroup.get()
+                        break;
+                    case 's':
+                        enemy2 = speedyGroup.get()
+                        break;
+                }
+
+                if (enemy2)
+                {
+                    enemy2.startOnPath(path2);
+                    enemy2.setActive(true);
+                    enemy2.setVisible(true);
+
+                    this.nextEnemy2 = time + this.waveData2[this.waveIndex][this.timeToNextEnemyIndex2];
+                    this.nextEnemyIndex2 += 2;
+                    this.timeToNextEnemyIndex2 += 2;
+                }
+            }
+        }
+
 
         if (placing == true){
             this.cancel_msg_1.setText('Cancel')
@@ -1713,15 +1748,17 @@ var LevelScene = new Phaser.Class({
             this.waveText.x = MAPWIDTH / 2 - 100;
         }
 
-        if (this.waveIndex < this.waveData.length - 1) {
+        if (this.waveIndex < this.waveData.length - 1 && this.waveIndex < this.waveData2.length -1) {
             //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
-            if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
-                allEnemiesDead()) {
+            if (this.timeToNextEnemyIndex >= this.waveData[this.waveIndex].length && this.timeToNextEnemyIndex2 >= this.waveData2[this.waveIndex].length && allEnemiesDead()) {
                 //time for a new wave!
                 this.nextEnemyIndex = 0;
                 this.timeToNextEnemyIndex = 1;
+                this.nextEnemyIndex2 = 0;
+                this.timeToNextEnemyIndex2 = 1;
                 this.waveIndex++;
                 this.nextEnemy = time + 10000; //10 sec until next wave
+                this.nextEnemy2 = time + 10000; //10 sec until next wave
                 this.showCountdown = true;
             }
         }

@@ -1458,6 +1458,7 @@ var LevelScene = new Phaser.Class({
                 var level = this.cache.text.get('level1');
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
+                this.secondPath = false;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
@@ -1473,7 +1474,8 @@ var LevelScene = new Phaser.Class({
                 //2 paths
                 var waveData = this.cache.text.get('wave3aData');
                 var waveData2 = this.cache.text.get('wave3bData');
-                this.secondPath = true;
+                // TODO: set second path to true once second path is built
+                this.secondPath = false;
                 break;
         }
 
@@ -1518,13 +1520,22 @@ var LevelScene = new Phaser.Class({
         var path1StartY = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
         path = this.add.path(path1StartX, path1StartY);
 
-        if (this.secondPath === true){
+        if (this.secondPath === true  && this.currentLevel != 'level3'){
             if (levelPath[1] !== []){
                 var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
                 var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
-                // figure out how to pass this around to enemy classes in update()
                 path2 = this.add.path(path2StartX, path2StartY);
             }
+        }
+
+        if (this.currentLevel === 'level3') {
+            //TODO: create manual second path for third level here.
+            // var path2StartX = 8 * TILESIZE + TILESIZE / 2
+            // var path2StartY = 2 * TILESIZE + TILESIZE / 2
+            // var path2EndX = 16 * TILESIZE + TILESIZE / 2
+            // var path2EndY = 2 * TILESIZE + TILESIZE / 2
+            // path2 = this.add.path(path2StartX, path2StartY);
+            // path2.lineTo(path2EndX,path2EndY);
         }
 
         // TOOO: combine map data and functionality into an object as much as possible
@@ -1816,23 +1827,42 @@ var LevelScene = new Phaser.Class({
             this.waveText.x = MAPWIDTH / 2 - 100;
         }
 
-        if (this.waveIndex < this.waveData.length - 1 && this.waveIndex < this.waveData2.length -1) {
+        if (this.secondPath) {
+            if (this.waveIndex < this.waveData.length - 1 && this.waveIndex < this.waveData2.length -1) {
             //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
-            if (this.timeToNextEnemyIndex >= this.waveData[this.waveIndex].length && this.timeToNextEnemyIndex2 >= this.waveData2[this.waveIndex].length && allEnemiesDead()) {
-                //time for a new wave!
-                this.nextEnemyIndex = 0;
-                this.timeToNextEnemyIndex = 1;
-                this.nextEnemyIndex2 = 0;
-                this.timeToNextEnemyIndex2 = 1;
-                this.waveIndex++;
-                this.nextEnemy = time + 10000; //10 sec until next wave
-                this.nextEnemy2 = time + 10000; //10 sec until next wave
-                this.showCountdown = true;
+                if (this.timeToNextEnemyIndex >= this.waveData[this.waveIndex].length && this.timeToNextEnemyIndex2 >= this.waveData2[this.waveIndex].length && allEnemiesDead()) {
+                    //time for a new wave!
+                    this.nextEnemyIndex = 0;
+                    this.timeToNextEnemyIndex = 1;
+                    this.nextEnemyIndex2 = 0;
+                    this.timeToNextEnemyIndex2 = 1;
+                    this.waveIndex++;
+                    this.nextEnemy = time + 10000; //10 sec until next wave
+                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.showCountdown = true;
+                }
+            }
+        }
+        else{
+            if (this.waveIndex < this.waveData.length - 1) {
+                //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
+                if (this.timeToNextEnemyIndex >= this.waveData[this.waveIndex].length && allEnemiesDead()) {
+                    //time for a new wave!
+                    this.nextEnemyIndex = 0;
+                    this.timeToNextEnemyIndex = 1;
+                    this.nextEnemyIndex2 = 0;
+                    this.timeToNextEnemyIndex2 = 1;
+                    this.waveIndex++;
+                    this.nextEnemy = time + 10000; //10 sec until next wave
+                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.showCountdown = true;
+                }
             }
         }
 
+
         // Victory scene if all waves are completed
-        else if (allEnemiesDead() && (this.waveData.length - 1 === this.waveIndex)){
+        if (allEnemiesDead() && (this.waveData.length - 1 === this.waveIndex)){
             this.scene.stop();
             this.scene.start('YouWin');
         }

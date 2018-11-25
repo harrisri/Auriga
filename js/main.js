@@ -1186,7 +1186,7 @@ var TitleScene = new Phaser.Class({
         this.level2Button = this.add.text(500, 300, "LEVEL 2", { fontSize: 20 });
         titleSceneButtonInput(this.level2Button);
         this.level2Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
-        this.level2MapImage = this.add.image(535, 405, "level1map");
+        this.level2MapImage = this.add.image(535, 405, "level2map");
         this.level2MapImage.setScale(0.2);
         this.level2MapImage.setInteractive({ useHandCursor: true });
         this.level2MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));

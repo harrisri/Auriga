@@ -734,6 +734,21 @@ function showUpgradeAndSell(tower, levelMap){
     var left = tower.x - 33
     var right = tower.x + 33;
 
+    if (down > MAPHEIGHT) {
+        down = tower.y - 50;
+    }
+
+    if (left < 0) {
+        left = tower.x;
+        right = tower.x + 66;   
+    }
+
+    if (right > MAPWIDTH) {
+        left = tower.x - 66;
+        right = tower.x;
+    }
+
+
     //create sell button
     var sellButton = ButtonsGroup.get(right,down,'sellButton',null,true);
     this.sellText.setText("Sell\n$"+ tower.getSellPrice()).setPosition(right,down).setOrigin(0.5,0.5);
@@ -813,20 +828,47 @@ function towerRestState(tower){
 function showUpgradeInfo(button, tower){
     towerRestState(tower);
     if (tower.level < 4) {
-        var down = tower.y + 120;
-        var left = tower.x - 33;
         button.setTint(0xd3d3d3);
-
         tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
         tower.upgradeRangeGraphic.setVisible(true);
-
+        
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
-        this.upgradeInfoText.setPosition(left,down).setOrigin(0.5,0.5);
         this.upgradeInfoText.depth = 11;
-        upgradeInfoButton.setVisible(true);
+        upgradeInfoButton.depth = 10;
+
         var buttonSize = this.upgradeInfoText.getBounds();
-        upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 5);
-        upgradeInfoButton.setPosition(left,down);
+        upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 10);
+        
+        var upgradeButtonBounds = button.getBounds();
+        var infoButtonBounds = upgradeInfoButton.getBounds();
+
+        var y = upgradeButtonBounds.bottom + infoButtonBounds.height/2 + 10;
+        var x = button.x;
+
+        //set initial position
+        upgradeInfoButton.setPosition(x,y)
+
+        //check if info popup has appeared off screen. Adjust x,y accordingly.
+        //too low
+        if (upgradeInfoButton.getBounds().bottom > MAPHEIGHT) {
+            y = upgradeButtonBounds.top - infoButtonBounds.height/2 - 10;
+        }
+
+        //too far left
+        if (upgradeInfoButton.getBounds().left < 0){
+            x = infoButtonBounds.width/2 + 10;
+        } 
+
+        //too far right
+        if (upgradeInfoButton.getBounds().right > MAPWIDTH){
+            x = MAPWIDTH - infoButtonBounds.width/2 - 10;
+        } 
+
+        //reset position since x,y may have changed.
+        upgradeInfoButton.setPosition(x,y)
+        this.upgradeInfoText.setPosition(x,y).setOrigin(0.5,0.5);
+
+        upgradeInfoButton.setVisible(true);
     }
 }
 
@@ -1125,6 +1167,12 @@ function enterButtonRestState(button) {
     button.setTint(0xffffff);
 }
 
+function titleSceneButtonInput(button) {
+    button.setInteractive({ useHandCursor: true });
+    button.on('pointerover', () => enterButtonHoverState(button));
+    button.on('pointerout', () => enterButtonRestState(button));
+}
+
 function selectTowerForPlacement(towerButton) {
     placing = true;
     switch(towerButton.texture.key)
@@ -1161,25 +1209,44 @@ var TitleScene = new Phaser.Class({
         Phaser.Scene.call(this, { key: 'TitleScene' });
     },
 
+    preload: function()
+    {
+        this.load.image('level1map', 'assets/level1map.png');
+        this.load.image('level2map', 'assets/level2map.png');
+        // this.load.image('level3map', assets/level3map.png);
+    },
+
     create: function()
     {
-        this.add.text(325, 50, "AURIGA TOWER DEFENSE", { fontFamily: 'Arial', fontSize: 30 });
+        this.add.text(350, 25, "AURIGA TOWER DEFENSE", { fontFamily: 'Arial', fontSize: 30 });
 
         // Create Text Buttons that load the new scenes
-        this.level1Button = this.add.text(475, 200, "LEVEL 1", { fontSize: 20 });
-        this.level1Button.setInteractive();
+        this.level1Button = this.add.text(500, 90, "LEVEL 1", { fontSize: 20 });
+        titleSceneButtonInput(this.level1Button)
         this.level1Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
+        this.level1MapImage = this.add.image(535, 200, "level1map");
+        this.level1MapImage.setScale(0.2);
+        this.level1MapImage.setInteractive({ useHandCursor: true });
+        this.level1MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
 
-        this.level2Button = this.add.text(475, 350, "LEVEL 2", { fontSize: 20 });
-        this.level2Button.setInteractive();
+        this.level2Button = this.add.text(500, 300, "LEVEL 2", { fontSize: 20 });
+        titleSceneButtonInput(this.level2Button);
         this.level2Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
+        this.level2MapImage = this.add.image(535, 405, "level2map");
+        this.level2MapImage.setScale(0.2);
+        this.level2MapImage.setInteractive({ useHandCursor: true });
+        this.level2MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
 
-        this.level3Button = this.add.text(475, 500, "LEVEL 3", { fontSize: 20 });
-        this.level3Button.setInteractive();
+        this.level3Button = this.add.text(500, 500, "LEVEL 3", { fontSize: 20 });
+        titleSceneButtonInput(this.level3Button);
         this.level3Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
+        // this.level3MapImage = this.add.image(535, 600, "level3map");
+        // this.level3MapImage.setScale(0.2);
+        // this.level3MapImage.setInteractive({ useHandCursor: true });
+        // this.level3MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
 
-        this.instructionsButton = this.add.text(415, 650, "GAME INSTRUCTIONS", { fontSize: 20 });
-        this.instructionsButton.setInteractive();
+        this.instructionsButton = this.add.text(435, 750, "GAME INSTRUCTIONS", { fontSize: 20 });
+        titleSceneButtonInput(this.instructionsButton);
         this.instructionsButton.on('pointerdown', () => this.scene.start('InstructionsScene'));
     }
 });
@@ -1197,7 +1264,7 @@ var InstructionsScene = new Phaser.Class({
         this.enemyInstructions = this.add.text(200, 150, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
         this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
         this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN");
-        this.backButton.setInteractive();
+        titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => this.scene.start('TitleScene'));
     }
 });
@@ -1214,21 +1281,21 @@ var PauseScene = new Phaser.Class({
     {
         // Create Pause Menu Buttons
         this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", { fontSize: 30 });
-        this.resumeGameButton.setInteractive();
+        titleSceneButtonInput(this.resumeGameButton)
         this.resumeGameButton.on('pointerdown', () => {
                 this.scene.resume('LevelScene');
                 this.scene.stop();
         });
 
         this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL", { fontSize: 30 });
-        this.restartGameButton.setInteractive();
+        titleSceneButtonInput(this.restartGameButton);
         this.restartGameButton.on('pointerdown', () => {
                 this.scene.restart('LevelScene');
                 this.scene.start('LevelScene');
         });
 
         this.quitGameButton = this.add.text(400, 450, "QUIT GAME", { fontSize: 30 });
-        this.quitGameButton.setInteractive();
+        titleSceneButtonInput(this.quitGameButton);
         this.quitGameButton.on('pointerdown', () => {
             this.scene.stop();
             this.scene.stop('LevelScene');
@@ -1250,7 +1317,7 @@ var HelpScene = new Phaser.Class({
         this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
         this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
         this.backButton = this.add.text(400, 550, "RESUME GAME");
-        this.backButton.setInteractive();
+        titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => {
             this.scene.stop();
             this.scene.resume('LevelScene');
@@ -1276,7 +1343,7 @@ var YouWin = new Phaser.Class({
         this.WinImage = this.add.image(530, 400, 'youWin');
         this.WinImage.setScale(2);
         this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
-        this.TitleReturnButton.setInteractive();
+        titleSceneButtonInput(this.TitleReturnButton);
         this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
     }
 });
@@ -1299,7 +1366,7 @@ var GameOver = new Phaser.Class({
         this.GameOverImage = this.add.image(530, 400, 'gameOver');
         this.GameOverImage.setScale(2);
         this.TitleReturnButton = this.add.text(350, 600, "RETURN TO MAIN MENU", { fontSize: 30 });
-        this.TitleReturnButton.setInteractive();
+        titleSceneButtonInput(this.TitleReturnButton);
         this.TitleReturnButton.on('pointerdown', () => this.scene.start("TitleScene"));
     }
 })
@@ -1695,7 +1762,16 @@ var LevelScene = new Phaser.Class({
                 }
             }
         }
-
+      
+        //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
+        this.tempArrowTower.setVisible(false);
+        this.arrowCircle.setVisible(false);
+        this.tempBombTower.setVisible(false);
+        this.bombCircle.setVisible(false);
+        this.tempIceTower.setVisible(false);
+        this.iceCircle.setVisible(false);
+        this.tempFireTower.setVisible(false);
+        this.fireCircle.setVisible(false);
 
         if (placing == true){
             this.cancel_msg_1.setText('Cancel')
@@ -1732,14 +1808,6 @@ var LevelScene = new Phaser.Class({
         if (placing == false) {
             this.cancel_msg_1.setText('');
             this.cancel_msg_2.setText('');
-            this.tempArrowTower.setVisible(false);
-            this.arrowCircle.setVisible(false);
-            this.tempBombTower.setVisible(false);
-            this.bombCircle.setVisible(false);
-            this.tempIceTower.setVisible(false);
-            this.iceCircle.setVisible(false);
-            this.tempFireTower.setVisible(false);
-            this.fireCircle.setVisible(false);
         }
 
         if (this.showCountdown){
@@ -1764,7 +1832,8 @@ var LevelScene = new Phaser.Class({
         }
 
         // Victory scene if all waves are completed
-        else if (allEnemiesDead()){
+        else if (allEnemiesDead() && (this.waveData.length - 1 === this.waveIndex)){
+            this.scene.stop();
             this.scene.start('YouWin');
         }
 

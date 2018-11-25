@@ -6,7 +6,7 @@ const START = ['0', '1', '2']
 const END = ['9', '8', '7']
 const TILESIZE = 64;
 const MAPHEIGHT = TILESIZE * 12;
-const MAPWIDTH = TILESIZE * 16;
+const MAPWIDTH = TILESIZE * 17;
 const COLUMN_N = 16;
 const ROW_N = 12;
 const SELL_PERCENTAGE = 0.8;
@@ -16,6 +16,7 @@ const ICE_MAX_DURATION = 2000; //time frozen in place after successful freeze in
 const FIRE_MAX_CHANCE = 0.01; //chance to incinerate enemy @ MAX Fire level
 
 var path;
+var path2;
 var goldText;
 var lifeText;
 var explosion;
@@ -73,7 +74,6 @@ function generateEnemyClass(data){
             //shrink up the hitbox a bit.
             this.body.setCircle(20);
             this.depth = 1;
-
         },
 
         receiveDamage: function(damage, slow, duration, fire) {
@@ -131,7 +131,7 @@ function generateEnemyClass(data){
             this.follower.t += this.speed * delta;
 
             // get the new x and y coordinates in vec
-            path.getPoint(this.follower.t, this.follower.vec);
+            this.path.getPoint(this.follower.t, this.follower.vec);
 
             //rotate to face correct direction
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.follower.vec.x, this.follower.vec.y);
@@ -615,7 +615,7 @@ function damageEnemy(enemy, bullet) {
 
             //current location of the hit enemy
             var pathLocation = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
-            
+
             //drop ground fire around the enemy!
             for (var i = 0; i < dropCoords.length; i++) {
                 //move the location on the path a certain percentage dictated by getDropCoords()
@@ -1023,8 +1023,8 @@ function parseMap(maptext){
 
     for (var i = 0; i < grid.length; i++){
         tiles[i] = [];
-        tiles[i].length = grid[i].length;
-        for (var j = 0; j < grid[i].length; j++){
+        tiles[i].length = grid[i].length + 1;
+        for (var j = 0; j < tiles[i].length; j++){
             char = grid[i][j]
             if (char === OPEN || start.includes(char) || end.includes(char)) {
                 tiles[i][j] = 93; // Build-space tile in Kenney pack [2nd row 2nd column]
@@ -1033,7 +1033,10 @@ function parseMap(maptext){
                 tiles[i][j] = 130; // Build-space tile in Kenney pack [2nd row 2nd column]
             }
             else if (char === BUILD){
-                tiles[i][j] = 24; // Ground-space tile in Kenney pack [5th row 2nd column]
+                tiles[i][j] = 38; // Ground-space tile in Kenney pack [5th row 2nd column]
+            }
+            else if (j === grid[i].length){
+                tiles[i][j] = 257;
             }
         }
     }
@@ -1115,7 +1118,7 @@ function generatePaths(levelMap){
     return paths;
 }
 
-function parseWaveText(waveData){
+function parseWaveData(waveData){
     var waves = [[]]
 
     //split up each wave's data
@@ -1431,11 +1434,11 @@ var LevelScene = new Phaser.Class({
         this.load.spritesheet('icons', 'assets/icons_32x32.png', { frameWidth: 32, frameHeight: 32 });
 
         //load wave data
-        this.load.text('wave1Text', 'data/waves/level1');
-        this.load.text('wave2aText', 'data/waves/level2-a');
-        this.load.text('wave2bText', 'data/waves/level2-b');
-        this.load.text('wave3aText', 'data/waves/level3-a');
-        this.load.text('wave3bText', 'data/waves/level3-b');
+        this.load.text('wave1Data', 'data/waves/level1');
+        this.load.text('wave2aData', 'data/waves/level2-a');
+        this.load.text('wave2bData', 'data/waves/level2-b');
+        this.load.text('wave3aData', 'data/waves/level3-a');
+        this.load.text('wave3bData', 'data/waves/level3-b');
 
         //load ice tower explosion;
         this.load.setPath('assets/')
@@ -1446,25 +1449,31 @@ var LevelScene = new Phaser.Class({
     {
         gold = 200;
         life = 20;
+
+        this.secondPath = false;
+
         switch(this.currentLevel){
         //---------------------------LEVEL 1---------------------------------------
             case 'level1':
                 var level = this.cache.text.get('level1');
-                var waveText = this.cache.text.get('wave1Text');
+                var waveData = this.cache.text.get('wave1Data');
+                var waveData2 = null;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
                 var level = this.cache.text.get('level2');
                 //2 paths
-                var waveText = this.cache.text.get('wave2aText');
-                var waveText2 = this.cache.text.get('wave2bText');
+                var waveData = this.cache.text.get('wave2aData');
+                var waveData2 = this.cache.text.get('wave2bData');
+                this.secondPath = true;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
                 var level = this.cache.text.get('level3');
                 //2 paths
-                var waveText = this.cache.text.get('wave3aText');
-                var waveText2 = this.cache.text.get('wave3bText');
+                var waveData = this.cache.text.get('wave3aData');
+                var waveData2 = this.cache.text.get('wave3bData');
+                this.secondPath = true;
                 break;
         }
 
@@ -1473,9 +1482,9 @@ var LevelScene = new Phaser.Class({
         levelPath = generatePaths(levelMap);
 
         //set up wave text
-        this.waveData = parseWaveText(waveText);
-        if (waveText2) {
-            this.waveData2 = parseWaveText(waveText2);
+        this.waveData = parseWaveData(waveData);
+        if (waveData2 !== null) {
+            this.waveData2 = parseWaveData(waveData2);
         }
 
         // Set up tilemap using Kenney sprite sheet
@@ -1485,11 +1494,11 @@ var LevelScene = new Phaser.Class({
 
         //UI elements
         this.add.image(26, 28, 'goldCoin');
-        this.add.image(MAPWIDTH - 56, 28, 'heart');
+        this.add.image(MAPWIDTH - 50, 28, 'heart');
         goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 40, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(480, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
-    
+        lifeText = this.add.text(MAPWIDTH - 35, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
         upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1499,16 +1508,25 @@ var LevelScene = new Phaser.Class({
 
         //group for putting stars under towers.
         StarGroup = this.add.group();
-    
+
         // this graphics element is only for visualization,
         // its not related to our path
         var graphics = this.add.graphics();
 
         // TODO: Clean this up; manually creating levels for now.
-        var startx = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
-        var starty = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
-        path = this.add.path(startx, starty);
-        
+        var path1StartX = levelPath[0][0][0] * TILESIZE + TILESIZE / 2
+        var path1StartY = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
+        path = this.add.path(path1StartX, path1StartY);
+
+        if (this.secondPath === true){
+            if (levelPath[1] !== []){
+                var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
+                var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
+                // figure out how to pass this around to enemy classes in update()
+                path2 = this.add.path(path2StartX, path2StartY);
+            }
+        }
+
         // TOOO: combine map data and functionality into an object as much as possible
         function makePath(pathStart, levelPath){
             // Make path with Phaser based on return value of generatePaths()
@@ -1520,6 +1538,9 @@ var LevelScene = new Phaser.Class({
             }
         }
         makePath(path, levelPath[0]);
+        if (this.secondPath === true){
+            makePath(path2, levelPath[1]);
+        }
 
         // Get enemy data and generate classes to instantiate enemies
         let infantryData = game.cache.json.get('infantry');
@@ -1537,7 +1558,7 @@ var LevelScene = new Phaser.Class({
         heavyGroup = this.physics.add.group({ classType: Heavy, runChildUpdate: true });
         flyingGroup = this.physics.add.group({ classType: Flying, runChildUpdate: true });
         speedyGroup = this.physics.add.group({ classType: Speedy, runChildUpdate: true });
-        
+
         // Do the same thing with towers
         let arrowData = game.cache.json.get('arrow');
         let bombData = game.cache.json.get('bomb');
@@ -1593,31 +1614,31 @@ var LevelScene = new Phaser.Class({
         this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
         //Cancel: ESC message
-        this.cancel_msg_1 = this.add.text(965,485,'',{fontStyle: 'Bold'});
-        this.cancel_msg_2 = this.add.text(973,495,'',{fontSize: '24px', fontStyle: 'Bold'});
+        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontStyle: 'Bold'});
+        this.cancel_msg_2 = this.add.text(MAPWIDTH - 52,495,'',{fontSize: '24px', fontStyle: 'Bold'});
 
         // Arrow tower button
-        this.add.text(970, 80, 'Arrow');
-        this.add.text(980, 155, "$" + arrowData.cost.level_1);
-        this.arrowTowerButton = this.add.image(995, 125, 'arrow');
+        this.add.text(MAPWIDTH - 54, 80, 'Arrow');
+        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1);
+        this.arrowTowerButton = this.add.image(MAPWIDTH - 29, 125, 'arrow');
         addButtonInput(this.arrowTowerButton);
 
         // Bomb tower button
-        this.add.text(975, 180, 'Bomb');
-        this.add.text(975, 245, "$" + bombData.cost.level_1);
-        this.bombTowerButton = this.add.image(995, 225, 'bomb');
+        this.add.text(MAPWIDTH - 49, 180, 'Bomb');
+        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1);
+        this.bombTowerButton = this.add.image(MAPWIDTH - 29, 225, 'bomb');
         addButtonInput(this.bombTowerButton);
-        
+
         // Fire tower button
-        this.add.text(975, 275, 'Fire');
-        this.add.text(975, 350, "$" + fireData.cost.level_1);
-        this.fireTowerButton = this.add.image(995, 320, 'fire');
+        this.add.text(MAPWIDTH - 49, 275, 'Fire');
+        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1);
+        this.fireTowerButton = this.add.image(MAPWIDTH - 29, 320, 'fire');
         addButtonInput(this.fireTowerButton);
 
         // Ice tower button
-        this.add.text(981, 380, 'Ice');
-        this.add.text(975, 455, "$" + iceData.cost.level_1);
-        this.iceTowerButton = this.add.image(995, 425, 'ice');
+        this.add.text(MAPWIDTH - 43, 380, 'Ice');
+        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1);
+        this.iceTowerButton = this.add.image(MAPWIDTH - 29, 425, 'ice');
         addButtonInput(this.iceTowerButton);
 
         // Tower sprites that will follow mouse pointer when UI button is clicked
@@ -1625,7 +1646,7 @@ var LevelScene = new Phaser.Class({
         this.tempBombTower = this.add.image(0, 0, 'bomb');
         this.tempFireTower = this.add.image(0, 0, 'fire');
         this.tempIceTower = this.add.image(0, 0, 'ice');
-        
+
         var graphicsArrow = this.add.graphics();
         var graphicsBomb = this.add.graphics();
         var graphicsFire = this.add.graphics();
@@ -1643,8 +1664,8 @@ var LevelScene = new Phaser.Class({
         this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
 
         // Add pause and help icons
-        this.pauseButton = this.add.image(980, 750, 'icons', 22);
-        this.helpButton = this.add.image(1010, 750, 'icons', 39);
+        this.pauseButton = this.add.image(MAPWIDTH - 44, 750, 'icons', 22);
+        this.helpButton = this.add.image(MAPWIDTH - 14, 750, 'icons', 39);
         this.pauseButton.setInteractive();
         // on pauseButton click, pause LevelScene, start Pause Scene with resume, restart, and quit
         this.pauseButton.on('pointerdown', () => {
@@ -1660,21 +1681,24 @@ var LevelScene = new Phaser.Class({
 
         //variables to assist in spawning enemies in waves
         this.nextEnemy = 0;
+        this.nextEnemy2 = 0;
         this.nextEnemyIndex = 0;
+        this.nextEnemyIndex2 = 0;
         this.timeToNextEnemyIndex = 1;
+        this.timeToNextEnemyIndex2 = 1;
         this.waveIndex = 0;
         this.showCountdown = false;
     },
 
     update: function(time, delta)
     {
+        //first path
         if (time > this.nextEnemy)
         {
             this.showCountdown = false;
             this.waveText.setText("Wave " + (this.waveIndex + 1));
-            this.waveText.x = MAPWIDTH / 2 - 46;
+            this.waveText.x = MAPWIDTH / 2 - 68;
             var enemyType = this.waveData[this.waveIndex][this.nextEnemyIndex];
-
             var enemy;
             switch(enemyType){
                 case 'i':
@@ -1698,11 +1722,47 @@ var LevelScene = new Phaser.Class({
                 enemy.setVisible(true);
 
                 this.nextEnemy = time + this.waveData[this.waveIndex][this.timeToNextEnemyIndex];
-                this.nextEnemyIndex = this.nextEnemyIndex + 2;
-                this.timeToNextEnemyIndex = this.timeToNextEnemyIndex + 2;
+                this.nextEnemyIndex += 2;
+                this.timeToNextEnemyIndex += 2;
             }
         }
 
+        //second Path
+        if (this.secondPath) {
+            if (time > this.nextEnemy2){
+                this.showCountdown = false;
+                this.waveText.x = MAPWIDTH / 2 - 68;
+                this.waveText.setText("Wave " + (this.waveIndex + 1));
+                var enemyType2 = this.waveData2[this.waveIndex][this.nextEnemyIndex2];
+                var enemy2;
+                switch(enemyType2){
+                    case 'i':
+                        enemy2 = infantryGroup.get()
+                        break;
+                    case 'h':
+                        enemy2 = heavyGroup.get()
+                        break;
+                    case 'f':
+                        enemy2 = flyingGroup.get()
+                        break;
+                    case 's':
+                        enemy2 = speedyGroup.get()
+                        break;
+                }
+
+                if (enemy2)
+                {
+                    enemy2.startOnPath(path2);
+                    enemy2.setActive(true);
+                    enemy2.setVisible(true);
+
+                    this.nextEnemy2 = time + this.waveData2[this.waveIndex][this.timeToNextEnemyIndex2];
+                    this.nextEnemyIndex2 += 2;
+                    this.timeToNextEnemyIndex2 += 2;
+                }
+            }
+        }
+      
         //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
         this.tempArrowTower.setVisible(false);
         this.arrowCircle.setVisible(false);
@@ -1756,15 +1816,17 @@ var LevelScene = new Phaser.Class({
             this.waveText.x = MAPWIDTH / 2 - 100;
         }
 
-        if (this.waveIndex < this.waveData.length - 1) {
+        if (this.waveIndex < this.waveData.length - 1 && this.waveIndex < this.waveData2.length -1) {
             //check if it's time for a new wave: all enemies dead, and there are no more enemies to spawn.
-            if (this.timeToNextEnemyIndex > this.waveData[this.waveIndex].length &&
-                allEnemiesDead()) {
+            if (this.timeToNextEnemyIndex >= this.waveData[this.waveIndex].length && this.timeToNextEnemyIndex2 >= this.waveData2[this.waveIndex].length && allEnemiesDead()) {
                 //time for a new wave!
                 this.nextEnemyIndex = 0;
                 this.timeToNextEnemyIndex = 1;
+                this.nextEnemyIndex2 = 0;
+                this.timeToNextEnemyIndex2 = 1;
                 this.waveIndex++;
                 this.nextEnemy = time + 10000; //10 sec until next wave
+                this.nextEnemy2 = time + 10000; //10 sec until next wave
                 this.showCountdown = true;
             }
         }

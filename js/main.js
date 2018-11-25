@@ -1,4 +1,4 @@
-const SPEED_SCALE = 50000;
+const SPEED_SCALE = 15;
 const BUILD = '#';
 const NOBUILD = '^';
 const OPEN = '-';
@@ -127,8 +127,9 @@ function generateEnemyClass(data){
                 this.setTint(0xffffff);
             }
 
-            // move the t point along the path, 0 is the start and 0 is the end
-            this.follower.t += this.speed * delta;
+            // move the t point along the path, 0 is the start and 1 is the end
+            // console.log(this.path.getLength())
+            this.follower.t += (this.speed/this.path.getLength()) * delta;
 
             // get the new x and y coordinates in vec
             this.path.getPoint(this.follower.t, this.follower.vec);

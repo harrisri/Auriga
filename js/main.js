@@ -128,7 +128,6 @@ function generateEnemyClass(data){
             }
 
             // move the t point along the path, 0 is the start and 1 is the end
-            // console.log(this.path.getLength())
             this.follower.t += (this.speed/this.path.getLength()) * delta;
 
             // get the new x and y coordinates in vec
@@ -149,8 +148,9 @@ function generateEnemyClass(data){
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
-                this.setActive(false);
-                this.setVisible(false);
+                this.destroy();
+                // this.setActive(false);
+                // this.setVisible(false);
                 this.healthBar.bar.destroy();
                 this.healthBar.destroy();
                 life -= 1;
@@ -344,12 +344,17 @@ function generateTowerClass(data){
 
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
-            if(enemy) {
+            if(enemy && enemy.follower.t < 1) {
                 //'lead' the target by shooting at a point 0.5% ahead of where the enemy is currently.
                 var leadTarget = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
-                leadTarget.t += 0.0045
-                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
+                if (leadTarget.t + 0.0045 <= 1) {
+                    leadTarget.t += 0.0045
+                }
+                else{
+                    leadTarget.t = 1;
+                }
 
+                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
                 //calculate the angle in which the projectile will shoot.  Also, the angle that the turret will face.
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
@@ -581,7 +586,7 @@ function getEnemy(x, y, distance, turret_target) {
     var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
     for(var i = 0; i < enemyUnits.length; i++) {
-        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
+        if(enemyUnits[i].active && enemyUnits[i].hp > 0 && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
             if (turret_target == 'air-ground') {
                 return enemyUnits[i];
             }

@@ -347,7 +347,7 @@ function generateTowerClass(data){
             if(enemy) {
                 //'lead' the target by shooting at a point 0.5% ahead of where the enemy is currently.
                 var leadTarget = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
-                leadTarget.t += 0.003
+                leadTarget.t += 0.0045
                 enemy.path.getPoint(leadTarget.t, leadTarget.vec);
 
                 //calculate the angle in which the projectile will shoot.  Also, the angle that the turret will face.
@@ -438,16 +438,23 @@ function generateProjectileClass(data){
     homingFire: function(x, y, enemy){
         this.homingTarget = enemy;
         this.setPosition(x, y);
-        // this.dx = Math.cos(angle);
-        // this.dy = Math.sin(angle);
     },
 
     update: function (time, delta)
     {
         if (this.homingTarget) {
+            
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
+
+            //for some reason, the collision isnt always detected.  This manually acts as the collision. 
+            if (Phaser.Math.Distance.Between(this.homingTarget.x, this.homingTarget.y, this.x, this.y) < 15) {
+                damageEnemy(this.homingTarget, this);
+                this.setActive(false);
+                this.setVisible(false);
+            }
+
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
             this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.dx = Math.cos(angle);
@@ -457,7 +464,7 @@ function generateProjectileClass(data){
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range + 100) {
             this.setActive(false);
             this.setVisible(false);
         }
@@ -1467,7 +1474,7 @@ var LevelScene = new Phaser.Class({
 
     create: function()
     {
-        gold = 200;
+        gold = 20000;
         life = 20;
 
         this.secondPath = false;

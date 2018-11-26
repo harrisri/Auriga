@@ -1531,9 +1531,9 @@ var LevelScene = new Phaser.Class({
         this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
-        sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeInfoText = this.add.text(0,0, '', {fontFamily: 'Arial',fontSize: '14px', fill: '#ffffff', align:'center'});
         upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
         ButtonsGroup = this.add.group();
 

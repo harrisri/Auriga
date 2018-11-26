@@ -1476,7 +1476,7 @@ var LevelScene = new Phaser.Class({
 
     create: function()
     {
-        gold = 20000;
+        gold = 200;
         life = 20;
 
         this.secondPath = false;

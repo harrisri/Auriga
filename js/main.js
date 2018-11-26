@@ -1344,11 +1344,8 @@ var HelpScene = new Phaser.Class({
     {
         var background = this.add.image(0, 0, 'infoscreen').setOrigin(0,0).setScale(.648)
         background.setPosition(-8, 0)
-        // this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
-        // this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
         this.backButton = this.add.text(400, 650, "RESUME GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
         this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 50);
-        // this.backButton = this.add.text(400, 550, "RESUME GAME");
         titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => {
             this.scene.stop();
@@ -1529,9 +1526,9 @@ var LevelScene = new Phaser.Class({
         //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
-        goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+        goldText = this.add.text(42, 15, '200', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1657,30 +1654,30 @@ var LevelScene = new Phaser.Class({
         this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
         //Cancel: ESC message
-        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontStyle: 'Bold'});
-        this.cancel_msg_2 = this.add.text(MAPWIDTH - 52,495,'',{fontSize: '24px', fontStyle: 'Bold'});
+        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontFamily: 'Arial',fontStyle: 'Bold'});
+        this.cancel_msg_2 = this.add.text(MAPWIDTH - 56,499,'',{fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         // Arrow tower button
-        this.add.text(MAPWIDTH - 54, 80, 'Arrow');
-        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1);
+        this.add.text(MAPWIDTH - 47, 80, 'Gun',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.arrowTowerButton = this.add.image(MAPWIDTH - 29, 125, 'arrow');
         addButtonInput(this.arrowTowerButton);
 
         // Bomb tower button
-        this.add.text(MAPWIDTH - 49, 180, 'Bomb');
-        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1);
+        this.add.text(MAPWIDTH - 56, 180, 'Missile',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.bombTowerButton = this.add.image(MAPWIDTH - 29, 225, 'bomb');
         addButtonInput(this.bombTowerButton);
 
         // Fire tower button
-        this.add.text(MAPWIDTH - 49, 275, 'Fire');
-        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1);
+        this.add.text(MAPWIDTH - 44, 275, 'Fire',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.fireTowerButton = this.add.image(MAPWIDTH - 29, 320, 'fire');
         addButtonInput(this.fireTowerButton);
 
         // Ice tower button
-        this.add.text(MAPWIDTH - 43, 380, 'Ice');
-        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1);
+        this.add.text(MAPWIDTH - 41, 380, 'Ice',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.iceTowerButton = this.add.image(MAPWIDTH - 29, 425, 'ice');
         addButtonInput(this.iceTowerButton);
 

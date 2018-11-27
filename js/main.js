@@ -349,7 +349,6 @@ function generateTowerClass(data){
                 //'lead' the target by shooting at a point 0.6% ahead of where the enemy is currently.
                 var distance = Phaser.Math.Distance.Between(enemy.x,enemy.y,this.x, this.y)
                 if ((enemy.name === 'speedy' && distance > 75) || distance > 150){
-                    console.log('leading target!')
                     if (leadTarget.t + 0.006 <= 1) {
                         leadTarget.t += 0.006
                     }
@@ -1487,7 +1486,7 @@ var LevelScene = new Phaser.Class({
 
     create: function()
     {
-        gold = 2000;
+        gold = 200;
         life = 20;
 
         this.secondPath = false;

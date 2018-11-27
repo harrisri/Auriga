@@ -1119,6 +1119,14 @@ function generatePaths(levelMap){
     return paths;
 }
 
+function setupLevel3Path(levelMap, levelPath){
+    levelPath[1] = []
+    for (var i = 0; i <= 15; i++){
+        curr = [1, i]
+        levelPath[1].push(curr)
+    }
+}
+
 function parseWaveData(waveData){
     var waves = [[]]
 
@@ -1483,7 +1491,7 @@ var LevelScene = new Phaser.Class({
         }
 
         // Load and parse map data
-        levelMap = parseMap(level)
+        levelMap = parseMap(level);
         levelPath = generatePaths(levelMap);
 
         //set up wave text
@@ -1523,22 +1531,12 @@ var LevelScene = new Phaser.Class({
         var path1StartY = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
         path = this.add.path(path1StartX, path1StartY);
 
-        if (this.secondPath === true  && this.currentLevel != 'level3'){
+        if (this.secondPath === true && this.currentLevel !== 'level3'){
             if (levelPath[1] !== []){
                 var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
                 var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
                 path2 = this.add.path(path2StartX, path2StartY);
             }
-        }
-
-        if (this.currentLevel === 'level3') {
-            //TODO: create manual second path for third level here.
-            // var path2StartX = 8 * TILESIZE + TILESIZE / 2
-            // var path2StartY = 2 * TILESIZE + TILESIZE / 2
-            // var path2EndX = 16 * TILESIZE + TILESIZE / 2
-            // var path2EndY = 2 * TILESIZE + TILESIZE / 2
-            // path2 = this.add.path(path2StartX, path2StartY);
-            // path2.lineTo(path2EndX,path2EndY);
         }
 
         // TOOO: combine map data and functionality into an object as much as possible
@@ -1551,9 +1549,23 @@ var LevelScene = new Phaser.Class({
                 pathStart.lineTo(pathx, pathy)
             }
         }
+
+        if (this.currentLevel === 'level3'){
+            this.secondPath = true;
+        }
+
         makePath(path, levelPath[0]);
-        if (this.secondPath === true){
+        if (this.secondPath === true && this.currentLevel !== 'level3'){
             makePath(path2, levelPath[1]);
+        }
+        else if (this.currentLevel === 'level3') {
+            //TODO: create manual second path for third level here.
+            var path2StartX = 0 * TILESIZE + TILESIZE / 2
+            var path2StartY = 1 * TILESIZE + TILESIZE / 2
+            var path2EndX = 14 * TILESIZE + TILESIZE / 2
+            var path2EndY = 1 * TILESIZE + TILESIZE / 2
+            path2 = this.add.path(path2StartX, path2StartY);
+            path2.lineTo(path2EndX,path2EndY);
         }
 
         // Get enemy data and generate classes to instantiate enemies

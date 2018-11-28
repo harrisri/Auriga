@@ -1285,6 +1285,10 @@ var TitleScene = new Phaser.Class({
         this.instructionsButton.setPosition(MAPWIDTH/2 - this.instructionsButton.getBounds().width/2, MAPHEIGHT - 50)
         titleSceneButtonInput(this.instructionsButton);
         this.instructionsButton.on('pointerdown', () => this.scene.start('InstructionsScene'));
+
+        this.creditsButton = this.add.text(MAPWIDTH - 100, MAPHEIGHT - 90, "CREDITS", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.creditsButton);
+        this.creditsButton.on('pointerdown', () => this.scene.start('CreditScene'));
     }
 });
 
@@ -1369,6 +1373,34 @@ var HelpScene = new Phaser.Class({
             this.scene.stop();
             this.scene.resume('LevelScene');
         });
+    }
+});
+
+var CreditScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+    initialize:
+    function CreditScene ()
+    {
+        Phaser.Scene.call(this, { key: 'CreditScene' });
+    },
+
+    preload: function()
+    {
+        this.load.image('background','assets/background.png');
+    },
+
+    create: function()
+    {
+        this.add.image(0, 0, 'background').setOrigin(0,0);
+        this.creditsTitle = this.add.text(0, 0, "CREDITS", {fontFamily: 'Arial', fontSize: 35, fontStyle: 'Bold'});
+        this.creditsTitle.setPosition(MAPWIDTH/2 - this.creditsTitle.getBounds().width/2, 50);
+        this.sources = this.add.text(0, 0, "Phaser 3 Documentation: https://photonstorm.github.io/phaser3-docs/\nPhaser 3 Examples: https://labs.phaser.io/\nKenney Asset Pack: https://www.kenney.nl/assets/tower-defense-top-down\nHeart Sprite: https://www.dontmind8.win/2018/03/heart-pixel-art.html\nPhaser 3 Tower Defense Tutorial: https://gamedevacademy.org/how-to-make-tower-defense-game-with-phaser-3/\n\n\nMADE BY:\nRiley Harrison\nTrevor Worthey\nDaniel Kim", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        this.sources.setPosition(MAPWIDTH/2 - this.sources.getBounds().width/2, MAPHEIGHT/2 - this.sources.getBounds().height/2);
+        this.sources.setAlign("center");
+        this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 80);
+        titleSceneButtonInput(this.backButton);
+        this.backButton.on('pointerdown', () => this.scene.start('TitleScene'));
     }
 });
 
@@ -1729,8 +1761,8 @@ var LevelScene = new Phaser.Class({
         this.iceCircle = graphicsIce.strokeCircle(0, 0, iceData.range.level_1);
 
         // Add pause and help icons
-        this.pauseButton = this.add.image(MAPWIDTH - 44, 750, 'icons', 22);
-        this.helpButton = this.add.image(MAPWIDTH - 14, 750, 'icons', 39);
+        this.pauseButton = this.add.image(MAPWIDTH - 47, 750, 'icons', 22);
+        this.helpButton = this.add.image(MAPWIDTH - 17, 750, 'icons', 39);
         this.pauseButton.setInteractive();
         // on pauseButton click, pause LevelScene, start Pause Scene with resume, restart, and quit
         this.pauseButton.on('pointerdown', () => {
@@ -1938,7 +1970,7 @@ var config = {
     physics: {
         default: 'arcade'
     },
-    scene: [ TitleScene, LevelScene, InstructionsScene, PauseScene, HelpScene, YouWin, GameOver ]
+    scene: [ TitleScene, LevelScene, InstructionsScene, PauseScene, HelpScene, CreditScene, YouWin, GameOver ]
 };
 
 var game = new Phaser.Game(config);

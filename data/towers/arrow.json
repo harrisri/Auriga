@@ -4,14 +4,14 @@
     "cost":{
         "level_1": 60,
         "level_2": 110,
-        "level_3": 140,
-        "level_4": 260
+        "level_3": 190,
+        "level_4": 285
     },
     "damage":{
-        "level_1": 8,
-        "level_2": 10,
-        "level_3": 12,
-        "level_4": 14
+        "level_1": 7,
+        "level_2": 9,
+        "level_3": 11,
+        "level_4": 12
     },
     "range":{
         "level_1": 155,
@@ -20,7 +20,7 @@
         "level_4": 800
     },
     "rate":{
-        "level_1": 1300,
+        "level_1": 1600,
         "level_2": 1300,
         "level_3": 1150,
         "level_4": 1000

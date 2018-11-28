@@ -451,12 +451,12 @@ function generateProjectileClass(data){
     update: function (time, delta)
     {
         if (this.homingTarget) {
-            
+
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
 
-            //for some reason, the collision isnt always detected.  This manually acts as the collision. 
+            //for some reason, the collision isnt always detected.  This manually acts as the collision.
             if (Phaser.Math.Distance.Between(this.homingTarget.x, this.homingTarget.y, this.x, this.y) < 15) {
                 damageEnemy(this.homingTarget, this);
                 this.setActive(false);
@@ -763,7 +763,7 @@ function showUpgradeAndSell(tower, levelMap){
 
     if (left < 0) {
         left = tower.x;
-        right = tower.x + 66;   
+        right = tower.x + 66;
     }
 
     if (right > MAPWIDTH) {
@@ -854,14 +854,14 @@ function showUpgradeInfo(button, tower){
         button.setTint(0xd3d3d3);
         tower.upgradeRangeGraphic.strokeCircle(tower.x, tower.y, tower.getUpgradeRange())
         tower.upgradeRangeGraphic.setVisible(true);
-        
+
         this.upgradeInfoText.setText(tower.getUpgradeInformation());
         this.upgradeInfoText.depth = 11;
         upgradeInfoButton.depth = 10;
 
         var buttonSize = this.upgradeInfoText.getBounds();
         upgradeInfoButton.setDisplaySize(buttonSize.width + 5, buttonSize.height + 10);
-        
+
         var upgradeButtonBounds = button.getBounds();
         var infoButtonBounds = upgradeInfoButton.getBounds();
 
@@ -880,12 +880,12 @@ function showUpgradeInfo(button, tower){
         //too far left
         if (upgradeInfoButton.getBounds().left < 0){
             x = infoButtonBounds.width/2 + 10;
-        } 
+        }
 
         //too far right
         if (upgradeInfoButton.getBounds().right > MAPWIDTH){
             x = MAPWIDTH - infoButtonBounds.width/2 - 10;
-        } 
+        }
 
         //reset position since x,y may have changed.
         upgradeInfoButton.setPosition(x,y)
@@ -1139,6 +1139,14 @@ function generatePaths(levelMap){
         paths.push(pathList);
     }
     return paths;
+}
+
+function setupLevel3Path(levelMap, levelPath){
+    levelPath[1] = []
+    for (var i = 0; i <= 15; i++){
+        curr = [1, i]
+        levelPath[1].push(curr)
+    }
 }
 
 function parseWaveData(waveData){
@@ -1486,7 +1494,6 @@ var LevelScene = new Phaser.Class({
 
     create: function()
     {
-        gold = 200;
         life = 20;
 
         this.secondPath = false;
@@ -1498,6 +1505,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
                 this.secondPath = false;
+                gold = 200;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
@@ -1506,6 +1514,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave2aData');
                 var waveData2 = this.cache.text.get('wave2bData');
                 this.secondPath = true;
+                gold = 360;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
@@ -1515,11 +1524,12 @@ var LevelScene = new Phaser.Class({
                 var waveData2 = this.cache.text.get('wave3bData');
                 // TODO: set second path to true once second path is built
                 this.secondPath = false;
+                gold = 450;
                 break;
         }
 
         // Load and parse map data
-        levelMap = parseMap(level)
+        levelMap = parseMap(level);
         levelPath = generatePaths(levelMap);
 
         //set up wave text
@@ -1536,9 +1546,10 @@ var LevelScene = new Phaser.Class({
         //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
-        goldText = this.add.text(42, 15, '200', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+
+        goldText = this.add.text(42, 15, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1559,22 +1570,12 @@ var LevelScene = new Phaser.Class({
         var path1StartY = levelPath[0][0][1] * TILESIZE + TILESIZE / 2
         path = this.add.path(path1StartX, path1StartY);
 
-        if (this.secondPath === true  && this.currentLevel != 'level3'){
+        if (this.secondPath === true && this.currentLevel !== 'level3'){
             if (levelPath[1] !== []){
                 var path2StartX = levelPath[1][0][0] * TILESIZE + TILESIZE / 2
                 var path2StartY = levelPath[1][0][1] * TILESIZE + TILESIZE / 2
                 path2 = this.add.path(path2StartX, path2StartY);
             }
-        }
-
-        if (this.currentLevel === 'level3') {
-            //TODO: create manual second path for third level here.
-            // var path2StartX = 8 * TILESIZE + TILESIZE / 2
-            // var path2StartY = 2 * TILESIZE + TILESIZE / 2
-            // var path2EndX = 16 * TILESIZE + TILESIZE / 2
-            // var path2EndY = 2 * TILESIZE + TILESIZE / 2
-            // path2 = this.add.path(path2StartX, path2StartY);
-            // path2.lineTo(path2EndX,path2EndY);
         }
 
         // TOOO: combine map data and functionality into an object as much as possible
@@ -1587,9 +1588,23 @@ var LevelScene = new Phaser.Class({
                 pathStart.lineTo(pathx, pathy)
             }
         }
+
+        if (this.currentLevel === 'level3'){
+            this.secondPath = true;
+        }
+
         makePath(path, levelPath[0]);
-        if (this.secondPath === true){
+        if (this.secondPath === true && this.currentLevel !== 'level3'){
             makePath(path2, levelPath[1]);
+        }
+        else if (this.currentLevel === 'level3') {
+            //TODO: create manual second path for third level here.
+            var path2StartX = 0 * TILESIZE + TILESIZE / 2
+            var path2StartY = 1 * TILESIZE + TILESIZE / 2
+            var path2EndX = 14 * TILESIZE + TILESIZE / 2
+            var path2EndY = 1 * TILESIZE + TILESIZE / 2
+            path2 = this.add.path(path2StartX, path2StartY);
+            path2.lineTo(path2EndX,path2EndY);
         }
 
         // Get enemy data and generate classes to instantiate enemies
@@ -1812,7 +1827,7 @@ var LevelScene = new Phaser.Class({
                 }
             }
         }
-      
+
         //clean up temp circles/towers.  Moved out here to clean up in case user selects ui towers repeatedly.
         this.tempArrowTower.setVisible(false);
         this.arrowCircle.setVisible(false);

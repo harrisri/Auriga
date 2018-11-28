@@ -2,34 +2,34 @@
     "name": "bomb",
     "target": "ground",
     "cost":{
-        "level_1": 135,
+        "level_1": 115,
         "level_2": 180,
-        "level_3": 240,
-        "level_4": 320
+        "level_3": 265,
+        "level_4": 345
     },
     "damage":{
-        "level_1": 7,
+        "level_1": 9,
         "level_2": 11,
-        "level_3": 13,
-        "level_4": 13
+        "level_3": 14,
+        "level_4": 19
     },
     "range":{
-        "level_1": 120,
-        "level_2": 160,
+        "level_1": 145,
+        "level_2": 165,
         "level_3": 190,
         "level_4": 800
     },
     "rate":{
-        "level_1": 1500,
-        "level_2": 1200,
-        "level_3": 1000,
-        "level_4": 1000
+        "level_1": 1600,
+        "level_2": 1300,
+        "level_3": 1300,
+        "level_4": 2500
     },
     "radius":{
-        "level_1": 50,
-        "level_2": 60,
-        "level_3": 70,
-        "level_4": 70
+        "level_1": 65,
+        "level_2": 70,
+        "level_3": 75,
+        "level_4": 90
     },
     "slow":{
         "level_1": -1,

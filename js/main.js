@@ -444,6 +444,8 @@ function generateProjectileClass(data){
     },
 
     homingFire: function(x, y, enemy){
+        this.setActive(true);
+        this.setVisible(true);
         this.homingTarget = enemy;
         this.setPosition(x, y);
     },
@@ -1505,7 +1507,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
                 this.secondPath = false;
-                gold = 200;
+                gold = 2000;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':

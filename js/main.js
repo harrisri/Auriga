@@ -128,7 +128,6 @@ function generateEnemyClass(data){
             }
 
             // move the t point along the path, 0 is the start and 1 is the end
-            // console.log(this.path.getLength())
             this.follower.t += (this.speed/this.path.getLength()) * delta;
 
             // get the new x and y coordinates in vec
@@ -149,8 +148,9 @@ function generateEnemyClass(data){
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
-                this.setActive(false);
-                this.setVisible(false);
+                this.destroy();
+                // this.setActive(false);
+                // this.setVisible(false);
                 this.healthBar.bar.destroy();
                 this.healthBar.destroy();
                 life -= 1;
@@ -344,12 +344,20 @@ function generateTowerClass(data){
 
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
-            if(enemy) {
-                //'lead' the target by shooting at a point 0.5% ahead of where the enemy is currently.
+            if(enemy && enemy.follower.t < 1) {
                 var leadTarget = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
-                leadTarget.t += 0.003
-                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
+                //'lead' the target by shooting at a point 0.6% ahead of where the enemy is currently.
+                var distance = Phaser.Math.Distance.Between(enemy.x,enemy.y,this.x, this.y)
+                if ((enemy.name === 'speedy' && distance > 75) || distance > 150){
+                    if (leadTarget.t + 0.006 <= 1) {
+                        leadTarget.t += 0.006
+                    }
+                    else{
+                        leadTarget.t = 1;
+                    }
+                }
 
+                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
                 //calculate the angle in which the projectile will shoot.  Also, the angle that the turret will face.
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
@@ -438,16 +446,23 @@ function generateProjectileClass(data){
     homingFire: function(x, y, enemy){
         this.homingTarget = enemy;
         this.setPosition(x, y);
-        // this.dx = Math.cos(angle);
-        // this.dy = Math.sin(angle);
     },
 
     update: function (time, delta)
     {
         if (this.homingTarget) {
+            
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
+
+            //for some reason, the collision isnt always detected.  This manually acts as the collision. 
+            if (Phaser.Math.Distance.Between(this.homingTarget.x, this.homingTarget.y, this.x, this.y) < 15) {
+                damageEnemy(this.homingTarget, this);
+                this.setActive(false);
+                this.setVisible(false);
+            }
+
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
             this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.dx = Math.cos(angle);
@@ -457,7 +472,7 @@ function generateProjectileClass(data){
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range + 100) {
             this.setActive(false);
             this.setVisible(false);
         }
@@ -564,7 +579,9 @@ function addProjectile(enemyTarget, name, level, x, y, range, angle, damage, rad
         if (name === 'bomb' && level === 4) {
             projectile.homingFire(x, y, enemyTarget);
         }
-        projectile.fire(x, y, angle);
+        else{
+            projectile.fire(x, y, angle);
+        }
     }
 }
 
@@ -573,8 +590,13 @@ function getEnemy(x, y, distance, turret_target) {
     var speedy = speedyGroup.getChildren();
     var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
+    //sort to always shoot at the furthest enemy down the path!
+    enemyUnits.sort(function(a,b){
+        return b.follower.t - a.follower.t
+    });
+
     for(var i = 0; i < enemyUnits.length; i++) {
-        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
+        if(enemyUnits[i].active && enemyUnits[i].hp > 0 && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
             if (turret_target == 'air-ground') {
                 return enemyUnits[i];
             }
@@ -1332,11 +1354,8 @@ var HelpScene = new Phaser.Class({
     {
         var background = this.add.image(0, 0, 'infoscreen').setOrigin(0,0).setScale(.648)
         background.setPosition(-8, 0)
-        // this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
-        // this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
         this.backButton = this.add.text(400, 650, "RESUME GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
         this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 50);
-        // this.backButton = this.add.text(400, 550, "RESUME GAME");
         titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => {
             this.scene.stop();
@@ -1517,14 +1536,14 @@ var LevelScene = new Phaser.Class({
         //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
-        goldText = this.add.text(42, 16, '200', {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+        goldText = this.add.text(42, 15, '200', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
-        sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeInfoText = this.add.text(0,0, '', {fontFamily: 'Arial',fontSize: '14px', fill: '#ffffff', align:'center'});
         upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
         ButtonsGroup = this.add.group();
 
@@ -1645,30 +1664,30 @@ var LevelScene = new Phaser.Class({
         this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
         //Cancel: ESC message
-        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontStyle: 'Bold'});
-        this.cancel_msg_2 = this.add.text(MAPWIDTH - 52,495,'',{fontSize: '24px', fontStyle: 'Bold'});
+        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontFamily: 'Arial',fontStyle: 'Bold'});
+        this.cancel_msg_2 = this.add.text(MAPWIDTH - 56,499,'',{fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         // Arrow tower button
-        this.add.text(MAPWIDTH - 54, 80, 'Arrow');
-        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1);
+        this.add.text(MAPWIDTH - 47, 80, 'Gun',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.arrowTowerButton = this.add.image(MAPWIDTH - 29, 125, 'arrow');
         addButtonInput(this.arrowTowerButton);
 
         // Bomb tower button
-        this.add.text(MAPWIDTH - 49, 180, 'Bomb');
-        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1);
+        this.add.text(MAPWIDTH - 56, 180, 'Missile',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.bombTowerButton = this.add.image(MAPWIDTH - 29, 225, 'bomb');
         addButtonInput(this.bombTowerButton);
 
         // Fire tower button
-        this.add.text(MAPWIDTH - 49, 275, 'Fire');
-        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1);
+        this.add.text(MAPWIDTH - 44, 275, 'Fire',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.fireTowerButton = this.add.image(MAPWIDTH - 29, 320, 'fire');
         addButtonInput(this.fireTowerButton);
 
         // Ice tower button
-        this.add.text(MAPWIDTH - 43, 380, 'Ice');
-        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1);
+        this.add.text(MAPWIDTH - 41, 380, 'Ice',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.iceTowerButton = this.add.image(MAPWIDTH - 29, 425, 'ice');
         addButtonInput(this.iceTowerButton);
 

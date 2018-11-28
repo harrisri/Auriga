@@ -128,7 +128,6 @@ function generateEnemyClass(data){
             }
 
             // move the t point along the path, 0 is the start and 1 is the end
-            // console.log(this.path.getLength())
             this.follower.t += (this.speed/this.path.getLength()) * delta;
 
             // get the new x and y coordinates in vec
@@ -149,8 +148,9 @@ function generateEnemyClass(data){
             // if we have reached the end of the path, remove the enemy
             if (this.follower.t >= 1)
             {
-                this.setActive(false);
-                this.setVisible(false);
+                this.destroy();
+                // this.setActive(false);
+                // this.setVisible(false);
                 this.healthBar.bar.destroy();
                 this.healthBar.destroy();
                 life -= 1;
@@ -344,12 +344,20 @@ function generateTowerClass(data){
 
         fire: function() {
             var enemy = getEnemy(this.x, this.y, this.range, this.target);
-            if(enemy) {
-                //'lead' the target by shooting at a point 0.5% ahead of where the enemy is currently.
+            if(enemy && enemy.follower.t < 1) {
                 var leadTarget = { t: enemy.follower.t, vec: new Phaser.Math.Vector2() };
-                leadTarget.t += 0.003
-                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
+                //'lead' the target by shooting at a point 0.6% ahead of where the enemy is currently.
+                var distance = Phaser.Math.Distance.Between(enemy.x,enemy.y,this.x, this.y)
+                if ((enemy.name === 'speedy' && distance > 75) || distance > 150){
+                    if (leadTarget.t + 0.006 <= 1) {
+                        leadTarget.t += 0.006
+                    }
+                    else{
+                        leadTarget.t = 1;
+                    }
+                }
 
+                enemy.path.getPoint(leadTarget.t, leadTarget.vec);
                 //calculate the angle in which the projectile will shoot.  Also, the angle that the turret will face.
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
@@ -438,16 +446,23 @@ function generateProjectileClass(data){
     homingFire: function(x, y, enemy){
         this.homingTarget = enemy;
         this.setPosition(x, y);
-        // this.dx = Math.cos(angle);
-        // this.dy = Math.sin(angle);
     },
 
     update: function (time, delta)
     {
         if (this.homingTarget) {
+
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
+
+            //for some reason, the collision isnt always detected.  This manually acts as the collision.
+            if (Phaser.Math.Distance.Between(this.homingTarget.x, this.homingTarget.y, this.x, this.y) < 15) {
+                damageEnemy(this.homingTarget, this);
+                this.setActive(false);
+                this.setVisible(false);
+            }
+
             var angle = Phaser.Math.Angle.Between(this.x, this.y, this.homingTarget.x, this.homingTarget.y);
             this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
             this.dx = Math.cos(angle);
@@ -457,7 +472,7 @@ function generateProjectileClass(data){
         this.x += this.dx * (this.speed * delta);
         this.y += this.dy * (this.speed * delta);
 
-        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range) {
+        if (Phaser.Math.Distance.Between(this.xOrigin, this.yOrigin, this.x, this.y) > this.range + 100) {
             this.setActive(false);
             this.setVisible(false);
         }
@@ -564,7 +579,9 @@ function addProjectile(enemyTarget, name, level, x, y, range, angle, damage, rad
         if (name === 'bomb' && level === 4) {
             projectile.homingFire(x, y, enemyTarget);
         }
-        projectile.fire(x, y, angle);
+        else{
+            projectile.fire(x, y, angle);
+        }
     }
 }
 
@@ -573,8 +590,13 @@ function getEnemy(x, y, distance, turret_target) {
     var speedy = speedyGroup.getChildren();
     var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
+    //sort to always shoot at the furthest enemy down the path!
+    enemyUnits.sort(function(a,b){
+        return b.follower.t - a.follower.t
+    });
+
     for(var i = 0; i < enemyUnits.length; i++) {
-        if(enemyUnits[i].active && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
+        if(enemyUnits[i].active && enemyUnits[i].hp > 0 && Phaser.Math.Distance.Between(x, y, enemyUnits[i].x, enemyUnits[i].y) <= distance){
             if (turret_target == 'air-ground') {
                 return enemyUnits[i];
             }
@@ -1220,41 +1242,47 @@ var TitleScene = new Phaser.Class({
 
     preload: function()
     {
+        this.load.image('background','assets/background.png')
         this.load.image('level1map', 'assets/level1map.png');
         this.load.image('level2map', 'assets/level2map.png');
-        // this.load.image('level3map', assets/level3map.png);
+        this.load.image('level3map', 'assets/level3map.png');
     },
 
     create: function()
     {
-        this.add.text(350, 25, "AURIGA TOWER DEFENSE", { fontFamily: 'Arial', fontSize: 30 });
+        this.add.image(0, 0, 'background').setOrigin(0,0)
+        var title = this.add.text(0, 25, "AURIGA TOWER DEFENSE", {fontFamily: 'Arial', fontSize: 35, fontStyle: 'Bold'});
+        title.setPosition(MAPWIDTH/2 - title.getBounds().width/2, 30)
 
         // Create Text Buttons that load the new scenes
-        this.level1Button = this.add.text(500, 90, "LEVEL 1", { fontSize: 20 });
+        this.level1Button = this.add.text(0, 90, "LEVEL 1", {fontFamily: 'Arial', fontSize: 18, fontStyle: 'Bold'});
+        var levelTextX = MAPWIDTH/2 - this.level1Button.getBounds().width/2
+        this.level1Button.setPosition(levelTextX, 90)
         titleSceneButtonInput(this.level1Button)
         this.level1Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
-        this.level1MapImage = this.add.image(535, 200, "level1map");
-        this.level1MapImage.setScale(0.2);
+        this.level1MapImage = this.add.image(MAPWIDTH/2, 200, "level1map").setScale(.15);
         this.level1MapImage.setInteractive({ useHandCursor: true });
         this.level1MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level1'}));
+        titleSceneButtonInput(this.level1MapImage)
 
-        this.level2Button = this.add.text(500, 300, "LEVEL 2", { fontSize: 20 });
+        this.level2Button = this.add.text(levelTextX, 300, "LEVEL 2", {fontFamily: 'Arial', fontSize: 18, fontStyle: 'Bold'});
         titleSceneButtonInput(this.level2Button);
         this.level2Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
-        this.level2MapImage = this.add.image(535, 405, "level2map");
-        this.level2MapImage.setScale(0.2);
+        this.level2MapImage = this.add.image(MAPWIDTH/2, 410, "level2map").setScale(.15);
         this.level2MapImage.setInteractive({ useHandCursor: true });
         this.level2MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level2'}));
+        titleSceneButtonInput(this.level2MapImage)
 
-        this.level3Button = this.add.text(500, 500, "LEVEL 3", { fontSize: 20 });
+        this.level3Button = this.add.text(levelTextX, 510, "LEVEL 3", {fontFamily: 'Arial', fontSize: 18, fontStyle: 'Bold'});
         titleSceneButtonInput(this.level3Button);
         this.level3Button.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
-        // this.level3MapImage = this.add.image(535, 600, "level3map");
-        // this.level3MapImage.setScale(0.2);
-        // this.level3MapImage.setInteractive({ useHandCursor: true });
-        // this.level3MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
+        this.level3MapImage = this.add.image(MAPWIDTH/2, 620, "level3map").setScale(.15);
+        this.level3MapImage.setInteractive({ useHandCursor: true });
+        this.level3MapImage.on('pointerdown', () => this.scene.start('LevelScene', {currentLevel:'level3'}));
+        titleSceneButtonInput(this.level3MapImage)
 
-        this.instructionsButton = this.add.text(435, 750, "GAME INSTRUCTIONS", { fontSize: 20 });
+        this.instructionsButton = this.add.text(0, 745, "GAME INSTRUCTIONS", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.instructionsButton.setPosition(MAPWIDTH/2 - this.instructionsButton.getBounds().width/2, MAPHEIGHT - 50)
         titleSceneButtonInput(this.instructionsButton);
         this.instructionsButton.on('pointerdown', () => this.scene.start('InstructionsScene'));
     }
@@ -1267,12 +1295,15 @@ var InstructionsScene = new Phaser.Class({
     {
         Phaser.Scene.call(this, { key: 'InstructionsScene' });
     },
-
+    preload: function(){
+        this.load.image('infoscreen','assets/infoScreen.png')
+    },
     create: function()
     {
-        this.enemyInstructions = this.add.text(200, 150, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
-        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
-        this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN");
+        var background = this.add.image(0, 0, 'infoscreen').setOrigin(0,0).setScale(.648)
+        background.setPosition(-8, 0)
+        this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 50);
         titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => this.scene.start('TitleScene'));
     }
@@ -1289,21 +1320,24 @@ var PauseScene = new Phaser.Class({
     create: function()
     {
         // Create Pause Menu Buttons
-        this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", { fontSize: 30 });
+        this.resumeGameButton = this.add.text(400, 250, "RESUME GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.resumeGameButton.setPosition(MAPWIDTH/2 - this.resumeGameButton.getBounds().width/2, 250)
         titleSceneButtonInput(this.resumeGameButton)
         this.resumeGameButton.on('pointerdown', () => {
                 this.scene.resume('LevelScene');
                 this.scene.stop();
         });
 
-        this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL", { fontSize: 30 });
+        this.restartGameButton = this.add.text(400, 350, "RESTART LEVEL",{fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.restartGameButton.setPosition(MAPWIDTH/2 - this.restartGameButton.getBounds().width/2, 350)
         titleSceneButtonInput(this.restartGameButton);
         this.restartGameButton.on('pointerdown', () => {
                 this.scene.restart('LevelScene');
                 this.scene.start('LevelScene');
         });
 
-        this.quitGameButton = this.add.text(400, 450, "QUIT GAME", { fontSize: 30 });
+        this.quitGameButton = this.add.text(400, 450, "QUIT GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.quitGameButton.setPosition(MAPWIDTH/2 - this.quitGameButton.getBounds().width/2, 450)
         titleSceneButtonInput(this.quitGameButton);
         this.quitGameButton.on('pointerdown', () => {
             this.scene.stop();
@@ -1320,12 +1354,16 @@ var HelpScene = new Phaser.Class({
     {
         Phaser.Scene.call(this, { key: 'HelpScene' });
     },
+    preload: function(){
+        this.load.image('infoscreen','assets/infoScreen.png')
+    },
 
     create: function()
     {
-        this.enemyInstructions = this.add.text(200, 250, "ENEMY UNITS\nInfantry - Basic ground units. Medium speed and health\nSpeedy - Fast ground units. Use Ice to slow them down\nHeavy - Ground units with high HP and armor. Weak to fire\nAir - Can only be targeted by certain towers");
-        this.TowerInstructions = this.add.text(200, 350, "TOWERS\nGun - Basic tower, hits both ground and air\nMAX: Anti-Air. Range and Damage greatly increased\n\nFire - Area-of-Effect damage over time that ignores armor. Ground only\nMAX: Chance to Incinerate (1-hit KO)\n\nIce - Slows units down but does little damage. Ground and Air\nMAX: Chance to freeze enemies in place\n\nMissile - Causes heavy AoE damage on the ground\nMAX: Guided missiles can hit Air or Ground at long range\n\n");
-        this.backButton = this.add.text(400, 550, "RESUME GAME");
+        var background = this.add.image(0, 0, 'infoscreen').setOrigin(0,0).setScale(.648)
+        background.setPosition(-8, 0)
+        this.backButton = this.add.text(400, 650, "RESUME GAME", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
+        this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 50);
         titleSceneButtonInput(this.backButton);
         this.backButton.on('pointerdown', () => {
             this.scene.stop();
@@ -1508,14 +1546,15 @@ var LevelScene = new Phaser.Class({
         //UI elements
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
-        goldText = this.add.text(42, 16, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 16, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 16, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+
+        goldText = this.add.text(42, 15, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
-        sellText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
-        upgradeInfoText = this.add.text(0,0, '', {fontSize: '14px', fill: '#ffffff', align:'center'});
+        sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
+        upgradeInfoText = this.add.text(0,0, '', {fontFamily: 'Arial',fontSize: '14px', fill: '#ffffff', align:'center'});
         upgradeInfoButton = this.add.image(0,0,'upgradeInfoButton').setVisible(false);
         ButtonsGroup = this.add.group();
 
@@ -1640,30 +1679,30 @@ var LevelScene = new Phaser.Class({
         this.input.keyboard.on('keydown_' + 'ESC', escapePlaceMode);
 
         //Cancel: ESC message
-        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontStyle: 'Bold'});
-        this.cancel_msg_2 = this.add.text(MAPWIDTH - 52,495,'',{fontSize: '24px', fontStyle: 'Bold'});
+        this.cancel_msg_1 = this.add.text(MAPWIDTH - 59,485,'',{fontFamily: 'Arial',fontStyle: 'Bold'});
+        this.cancel_msg_2 = this.add.text(MAPWIDTH - 56,499,'',{fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
 
         // Arrow tower button
-        this.add.text(MAPWIDTH - 54, 80, 'Arrow');
-        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1);
+        this.add.text(MAPWIDTH - 47, 80, 'Gun',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 44, 155, "$" + arrowData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.arrowTowerButton = this.add.image(MAPWIDTH - 29, 125, 'arrow');
         addButtonInput(this.arrowTowerButton);
 
         // Bomb tower button
-        this.add.text(MAPWIDTH - 49, 180, 'Bomb');
-        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1);
+        this.add.text(MAPWIDTH - 56, 180, 'Missile',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 245, "$" + bombData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.bombTowerButton = this.add.image(MAPWIDTH - 29, 225, 'bomb');
         addButtonInput(this.bombTowerButton);
 
         // Fire tower button
-        this.add.text(MAPWIDTH - 49, 275, 'Fire');
-        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1);
+        this.add.text(MAPWIDTH - 44, 275, 'Fire',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 350, "$" + fireData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.fireTowerButton = this.add.image(MAPWIDTH - 29, 320, 'fire');
         addButtonInput(this.fireTowerButton);
 
         // Ice tower button
-        this.add.text(MAPWIDTH - 43, 380, 'Ice');
-        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1);
+        this.add.text(MAPWIDTH - 41, 380, 'Ice',{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
+        this.add.text(MAPWIDTH - 49, 455, "$" + iceData.cost.level_1,{fontFamily: 'Arial',fontSize: '16px', fontStyle: 'Bold'});
         this.iceTowerButton = this.add.image(MAPWIDTH - 29, 425, 'ice');
         addButtonInput(this.iceTowerButton);
 

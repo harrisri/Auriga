@@ -1547,9 +1547,9 @@ var LevelScene = new Phaser.Class({
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
 
-        goldText = this.add.text(42, 15, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+        goldText = this.add.text(42, 14, String(gold), {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 14, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 14, "Wave 1", {fontFamily: 'Arial',fontSize:'24px', fontStyle: 'Bold'});
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});

@@ -371,7 +371,7 @@ function generateTowerClass(data){
 
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                        iceExplosion(this.x, this.y);
+                        iceExplosion(this.x, this.y, this.range);
                         var freeze = Math.random().toFixed(2);
                         if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
                             enemyUnits[i].receiveDamage(this.damage, 1, ICE_MAX_DURATION);
@@ -545,10 +545,11 @@ function generateGroundFireClass(data){
     return GroundFire;
 }
 
-function iceExplosion(x,y){
+function iceExplosion(x,y,radius){
     var explosion = iceExplosions.get().setActive(true);
     explosion.x = x;
     explosion.y = y;
+    explosion.setScale(1.45);
     explosion.play('explode');
 }
 
@@ -632,6 +633,11 @@ function damageEnemy(enemy, bullet) {
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }
+
+            var explosion = missileExplosions.get();
+            explosion.setPosition(enemy.x, enemy.y)
+            explosion.setScale(bullet.radius/100);
+            explosion.play('missileBoom')
         }
 
         else if (bullet.name == 'fire'){
@@ -1492,6 +1498,11 @@ var LevelScene = new Phaser.Class({
         //load ice tower explosion;
         this.load.setPath('assets/')
         this.load.multiatlas('iceExplosion','Ice_Explosion.json');
+        this.load.spritesheet('missileExplosion','missile_explosion.png',{
+            frameWidth:100,
+            frameHeight:100,
+            endFrame:33
+        })
     },
 
     create: function()
@@ -1656,6 +1667,26 @@ var LevelScene = new Phaser.Class({
                 start: 1, end: 19, suffix:'.png'
             })
             this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
+        }
+
+        var animConfig = {
+            key : 'missileBoom',
+            frames : this.anims.generateFrameNumbers('missileExplosion',{
+                start: 1,
+                end: 32
+            }),
+            // repeat: 0,
+            frameRate: 50,
+            hideOnComplete: true
+        }
+        if (!this.anims.anims.has('missileBoom')) {
+            this.anims.create(animConfig);
+        }
+
+        missileExplosions = this.add.group();
+        for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
+            var sprite = missileExplosions.create(0,0,'missileBoom')
+            sprite.setVisible(false);
         }
 
         iceExplosions = this.add.group();

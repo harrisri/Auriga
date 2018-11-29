@@ -441,6 +441,7 @@ function generateProjectileClass(data){
 
     fire: function (x, y, angle)
     {
+        this.homingTarget = null;
         this.setActive(true);
         this.setVisible(true);
 
@@ -461,6 +462,7 @@ function generateProjectileClass(data){
     update: function (time, delta)
     {
         if (this.homingTarget) {
+            console.log('homingTarget!')
 
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")

@@ -644,7 +644,7 @@ function damageEnemy(enemy, bullet) {
 
             var explosion = missileExplosions.get();
             explosion.setPosition(enemy.x, enemy.y)
-            explosion.setScale(bullet.radius/100);
+            explosion.setScale(bullet.radius/60);
             explosion.play('missileBoom')
         }
 
@@ -1511,6 +1511,12 @@ var LevelScene = new Phaser.Class({
             frameHeight:100,
             endFrame:33
         })
+        this.load.image('explosion1','explosion1.png')
+        this.load.image('explosion2','explosion2.png')
+        this.load.image('explosion3','explosion3.png')
+        this.load.image('explosion4','explosion4.png')
+        this.load.image('explosion5','explosion5.png')
+
     },
 
     create: function()
@@ -1677,14 +1683,23 @@ var LevelScene = new Phaser.Class({
             this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
         }
 
+
         var animConfig = {
             key : 'missileBoom',
-            frames : this.anims.generateFrameNumbers('missileExplosion',{
-                start: 1,
-                end: 32
-            }),
-            // repeat: 0,
-            frameRate: 50,
+            // frames : this.anims.generateFrameNumbers('missileExplosion',{
+            //     start: 1,
+            //     end: 32
+            // }),
+            frames:[
+                {key:'explosion1'},
+                {key:'explosion2'},
+                {key:'explosion3'},
+                {key:'explosion4'},
+                {key:'explosion5'}
+            ],
+
+            // frameRate: 50,
+            frameRate: 13,
             hideOnComplete: true
         }
         if (!this.anims.anims.has('missileBoom')) {

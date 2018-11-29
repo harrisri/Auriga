@@ -2,22 +2,22 @@
     "name": "ice",
     "target": "ground",
     "cost":{
-        "level_1": 165,
+        "level_1": 145,
         "level_2": 205,
         "level_3": 260,
-        "level_4": 300
+        "level_4": 345
     },
     "damage":{
         "level_1": 2,
         "level_2": 3,
         "level_3": 4,
-        "level_4": 5
+        "level_4": 4
     },
     "range":{
-        "level_1": 120,
-        "level_2": 120,
-        "level_3": 120,
-        "level_4": 120
+        "level_1": 105,
+        "level_2": 105,
+        "level_3": 105,
+        "level_4": 105
     },
     "rate":{
         "level_1": 1850,

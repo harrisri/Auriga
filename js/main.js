@@ -82,7 +82,7 @@ function generateEnemyClass(data){
                 this.hp = this.hp - damage;
             }
             else{
-                this.hp =  this.hp - (damage - this.armor);
+                this.hp =  this.hp - (damage - damage * this.armor/10);
             }
             this.healthBar.setHealth(this.hp);
             this.healthBar.draw();
@@ -659,7 +659,7 @@ function damageEnemy(enemy, bullet) {
                 //reset the t value for next fire drop
                 pathLocation.t = enemy.follower.t;
             }
-            //initial hit damage from fire bullet. Only if they are air.
+            //initial hit damage from fire bullet. Only if they are not air.
             if (enemy.moveType != 'air') {
                 enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
             }
@@ -679,7 +679,7 @@ function groundFireDamageEnemy(enemy, groundFire){
                 enemy.receiveDamage(10000, 0, 0, true);
             }
             else{
-                enemy.receiveDamage(groundFire.damage/100, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+                enemy.receiveDamage(groundFire.damage/60, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
             }
         }
     }

@@ -2,28 +2,28 @@
     "name": "arrow",
     "target": "air-ground",
     "cost":{
-        "level_1": 60,
+        "level_1": 70,
         "level_2": 110,
-        "level_3": 190,
-        "level_4": 285
+        "level_3": 245,
+        "level_4": 350
     },
     "damage":{
-        "level_1": 7,
-        "level_2": 9,
-        "level_3": 11,
-        "level_4": 12
+        "level_1": 6,
+        "level_2": 8,
+        "level_3": 9,
+        "level_4": 15
     },
     "range":{
-        "level_1": 155,
-        "level_2": 195,
-        "level_3": 235,
+        "level_1": 135,
+        "level_2": 155,
+        "level_3": 205,
         "level_4": 800
     },
     "rate":{
-        "level_1": 1600,
-        "level_2": 1300,
-        "level_3": 1150,
-        "level_4": 1000
+        "level_1": 1550,
+        "level_2": 1450,
+        "level_3": 1350,
+        "level_4": 1200
     },
     "radius":{
         "level_1": -1,

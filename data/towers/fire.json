@@ -2,25 +2,25 @@
     "name": "fire",
     "target": "ground",
     "cost":{
-        "level_1": 165,
+        "level_1": 145,
         "level_2": 230,
         "level_3": 295,
         "level_4": 415
     },
     "damage":{
         "level_1": 11,
-        "level_2": 14,
-        "level_3": 14,
-        "level_4": 17
+        "level_2": 12,
+        "level_3": 12,
+        "level_4": 13
     },
     "range":{
-        "level_1": 100,
-        "level_2": 115,
-        "level_3": 130,
-        "level_4": 165
+        "level_1": 85,
+        "level_2": 105,
+        "level_3": 120,
+        "level_4": 135
     },
     "rate":{
-        "level_1": 1900,
+        "level_1": 1800,
         "level_2": 1600,
         "level_3": 1400,
         "level_4": 1250
@@ -38,8 +38,8 @@
         "level_4": -1
     },
     "duration":{
-        "level_1": 1750,
-        "level_2": 1900,
+        "level_1": 1450,
+        "level_2": 1550,
         "level_3": 2000,
         "level_4": 2250
     },

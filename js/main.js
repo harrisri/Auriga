@@ -362,16 +362,19 @@ function generateTowerClass(data){
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
                 addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
+                return true;
             }
+            return false;
         },
 
         iceFire: function() {
             var speedy = speedyGroup.getChildren();
             var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
+            var fired = false;
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
-                        iceExplosion(this.x, this.y);
+                        iceExplosion(this.x, this.y, this.range);
                         var freeze = Math.random().toFixed(2);
                         if (this.level == 4 && freeze <= ICE_MAX_CHANCE) {
                             enemyUnits[i].receiveDamage(this.damage, 1, ICE_MAX_DURATION);
@@ -379,8 +382,10 @@ function generateTowerClass(data){
                         else{
                             enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
                         }
+                        fired = true;
                 }
             }
+            return fired;
         },
         // we will place the turret according to the grid
         place: function(i, j, levelMap) {
@@ -396,13 +401,16 @@ function generateTowerClass(data){
         {
             // time to shoot
             if(time > this.nextTic) {
+                var fired;
                 if (this.name == "ice") {
-                    this.iceFire();
+                    fired = this.iceFire();
                 }
                 else{
-                    this.fire()
+                    fired = this.fire()
                 }
-                this.nextTic = time + this.rate;
+                if (fired) {
+                    this.nextTic = time + this.rate;
+                }
             }
         }
     });
@@ -433,6 +441,7 @@ function generateProjectileClass(data){
 
     fire: function (x, y, angle)
     {
+        this.homingTarget = null;
         this.setActive(true);
         this.setVisible(true);
 
@@ -444,6 +453,8 @@ function generateProjectileClass(data){
     },
 
     homingFire: function(x, y, enemy){
+        this.setActive(true);
+        this.setVisible(true);
         this.homingTarget = enemy;
         this.setPosition(x, y);
     },
@@ -451,7 +462,6 @@ function generateProjectileClass(data){
     update: function (time, delta)
     {
         if (this.homingTarget) {
-
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
@@ -543,10 +553,11 @@ function generateGroundFireClass(data){
     return GroundFire;
 }
 
-function iceExplosion(x,y){
+function iceExplosion(x,y,radius){
     var explosion = iceExplosions.get().setActive(true);
     explosion.x = x;
     explosion.y = y;
+    explosion.setScale(1.45);
     explosion.play('explode');
 }
 
@@ -630,6 +641,11 @@ function damageEnemy(enemy, bullet) {
                     enemyUnits[i].receiveDamage(bullet.damage);
                 }
             }
+
+            var explosion = missileExplosions.get();
+            explosion.setPosition(enemy.x, enemy.y)
+            explosion.setScale(bullet.radius/60);
+            explosion.play('missileBoom')
         }
 
         else if (bullet.name == 'fire'){
@@ -1490,6 +1506,14 @@ var LevelScene = new Phaser.Class({
         //load ice tower explosion;
         this.load.setPath('assets/')
         this.load.multiatlas('iceExplosion','Ice_Explosion.json');
+
+        //load missile explosion images
+        this.load.image('explosion1','explosion1.png')
+        this.load.image('explosion2','explosion2.png')
+        this.load.image('explosion3','explosion3.png')
+        this.load.image('explosion4','explosion4.png')
+        this.load.image('explosion5','explosion5.png')
+
     },
 
     create: function()
@@ -1547,9 +1571,10 @@ var LevelScene = new Phaser.Class({
         this.add.image(26, 28, 'goldCoin');
         this.add.image(MAPWIDTH - 50, 28, 'heart');
 
-        goldText = this.add.text(42, 15, String(gold), {fontSize: '24px', fontStyle: 'Bold'});
-        lifeText = this.add.text(MAPWIDTH - 35, 15, '20', {fontSize: '24px', fontStyle: 'Bold'});
-        this.waveText = this.add.text(MAPWIDTH - 640, 15, "Wave 1", {fontSize:'24px', fontStyle: 'Bold'});
+        goldText = this.add.text(42, 14, String(gold), {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        lifeText = this.add.text(MAPWIDTH - 35, 14, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
+        this.waveText = this.add.text(MAPWIDTH - 640, 14, "Wave 1", {fontFamily: 'Arial',fontSize:'24px', fontStyle: 'Bold'});
+        this.waveText.depth = 50;
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1656,6 +1681,29 @@ var LevelScene = new Phaser.Class({
             this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
         }
 
+        //create missile explosion animation
+        var animConfig = {
+            key : 'missileBoom',
+            frames:[
+                {key:'explosion1'},
+                {key:'explosion2'},
+                {key:'explosion3'},
+                {key:'explosion4'},
+                {key:'explosion5'}
+            ],
+            frameRate: 13,
+            hideOnComplete: true
+        }
+        if (!this.anims.anims.has('missileBoom')) {
+            this.anims.create(animConfig);
+        }
+
+        missileExplosions = this.add.group();
+        for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
+            var sprite = missileExplosions.create(0,0,'missileBoom')
+            sprite.setVisible(false);
+        }
+
         iceExplosions = this.add.group();
         for (var i = 0; i < 30; i++) { //shouldnt have more than 30 simultaneous explosions.
             var sprite = iceExplosions.create(0,0,'iceExplosion','1.png')
@@ -1745,14 +1793,14 @@ var LevelScene = new Phaser.Class({
         });
 
         //variables to assist in spawning enemies in waves
-        this.nextEnemy = 0;
-        this.nextEnemy2 = 0;
+        this.nextEnemy = 10000;
+        this.nextEnemy2 = 10000;
         this.nextEnemyIndex = 0;
         this.nextEnemyIndex2 = 0;
         this.timeToNextEnemyIndex = 1;
         this.timeToNextEnemyIndex2 = 1;
         this.waveIndex = 0;
-        this.showCountdown = false;
+        this.showCountdown = true;
     },
 
     update: function(time, delta)
@@ -1907,8 +1955,8 @@ var LevelScene = new Phaser.Class({
                     this.nextEnemyIndex2 = 0;
                     this.timeToNextEnemyIndex2 = 1;
                     this.waveIndex++;
-                    this.nextEnemy = time + 10000; //10 sec until next wave
-                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.nextEnemy = time + 5000; //10 sec until next wave
+                    this.nextEnemy2 = time + 5000; //10 sec until next wave
                     this.showCountdown = true;
                 }
             }

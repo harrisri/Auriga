@@ -1747,14 +1747,14 @@ var LevelScene = new Phaser.Class({
         });
 
         //variables to assist in spawning enemies in waves
-        this.nextEnemy = 0;
-        this.nextEnemy2 = 0;
+        this.nextEnemy = 10000;
+        this.nextEnemy2 = 10000;
         this.nextEnemyIndex = 0;
         this.nextEnemyIndex2 = 0;
         this.timeToNextEnemyIndex = 1;
         this.timeToNextEnemyIndex2 = 1;
         this.waveIndex = 0;
-        this.showCountdown = false;
+        this.showCountdown = true;
     },
 
     update: function(time, delta)

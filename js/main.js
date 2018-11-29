@@ -1909,8 +1909,8 @@ var LevelScene = new Phaser.Class({
                     this.nextEnemyIndex2 = 0;
                     this.timeToNextEnemyIndex2 = 1;
                     this.waveIndex++;
-                    this.nextEnemy = time + 10000; //10 sec until next wave
-                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.nextEnemy = time + 5000; //10 sec until next wave
+                    this.nextEnemy2 = time + 5000; //10 sec until next wave
                     this.showCountdown = true;
                 }
             }

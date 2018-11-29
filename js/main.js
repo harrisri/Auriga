@@ -1394,9 +1394,35 @@ var CreditScene = new Phaser.Class({
         this.add.image(0, 0, 'background').setOrigin(0,0);
         this.creditsTitle = this.add.text(0, 0, "CREDITS", {fontFamily: 'Arial', fontSize: 35, fontStyle: 'Bold'});
         this.creditsTitle.setPosition(MAPWIDTH/2 - this.creditsTitle.getBounds().width/2, 50);
-        this.sources = this.add.text(0, 0, "Phaser 3 Documentation: https://photonstorm.github.io/phaser3-docs/\nPhaser 3 Examples: https://labs.phaser.io/\nKenney Asset Pack: https://www.kenney.nl/assets/tower-defense-top-down\nHeart Sprite: https://www.dontmind8.win/2018/03/heart-pixel-art.html\nPhaser 3 Tower Defense Tutorial: https://gamedevacademy.org/how-to-make-tower-defense-game-with-phaser-3/\n\n\nMADE BY:\nRiley Harrison\nTrevor Worthey\nDaniel Kim", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
-        this.sources.setPosition(MAPWIDTH/2 - this.sources.getBounds().width/2, MAPHEIGHT/2 - this.sources.getBounds().height/2);
-        this.sources.setAlign("center");
+
+        this.phaserDoc = this.add.text(0, 0, "Phaser 3 Documentation: https://photonstorm.github.io/phaser3-docs/", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.phaserDoc);
+        this.phaserDoc.on('pointerdown', () => window.open("https://photonstorm.github.io/phaser3-docs/"));
+        this.phaserDoc.setPosition(MAPWIDTH/2 - this.phaserDoc.getBounds().width/2, 200);
+
+        this.phaserExamples = this.add.text(0, 0, "Phaser 3 Examples: https://labs.phaser.io/", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.phaserExamples);
+        this.phaserExamples.on('pointerdown', () => window.open("https://labs.phaser.io/"));
+        this.phaserExamples.setPosition(MAPWIDTH/2 - this.phaserExamples.getBounds().width/2, 250);
+
+        this.kenneyAssets = this.add.text(0, 0, "Kenney Asset Pack: https://www.kenney.nl/assets/tower-defense-top-down", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.kenneyAssets);
+        this.kenneyAssets.on('pointerdown', () => window.open("https://www.kenney.nl/assets/tower-defense-top-down"));
+        this.kenneyAssets.setPosition(MAPWIDTH/2 - this.kenneyAssets.getBounds().width/2, 300);
+
+        this.heartSprite = this.add.text(0, 0, "Heart Sprite: https://www.dontmind8.win/2018/03/heart-pixel-art.html", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.heartSprite);
+        this.heartSprite.on('pointerdown', () => window.open("https://www.dontmind8.win/2018/03/heart-pixel-art.html"));
+        this.heartSprite.setPosition(MAPWIDTH/2 - this.heartSprite.getBounds().width/2, 350);
+
+        this.tdTutorial = this.add.text(0, 0, "Phaser 3 Tower Defense Tutorial: https://gamedevacademy.org/how-to-make-tower-defense-game-with-phaser-3/", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        titleSceneButtonInput(this.tdTutorial);
+        this.tdTutorial.on('pointerdown', () => window.open("https://gamedevacademy.org/how-to-make-tower-defense-game-with-phaser-3/"));
+        this.tdTutorial.setPosition(MAPWIDTH/2 - this.tdTutorial.getBounds().width/2, 400);
+
+        this.madeBy = this.add.text(0, 0, "MADE BY:\nRiley Harrison\nTrevor Worthey\nDaniel Kim", {fontFamily: 'Arial', fontSize: 20, fontStyle: 'Bold'});
+        this.madeBy.setPosition(MAPWIDTH/2 - this.madeBy.getBounds().width/2, 500);
+        this.madeBy.setAlign("center");
         this.backButton = this.add.text(400, 650, "BACK TO TITLE SCREEN", {fontFamily: 'Arial', fontSize: 30, fontStyle: 'Bold'});
         this.backButton.setPosition(MAPWIDTH/2 - this.backButton.getBounds().width/2, MAPHEIGHT - 80);
         titleSceneButtonInput(this.backButton);

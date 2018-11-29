@@ -3,9 +3,9 @@
     "target": "ground",
     "cost":{
         "level_1": 145,
-        "level_2": 205,
-        "level_3": 260,
-        "level_4": 345
+        "level_2": 185,
+        "level_3": 220,
+        "level_4": 305
     },
     "damage":{
         "level_1": 2,

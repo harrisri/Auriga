@@ -1,8 +1,8 @@
 {
 	"name": "heavy",
 	"move_type": "ground",
-	"base_hp": 60,
+	"base_hp": 56,
 	"base_armor": 2.5,
 	"base_speed": 0.75,
-	"gold_drop": 18
+	"gold_drop": 19
 }

@@ -1507,7 +1507,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
                 this.secondPath = false;
-                gold = 2000;
+                gold = 200;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
@@ -1552,6 +1552,7 @@ var LevelScene = new Phaser.Class({
         goldText = this.add.text(42, 14, String(gold), {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
         lifeText = this.add.text(MAPWIDTH - 35, 14, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
         this.waveText = this.add.text(MAPWIDTH - 640, 14, "Wave 1", {fontFamily: 'Arial',fontSize:'24px', fontStyle: 'Bold'});
+        this.waveText.depth = 50;
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});
@@ -1747,14 +1748,14 @@ var LevelScene = new Phaser.Class({
         });
 
         //variables to assist in spawning enemies in waves
-        this.nextEnemy = 0;
-        this.nextEnemy2 = 0;
+        this.nextEnemy = 10000;
+        this.nextEnemy2 = 10000;
         this.nextEnemyIndex = 0;
         this.nextEnemyIndex2 = 0;
         this.timeToNextEnemyIndex = 1;
         this.timeToNextEnemyIndex2 = 1;
         this.waveIndex = 0;
-        this.showCountdown = false;
+        this.showCountdown = true;
     },
 
     update: function(time, delta)
@@ -1909,8 +1910,8 @@ var LevelScene = new Phaser.Class({
                     this.nextEnemyIndex2 = 0;
                     this.timeToNextEnemyIndex2 = 1;
                     this.waveIndex++;
-                    this.nextEnemy = time + 10000; //10 sec until next wave
-                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.nextEnemy = time + 5000; //10 sec until next wave
+                    this.nextEnemy2 = time + 5000; //10 sec until next wave
                     this.showCountdown = true;
                 }
             }

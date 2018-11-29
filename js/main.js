@@ -362,13 +362,16 @@ function generateTowerClass(data){
                 var angle = Phaser.Math.Angle.Between(this.x, this.y, leadTarget.vec.x, leadTarget.vec.y);
                 this.angle = (angle + Math.PI/2) * Phaser.Math.RAD_TO_DEG;
                 addProjectile(enemy, this.name, this.level, this.x, this.y, this.range, angle, this.damage, this.radius, this.duration);
+                return true;
             }
+            return false;
         },
 
         iceFire: function() {
             var speedy = speedyGroup.getChildren();
             var enemyUnits = speedy.concat(heavyGroup.getChildren(), flyingGroup.getChildren(), infantryGroup.getChildren());
 
+            var fired = false;
             for(var i = 0; i < enemyUnits.length; i++) {
                 if(enemyUnits[i].active && Phaser.Math.Distance.Between(this.x, this.y, enemyUnits[i].x, enemyUnits[i].y) <= this.range){
                         iceExplosion(this.x, this.y, this.range);
@@ -379,8 +382,10 @@ function generateTowerClass(data){
                         else{
                             enemyUnits[i].receiveDamage(this.damage, this.slow, this.duration);
                         }
+                        fired = true;
                 }
             }
+            return fired;
         },
         // we will place the turret according to the grid
         place: function(i, j, levelMap) {
@@ -396,13 +401,16 @@ function generateTowerClass(data){
         {
             // time to shoot
             if(time > this.nextTic) {
+                var fired;
                 if (this.name == "ice") {
-                    this.iceFire();
+                    fired = this.iceFire();
                 }
                 else{
-                    this.fire()
+                    fired = this.fire()
                 }
-                this.nextTic = time + this.rate;
+                if (fired) {
+                    this.nextTic = time + this.rate;
+                }
             }
         }
     });

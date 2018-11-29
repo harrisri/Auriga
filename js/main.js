@@ -1507,7 +1507,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave1Data');
                 var waveData2 = null;
                 this.secondPath = false;
-                gold = 2000;
+                gold = 200;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level2':
@@ -1552,6 +1552,7 @@ var LevelScene = new Phaser.Class({
         goldText = this.add.text(42, 14, String(gold), {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
         lifeText = this.add.text(MAPWIDTH - 35, 14, '20', {fontFamily: 'Arial',fontSize: '24px', fontStyle: 'Bold'});
         this.waveText = this.add.text(MAPWIDTH - 640, 14, "Wave 1", {fontFamily: 'Arial',fontSize:'24px', fontStyle: 'Bold'});
+        this.waveText.depth = 50;
 
         //below are used for upgrade/sell buttons.
         sellText = this.add.text(0,0, '', {fontFamily: 'Arial', fontSize: '14px', fill: '#ffffff', align:'center'});

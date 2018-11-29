@@ -462,8 +462,6 @@ function generateProjectileClass(data){
     update: function (time, delta)
     {
         if (this.homingTarget) {
-            console.log('homingTarget!')
-
             if (this.homingTarget.hp <= 0) {  //need to retarget!
                 this.homingTarget = getEnemy(this.xOrigin, this.yOrigin, this.range, "air-ground")
             }
@@ -1508,11 +1506,8 @@ var LevelScene = new Phaser.Class({
         //load ice tower explosion;
         this.load.setPath('assets/')
         this.load.multiatlas('iceExplosion','Ice_Explosion.json');
-        this.load.spritesheet('missileExplosion','missile_explosion.png',{
-            frameWidth:100,
-            frameHeight:100,
-            endFrame:33
-        })
+
+        //load missile explosion images
         this.load.image('explosion1','explosion1.png')
         this.load.image('explosion2','explosion2.png')
         this.load.image('explosion3','explosion3.png')
@@ -1685,13 +1680,9 @@ var LevelScene = new Phaser.Class({
             this.anims.create({key:'explode', frames:frameNames, frameRate:50, hideOnComplete: true})
         }
 
-
+        //create missile explosion animation
         var animConfig = {
             key : 'missileBoom',
-            // frames : this.anims.generateFrameNumbers('missileExplosion',{
-            //     start: 1,
-            //     end: 32
-            // }),
             frames:[
                 {key:'explosion1'},
                 {key:'explosion2'},
@@ -1699,8 +1690,6 @@ var LevelScene = new Phaser.Class({
                 {key:'explosion4'},
                 {key:'explosion5'}
             ],
-
-            // frameRate: 50,
             frameRate: 13,
             hideOnComplete: true
         }

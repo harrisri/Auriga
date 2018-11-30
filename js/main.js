@@ -72,7 +72,13 @@ function generateEnemyClass(data){
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
-            this.body.setCircle(20);
+            if (this.name === 'flying') {
+                this.body.setCircle(25);
+                
+            }
+            else{
+                this.body.setCircle(20);
+            }
             this.depth = 1;
         },
 

@@ -520,8 +520,7 @@ function generateGroundFireClass(data){
                 dropCoords.push(0);
                 break;
             case 2:
-                dropCoords.push(-0.004);
-                dropCoords.push(0.004);
+                dropCoords.push(0);
                 break;
             case 3:
                 dropCoords.push(-0.008);
@@ -529,10 +528,9 @@ function generateGroundFireClass(data){
                 dropCoords.push(0.008);
                 break;
             case 4:
-                dropCoords.push(-0.012);
-                dropCoords.push(-0.004);
-                dropCoords.push(0.004);
-                dropCoords.push(0.012);
+                dropCoords.push(-0.008);
+                dropCoords.push(0);
+                dropCoords.push(0.008);
                 break;
         }
         return dropCoords;
@@ -1538,7 +1536,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave2aData');
                 var waveData2 = this.cache.text.get('wave2bData');
                 this.secondPath = true;
-                gold = 360;
+                gold = 380;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
@@ -1548,7 +1546,7 @@ var LevelScene = new Phaser.Class({
                 var waveData2 = this.cache.text.get('wave3bData');
                 // TODO: set second path to true once second path is built
                 this.secondPath = false;
-                gold = 450;
+                gold = 480;
                 break;
         }
 

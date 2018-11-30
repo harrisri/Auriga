@@ -4,25 +4,25 @@
     "cost":{
         "level_1": 70,
         "level_2": 105,
-        "level_3": 165,
-        "level_4": 270
+        "level_3": 145,
+        "level_4": 210
     },
     "damage":{
         "level_1": 7,
         "level_2": 8,
-        "level_3": 9,
-        "level_4": 19
+        "level_3": 10,
+        "level_4": 18
     },
     "range":{
-        "level_1": 135,
-        "level_2": 155,
-        "level_3": 205,
+        "level_1": 150,
+        "level_2": 170,
+        "level_3": 195,
         "level_4": 800
     },
     "rate":{
-        "level_1": 1550,
-        "level_2": 1450,
-        "level_3": 1350,
+        "level_1": 1400,
+        "level_2": 1300,
+        "level_3": 1200,
         "level_4": 1200
     },
     "radius":{

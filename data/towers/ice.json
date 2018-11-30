@@ -2,10 +2,10 @@
     "name": "ice",
     "target": "ground",
     "cost":{
-        "level_1": 145,
-        "level_2": 185,
-        "level_3": 210,
-        "level_4": 270
+        "level_1": 125,
+        "level_2": 145,
+        "level_3": 170,
+        "level_4": 200
     },
     "damage":{
         "level_1": 2,
@@ -32,16 +32,16 @@
         "level_4": -1
     },
     "slow":{
-        "level_1": 0.25,
-        "level_2": 0.35,
-        "level_3": 0.50,
+        "level_1": 0.30,
+        "level_2": 0.40,
+        "level_3": 0.55,
         "level_4": 0.75
     },
     "duration":{
-        "level_1": 1500,
-        "level_2": 1750,
-        "level_3": 2000,
-        "level_4": 2250
+        "level_1": 1400,
+        "level_2": 1650,
+        "level_3": 1850,
+        "level_4": 2000
     },
     "final_ability": "Chance to FREEZE\n enemies in place."
 }

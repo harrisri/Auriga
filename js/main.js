@@ -72,7 +72,13 @@ function generateEnemyClass(data){
             this.healthBar.draw()
 
             //shrink up the hitbox a bit.
-            this.body.setCircle(20);
+            if (this.name === 'flying') {
+                this.body.setCircle(25);
+                
+            }
+            else{
+                this.body.setCircle(20);
+            }
             this.depth = 1;
         },
 
@@ -82,7 +88,7 @@ function generateEnemyClass(data){
                 this.hp = this.hp - damage;
             }
             else{
-                this.hp =  this.hp - (damage - this.armor);
+                this.hp =  this.hp - (damage - damage * this.armor/10);
             }
             this.healthBar.setHealth(this.hp);
             this.healthBar.draw();
@@ -296,7 +302,7 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-            if (this.name === 'fire') {
+            if (this.name === 'fire' && this.level === 2) {
                 info = info + 'Drops 1 Additional Fire.\n'
             }
             //loop through data and find anything that would be upgraded
@@ -520,19 +526,15 @@ function generateGroundFireClass(data){
                 dropCoords.push(0);
                 break;
             case 2:
-                dropCoords.push(-0.004);
-                dropCoords.push(0.004);
+                dropCoords.push(0);
                 break;
             case 3:
-                dropCoords.push(-0.008);
-                dropCoords.push(0);
-                dropCoords.push(0.008);
-                break;
-            case 4:
-                dropCoords.push(-0.012);
                 dropCoords.push(-0.004);
                 dropCoords.push(0.004);
-                dropCoords.push(0.012);
+                break;
+            case 4:
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
                 break;
         }
         return dropCoords;
@@ -675,7 +677,7 @@ function damageEnemy(enemy, bullet) {
                 //reset the t value for next fire drop
                 pathLocation.t = enemy.follower.t;
             }
-            //initial hit damage from fire bullet. Only if they are air.
+            //initial hit damage from fire bullet. Only if they are not air.
             if (enemy.moveType != 'air') {
                 enemy.receiveDamage(bullet.damage,0,0,true); //fire damage ignores armor
             }
@@ -695,7 +697,7 @@ function groundFireDamageEnemy(enemy, groundFire){
                 enemy.receiveDamage(10000, 0, 0, true);
             }
             else{
-                enemy.receiveDamage(groundFire.damage/100, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
+                enemy.receiveDamage(groundFire.damage/60, 0, 0, true) //base damage is way overpowered., fire damage ignores armor.
             }
         }
     }
@@ -1596,7 +1598,7 @@ var LevelScene = new Phaser.Class({
                 var waveData = this.cache.text.get('wave2aData');
                 var waveData2 = this.cache.text.get('wave2bData');
                 this.secondPath = true;
-                gold = 360;
+                gold = 380;
                 break;
         //---------------------------LEVEL 2---------------------------------------
             case 'level3':
@@ -1606,7 +1608,7 @@ var LevelScene = new Phaser.Class({
                 var waveData2 = this.cache.text.get('wave3bData');
                 // TODO: set second path to true once second path is built
                 this.secondPath = false;
-                gold = 450;
+                gold = 480;
                 break;
         }
 
@@ -1997,8 +1999,8 @@ var LevelScene = new Phaser.Class({
                     this.nextEnemyIndex2 = 0;
                     this.timeToNextEnemyIndex2 = 1;
                     this.waveIndex++;
-                    this.nextEnemy = time + 10000; //10 sec until next wave
-                    this.nextEnemy2 = time + 10000; //10 sec until next wave
+                    this.nextEnemy = time + 5000; //10 sec until next wave
+                    this.nextEnemy2 = time + 5000; //10 sec until next wave
                     this.showCountdown = true;
                 }
             }

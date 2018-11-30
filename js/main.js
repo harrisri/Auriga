@@ -302,7 +302,7 @@ function generateTowerClass(data){
             var nextlevelKey = 'level_' + (this.level + 1);
 
             var info = '';
-            if (this.name === 'fire') {
+            if (this.name === 'fire' && this.level === 2) {
                 info = info + 'Drops 1 Additional Fire.\n'
             }
             //loop through data and find anything that would be upgraded
@@ -529,14 +529,12 @@ function generateGroundFireClass(data){
                 dropCoords.push(0);
                 break;
             case 3:
-                dropCoords.push(-0.008);
-                dropCoords.push(0);
-                dropCoords.push(0.008);
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
                 break;
             case 4:
-                dropCoords.push(-0.008);
-                dropCoords.push(0);
-                dropCoords.push(0.008);
+                dropCoords.push(-0.004);
+                dropCoords.push(0.004);
                 break;
         }
         return dropCoords;
